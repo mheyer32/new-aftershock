@@ -34,7 +34,7 @@ int num_dynamic_tex = 0;
 int *ids = NULL;
 
 static byte img_buf[IMG_BUFSIZE];
-static int r_num_textures = 0;
+static int r_num_textures = TEX_PREGEN_LAST;
 static texture_t textures[MAX_TEXTURES];
 static uint_t r_textures_id[MAX_TEX];
 
@@ -142,10 +142,15 @@ static char *Find_Texture (const char *filename)
 
 int Tex_Init (void)
 {
-	r_num_textures = 0;
+	int i = 0;
+
+	r_num_textures = TEX_PREGEN_LAST;
 	memset (textures, 0, MAX_TEXTURES * sizeof(texture_t));
 
 	glGenTextures (MAX_TEXTURES, r_textures_id);
+
+	for (i = 0; i < TEX_PREGEN_LAST; i++)
+		r_textures_id[i] = -1;
 
 	return 1;
 }
@@ -304,7 +309,7 @@ byte *Tex_Load_TGA2 (const char *fname, int *width, int *height, int *format)
 	tgaheader_t *tgahead;
 	byte *where = NULL;
 	byte *img = NULL;
-	int size = 0,i = 0;
+	int size = 0, i = 0;
 	byte temp;
 
 	// Read the File
@@ -357,9 +362,9 @@ byte *Tex_Load_TGA2 (const char *fname, int *width, int *height, int *format)
 			img = malloc (size * 3);
 			*format = GL_RGB;
 			
-			memcpy (img ,where, size * 3);
+			memcpy (img, where, size * 3);
 			
-			for (i = 0; i < size * 3;i += 3)
+			for (i = 0; i < size * 3; i += 3)
 			{
 				temp = img[i];
 				img[i] = img[i + 2];
@@ -438,7 +443,7 @@ int Tex_UploadTexture (byte **data, int width, int height, int format, int flags
 
 		for (i = 0; i < r_picmip->integer; i++)
 		{
-			if (w > 4 && h > 4 )
+			if ((w > 4) && (h > 4))
 			{
 				w >>= 1;
 				h >>= 1;
@@ -547,8 +552,8 @@ int Tex_UploadTexture (byte **data, int width, int height, int format, int flags
 int R_Load_Texture (const char *name, int flags)
 {
 	char fname[MAX_APATH];
-	byte * data = NULL;
-	int img_width = 0, img_height = 0, format, i;
+	byte *data = NULL;
+	int img_width = 0, img_height = 0, format = GL_RGB, i;
 
 	if (!name[0] || !name)
 		return -1;
@@ -570,34 +575,45 @@ int R_Load_Texture (const char *name, int flags)
 
 	if (!stricmp(fname, "*white") || !stricmp (fname, "white"))
 	{
-		img_width = 32;
-		img_height = 32;
-		format = GL_RGB;
+		// wasn't uploaded yet
+		if (r_textures_id[TEX_PREGEN_WHITE] == -1)
+		{
+			img_width = 32;
+			img_height = 32;
 
-		data = malloc (img_width * img_height * 3);
-		
-		memset (data, 255, img_width * img_height * 3);
+			data = malloc (img_width * img_height * 3);
+			
+			memset (data, 255, img_width * img_height * 3);
+
+			glGenTextures (1, &r_textures_id[TEX_PREGEN_WHITE]);
+		}
+		else {
+			return r_textures_id[TEX_PREGEN_WHITE];
+		}
 	}
 	else if (!stricmp(fname, "*identityLight")) 
 	{
-		byte c = 255;
+		// wasn't uploaded yet
+		if (r_textures_id[TEX_PREGEN_IDENTITYLIGHT] == -1)
+		{
+			byte c = 255;
 
-		img_width = 32;
-		img_height = 32;
-		format = GL_RGB;
+			img_width = 32;
+			img_height = 32;
+			format = GL_RGB;
 
-		data = malloc (img_width * img_height * 3);
+			data = malloc (img_width * img_height * 3);
 
-		memset (data, c, img_width * img_height * 3);
+			memset (data, c, img_width * img_height * 3);
+			glGenTextures (1, &r_textures_id[TEX_PREGEN_IDENTITYLIGHT]);
+		}
+		else {
+			return r_textures_id[TEX_PREGEN_IDENTITYLIGHT];
+		}
 	}
 	else if (!stricmp(fname, "*scratch"))
 	{
-		img_width = 32;
-		img_height = 32;
-		format = GL_RGB;
-
-		// TODO !!!
-		data = malloc (img_width * img_height * 3);
+		return -1;
 	}
 	else if (!stricmp (fname, "$lightmap"))
 	{

@@ -23,6 +23,14 @@
 
 extern int num_dynamic_tex;
 
+enum
+{
+	TEX_PREGEN_WHITE,
+	TEX_PREGEN_IDENTITYLIGHT,
+
+	TEX_PREGEN_LAST
+};
+
 int R_Load_Texture (const char * name,int flags);
 int Tex_Init (void );
 int Tex_Shutdown (void );
