@@ -150,6 +150,7 @@ void GL_DisableClientState (int par );
 void GL_EnableClientState (int par );
 void GL_BlendFunc (int src, int dst );
 void GL_DepthFunc (int func );
+void GL_CullFace (int mode );
 
 void GL_EnableTexUnitARB (int num );
 void GL_DisableTexUnitARB (int num );

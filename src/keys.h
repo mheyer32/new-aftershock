@@ -17,19 +17,8 @@
  */
 
 
-
-
-
-
-
 #ifndef KEYS_H__
 #define KEYS_H__
-
-
-
-
-
-
 
 
 void Cmd_Unbindall (void );
@@ -51,33 +40,14 @@ int Key_IsDown( int keynum ) ;
 int Key_GetOverstrikeMode(void);
 void Key_SetOverstrikeMode (int state );
 
+void Key_Update_MousePosition ( int cur_x ,int cur_y );
+
+void Key_Update_Keystate ( int key ,int state ,aboolean is_char );
+void Key_Update_Mousestate ( int wParam, int state);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void Key_MouseUp (int wParam);
+void Key_MouseDown (int wParam);
 
 
 

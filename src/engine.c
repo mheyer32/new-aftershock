@@ -31,6 +31,8 @@
 #include "io.h"
 #include "server.h"
 #include "keys.h"
+#include "client.h"
+#include "server.h"
 
 #include "windows.h"
 
@@ -191,6 +193,7 @@ void Engine_Render_Next_Frame ( void )
 		g_frametime=(double)Now/1000.0;
 
 		numframes ++;
+		Cbuf_Execute();
 		CL_Run_Frame ();
 
 	}

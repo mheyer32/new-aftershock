@@ -154,6 +154,11 @@ typedef struct {
 } refdef_t;
 
 
+typedef enum {
+	STEREO_CENTER,
+	STEREO_LEFT,
+	STEREO_RIGHT
+} stereoFrame_t;
 
 typedef enum {
 	RT_MODEL,
@@ -276,6 +281,7 @@ void R_ClearScene (void );
 void R_RenderScene (const refdef_t * fd );
 void R_AddRefEntityToScene( const refEntity_t *re ) ;
 int R_TestVis ( const vec3_t p1, const vec3_t p2 );
+void R_LerpTag( orientation_t *tag, int model, int startFrame, int endFrame, float frac, const char *tagName ) ;
 
 int R_RegisterModel( const char *name ) ;
 int  R_RegisterSkin( const char *name );

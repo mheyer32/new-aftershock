@@ -65,8 +65,10 @@ static int meshincluded=0;
 
 void Render_Backend_Flush (int shadernum ,int lmtex );
 
-void Render_Backend_Flush_Generic (shader_t *s ,int lmtex );
-void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmtex );
+static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex );
+static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmtex );
+static void Render_Backend_Flush_Multitexture_Combine (shader_t *s,int lmtex );
+static void Render_Backend_Flush_Vertex_Lit (shader_t *s, int lmtex );
 
 
 static void render_pushface(cface_t *face);
@@ -1023,7 +1025,7 @@ void Render_Backend_Flush (int shadernum ,int lmtex )
 {
 	shader_t *s;
 
-	if (!shadernum || shadernum < 0)
+	if (shadernum < 0)
 	{
 		arrays.numverts=arrays.numelems=0;
 		return ;
@@ -1033,7 +1035,6 @@ void Render_Backend_Flush (int shadernum ,int lmtex )
 
 	switch (s->flush)
 	{
-		
 	case SHADER_FLUSH_GENERIC:
 		Render_Backend_Flush_Generic(s,lmtex);
 		break;
@@ -1041,35 +1042,45 @@ void Render_Backend_Flush (int shadernum ,int lmtex )
 		Render_Backend_Flush_Multitexture_Lightmapped(s,lmtex);
 		break;
 	case SHADER_FLUSH_MULTITEXTURE_COMBINE :
-
-
+		Render_Backend_Flush_Multitexture_Combine(s,lmtex);
 		break;
-	
 	case SHADER_FLUSH_VERTEX_LIT:
-
-
+		Render_Backend_Flush_Vertex_Lit(s,lmtex);
 		break;
 	default :
 		arrays.numverts=arrays.numelems=0;
 		return ;
-
 	}
 
 
 }
 
 
-void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
+static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 {
 
 	shaderpass_t *pass;
 	int i,texture;
 
-	// Set the main states :
-	if (s->flags & SHADER_NOCULL )
-		GL_Disable (GL_CULL_FACE );
-	else 
-		GL_Enable (GL_CULL_FACE );
+
+	switch (s->cull )
+	{
+	case SHADER_CULL_DISABLE:
+		GL_Disable (GL_CULL_FACE);
+		break;
+
+	case SHADER_CULL_FRONT:
+		GL_Enable (GL_CULL_FACE);
+		GL_CullFace (GL_FRONT);
+		break;
+
+
+	case SHADER_CULL_BACK:
+		GL_Enable (GL_CULL_FACE);
+		GL_CullFace (GL_BACK);
+		break;
+
+	}
 
 	if (s->flags & SHADER_POLYGONOFFSET)
 		GL_Enable (GL_POLYGON_OFFSET);
@@ -1173,7 +1184,7 @@ void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 // no blending in first pass 
 // Modulate int 2. pass
 
-void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmtex )
+static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmtex )
 {
 	shaderpass_t * pass;
 	int texture ;
@@ -1184,11 +1195,26 @@ void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmtex )
 
 	Render_Backend_Make_Vertices (s);
 
-	// Set the main states :
-	if (s->flags & SHADER_NOCULL )
-		GL_Disable (GL_CULL_FACE );
-	else 
-		GL_Enable (GL_CULL_FACE );
+	
+	switch (s->cull )
+	{
+	case SHADER_CULL_DISABLE:
+		GL_Disable (GL_CULL_FACE);
+		break;
+
+	case SHADER_CULL_FRONT:
+		GL_Enable (GL_CULL_FACE);
+		GL_CullFace (GL_FRONT);
+		break;
+
+
+	case SHADER_CULL_BACK:
+		GL_Enable (GL_CULL_FACE);
+		GL_CullFace (GL_BACK);
+		break;
+
+	}
+
 
 	if (s->flags & SHADER_POLYGONOFFSET)
 		GL_Enable (GL_POLYGON_OFFSET);
@@ -1290,7 +1316,7 @@ void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmtex )
 // assumes  2 Passes 
 // we could extend this 
 // TODO !!!
-void Render_Backend_Flush_Multitexture_Combine (shader_t *s,int lmtex )
+static void Render_Backend_Flush_Multitexture_Combine (shader_t *s,int lmtex )
 {
 	shaderpass_t * pass;
 	int texture ,i ;
@@ -1300,11 +1326,27 @@ void Render_Backend_Flush_Multitexture_Combine (shader_t *s,int lmtex )
 
 	Render_Backend_Make_Vertices (s);
 
-	// Set the main states :
-	if (s->flags & SHADER_NOCULL )
-		GL_Disable (GL_CULL_FACE );
-	else 
-		GL_Enable (GL_CULL_FACE );
+
+	
+	switch (s->cull )
+	{
+	case SHADER_CULL_DISABLE:
+		GL_Disable (GL_CULL_FACE);
+		break;
+
+	case SHADER_CULL_FRONT:
+		GL_Enable (GL_CULL_FACE);
+		GL_CullFace (GL_FRONT);
+		break;
+
+
+	case SHADER_CULL_BACK:
+		GL_Enable (GL_CULL_FACE);
+		GL_CullFace (GL_BACK);
+		break;
+
+	}
+
 
 	if (s->flags & SHADER_POLYGONOFFSET)
 		GL_Enable (GL_POLYGON_OFFSET);
@@ -1335,7 +1377,7 @@ void Render_Backend_Flush_Multitexture_Combine (shader_t *s,int lmtex )
 
 
 // TODO !!!
-void Render_Backend_Flush_Vertex_Lit (shader_t *s, int lmtex )
+static void Render_Backend_Flush_Vertex_Lit (shader_t *s, int lmtex )
 {
 
 

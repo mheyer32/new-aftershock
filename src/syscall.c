@@ -38,9 +38,8 @@
 #include "shader.h"
 #include "opengl.h"
 #include "entity.h"
-//#include "sys_network.h"
-//#include "net_lan.h"
-
+#include "client.h"
+#include "server.h"
 
 typedef    int  SYSCALL (int arg, ...) ;
 
@@ -188,7 +187,7 @@ static void Call_Cmd_Args( int bufferLength ,char *buffer)
 
 static void Call_R_LerpTag( const char *tagName, int  frac ,int endFrame, int startFrame,int model,orientation_t *tag) 
 {
-	R_LerpTag( tag, model, startFrame, endFrame,frac, tagName ); 
+	R_LerpTag( tag, model, startFrame, endFrame,GETFLOAT(frac), tagName ); 
 
 }
 

@@ -228,7 +228,8 @@ static float cos_fov;         /* Cosine of the field of view angle */
 #define  MIN_RENDER_LIST_SIZE 512
  
 #define  MAX_DYN_POLYS 256
-#define  MAX_POLY_VERTS MAX_DYN_POLYS * 8 // should be enough    
+#define	 MAX_VERTS_ON_POLY	10
+#define  MAX_POLY_VERTS MAX_DYN_POLYS * MAX_VERTS_ON_POLY 
 
 
 
@@ -307,7 +308,7 @@ void R_Init(void)
 
 
     GL_Enable(GL_DEPTH_TEST);
-    glCullFace(GL_FRONT);
+    GL_CullFace(GL_FRONT);
 	GL_Disable(GL_CULL_FACE);
     GL_Enable(GL_TEXTURE_2D);
     GL_TexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -1080,7 +1081,13 @@ void R_StartFrame (void )
 {
 	
 	GL_DepthMask(GL_TRUE);
-	glDrawBuffer(GL_BACK);
+
+	// TODO !!!
+	if (!stricmp (r_drawBuffer->string, "GL_BACK"))
+		glDrawBuffer (GL_BACK);
+	else
+		glDrawBuffer (GL_FRONT);
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
@@ -1088,6 +1095,7 @@ void R_StartFrame (void )
 
 void R_EndFrame (void )
 {
+
 
 	
 	Render_backend_Overlay ( overlay,overlay_numquads );
@@ -1314,14 +1322,14 @@ int R_TestVis ( const vec3_t p1, const vec3_t p2 )
 
 }
 
-
+// TODO !!!
 unsigned int SortKey (cface_t * face )
 {
 
-	return (r_shaders[map.shadernums[face->shadernum]].sort << 27 ) + // Needs 4 Bits 
-		(r_shaders[map.shadernums[face->shadernum]].sortkey << 21) + // 5 Bits
+	return (r_shaders[map.shadernums[face->shadernum]].sort << 29 ) + // Needs 4 Bits 
+		(r_shaders[map.shadernums[face->shadernum]].sortkey << 21) + // 8 Bits
 		(face->shadernum << 7 ) + // 9 Bits 
-		(face->lm_texnum + 1) ;  // 6 Bits
+		(face->lm_texnum ) ;  // 6 Bits
 }
 
 static int

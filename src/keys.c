@@ -26,13 +26,6 @@
 
 
 
-
-
-// TODO !!!
-
-
-
-
 static int  Keys[256];
 
 static int overstrike_mode =0;
@@ -192,148 +185,105 @@ void Key_SetOverstrikeMode (int state )
 
 
 
-// Key Input Handlin is not complete
 
-
-int Parse_KeyInput (int Vkey,int *isLetter)
-{
-	int key=0;
-
-	*isLetter=0;
-// letters:
-	if (Vkey>=0x41 && Vkey<=0x5A)
-	{
-		key='a'+Vkey-0x41;
-		*isLetter=1;
-		return key;
-	}
-
-// F keys:
-	if (Vkey>=0x70 && Vkey<=0x7E)
-	{
-		key=K_F1 + Vkey - 0x70;
-
-		return key;
-
-
-	}
-
-	
-// numbers:
-	if (Vkey>=0x30 && Vkey<=0x39)
-	{
-
-		key='0'+Vkey-0x30;
-		*isLetter=1;
-
-		return key;
-
-
-	}
-
-	switch (Vkey)
-	{
-	case VK_TAB :
-		return K_TAB;
-		break;
-	case VK_RETURN:
-		return	K_ENTER;
-		break;
-	case VK_ESCAPE:
-		return K_ESCAPE;
-		break;
-	case  VK_BACK   :
-		return K_BACKSPACE;
-		break;
-	case  VK_SPACE:
-		return K_SPACE;
-		break;
-
-	case VK_LSHIFT :
-	case VK_RSHIFT :
-		return K_SHIFT;
-		break;
-
-	case VK_LCONTROL:
-	case VK_RCONTROL:
-		return K_CTRL;
-		break;
-
-
-
-	case VK_UP:
-		return	K_UPARROW;
-		break;
-
-	case VK_DOWN:
-		return K_DOWNARROW;
-		break;
-	case VK_LEFT:
-		return K_LEFTARROW;
-		break;
-	case VK_RIGHT:
-		return 	K_RIGHTARROW;
-		break;
-
-	case 220 :
-		// TILDE : 
-		return 1000;
-		break;
-
-
-	case 33:
-		return K_PGUP;
-		break;
-
-	case 34:
-		return K_PGDN;
-		break;
-
-	}
-
-
-
-
-	return -1;
-
-
-}
-
-
-int Handle_KeyInput(int Key,int state)
+void Key_Update_Keystate ( int key ,int state ,aboolean is_char )
 {
 
-	int isLetter;
-	int res=Parse_KeyInput(Key,&isLetter);
+	if (key < 0 )
+		return ;
 
-	if (res==-1)
-		return -1;
-
-
-	if (state==1)
+	if (key==K_TILDE && state )
 	{
-		Keys[res]=1;
-
-	}
-	else
-	{
-		Keys[res]=0;
-	}
-	
-
-	if(isLetter==1)
-	{
-		return res| K_CHAR_FLAG;
+		Con_Toggle ();
+		return ;
 	}
 
-	return res;
+	if (Keys[key]!=state )
+	{
+		Keys[key]=state ;
+
+		if (is_char )
+		{
+			if (Keys[K_SHIFT])
+			{
+				key = toupper (key);
+			}
+			key |= K_CHAR_FLAG;
+
+		}
+
+
+		if ( ActiveKeyCatcher & KEYCATCH_CONSOLE  && state )
+		{
+			Con_KeyEvent(key);
+		}
+		else if ( ActiveKeyCatcher & KEYCATCH_UI && state)
+		{
+			UI_KeyEvent(key);
+		}
+		else if (ActiveKeyCatcher & KEYCATCH_MESSAGE )
+		{
+
+
+		}
+		else 
+		{
+			CL_KeyEvent(key);
+		}
+
+	}
 
 
 }
 
 
 
-void OnMouseDown (int wParam )
+static int lastx=0,lasty=0;
+
+void Key_Update_MousePosition ( int cur_x ,int cur_y )
+{
+	int x,y;
+	if (cur_x!=lastx || cur_y!=lasty )
+	{
+		x = cur_x - lastx;
+		y = cur_y - lasty;
+
+		
+		if (ActiveKeyCatcher & KEYCATCH_CONSOLE )
+		{
+
+
+
+		}
+		else if ( ActiveKeyCatcher & KEYCATCH_UI )
+		{
+			UI_MouseEvent (x,y);
+			lastx= cur_x;
+			lasty= cur_y;
+		}
+		else if ( ActiveKeyCatcher & KEYCATCH_MESSAGE )
+		{
+
+
+		}
+		else
+		{
+
+		}
+
+
+
+
+	}
+
+
+}
+
+
+
+
+// TODO !!!
+void Key_MouseDown (int wParam )
 {
 
 		Cbuf_Execute();
@@ -357,7 +307,8 @@ void OnMouseDown (int wParam )
 
 }
 
-void OnMouseUp (int wParam)
+// TODO !!!
+void Key_MouseUp (int wParam)
 {
 		if (MK_LBUTTON & wParam )
 			{
@@ -392,32 +343,6 @@ int Key_GetCatcher( void )
 {
 	return ActiveKeyCatcher;
 }
-
-void OnKey_Action (int wParam, int state )
-{
-	
-	int key=Handle_KeyInput(wParam,state);
-
-	
-	if ( ActiveKeyCatcher & KEYCATCH_CONSOLE  && state )
-		Con_KeyEvent(key);
-
-	else if ( ActiveKeyCatcher & KEYCATCH_UI && state)
-	{
-		Cbuf_Execute();
-		UI_main(UI_KEY_EVENT,key,0,0,0,0,0,0);
-	}
-
-	if ( state && key==1000 )
-	{
-		Con_Toggle ();
-
-	}
-
-
-
-}
-
 
 
 

@@ -29,7 +29,15 @@ extern cvar_t			*sv_maxclients;
 
 
 
-
+int SV_Init (void );
+void SV_LocateGameData (  void *gEntities, int numEntities, int sizeofGEntity_t,
+						 playerState_t *Gclients, int sizeofGClient );
+int SV_Shutdown (void );
+int SV_Startup (char * mapname );
+void SV_SetBrushModel( sharedEntity_t *ent, const char *name );
+void SV_SetConfigstring( int num, const char *string );
+void SV_Get_GameState ( gameState_t * state );
+void SV_GetConfigstring( int num, char *buffer, int bufferSize );
 
 
 

@@ -43,6 +43,7 @@ void CL_Run_Frame (void );
 int CL_Startup (void );
 int CL_Init (void );
 int CL_Shutdown (void );
+void CL_KeyEvent (int Key );
 
 
 

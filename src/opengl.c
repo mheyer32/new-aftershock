@@ -24,13 +24,25 @@
 #include "render.h"
 #include "console.h"
 #include "ui.h"
+#include "keys.h"
+#include "sys_key.h"
 
 glconfig_t glconfig;
 ext_info_t gl_ext_info;
 
 static int opengl_initialized =0;
-static char WIN32_GL_DLL_NAME [] = "opengl32.dll";
-static char  _3DFX_GL_DLL_NAME [] = "3dfxvrgl.dll"; // FIXME !!!!
+
+#if !defined _WIN32
+
+#define _3DFX_DRIVER_NAME	"libMesaVoodooGL.so"
+#define OPENGL_DRIVER_NAME	"libGL.so"
+
+#else
+
+#define _3DFX_DRIVER_NAME	"3dfxvgl"
+#define OPENGL_DRIVER_NAME	"opengl32"
+
+#endif 
 
 HINSTANCE GL_dll=NULL;
 
@@ -94,7 +106,7 @@ static  void (APIENTRY *glBlendFunc) (GLenum sfactor, GLenum dfactor);
  void (APIENTRY *glCopyTexImage2D) (GLenum target, GLint level, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
  void (APIENTRY *glCopyTexSubImage1D )(GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width);
  void (APIENTRY *glCopyTexSubImage2D )(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
- void (APIENTRY *glCullFace) (GLenum mode);
+static  void (APIENTRY *glCullFace) (GLenum mode);
  void (APIENTRY *glDeleteLists) (GLuint list, GLsizei range);
  void (APIENTRY *glDeleteTextures )(GLsizei n, const GLuint *textures);
 static void (APIENTRY *glDepthFunc )(GLenum func);
@@ -1446,7 +1458,9 @@ GLint APIENTRY GL_Build2DMipmaps( GLenum target, GLint components,
    if (width < 1 || height < 1)
       return GL_INVALID_VALUE;
 
-   glGetIntegerv( GL_MAX_TEXTURE_SIZE, &maxsize );
+   //glGetIntegerv( GL_MAX_TEXTURE_SIZE, &maxsize );
+
+   maxsize = glconfig.maxTextureSize;
 
    w = round_2( width );
    if (w>maxsize) {
@@ -1711,6 +1725,27 @@ void GL_Disable (int param )
 
 }
 
+static int CullMode =0; 
+
+
+void GL_CullFace (int mode )
+{
+
+#if TRACK_GL_STATE
+	if (mode != CullMode )
+	{
+		glCullFace (mode );
+		CullMode = mode ;
+
+	}
+
+#else
+	glCullFace (mode );
+#endif 
+
+
+
+}
 
 void GL_ActiveTextureARB (int param )
 {
@@ -2344,7 +2379,7 @@ int WIN_Destroy_Window (void )
 
 	}
 
-
+	return 0;
 
 }
 
@@ -2366,28 +2401,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case WM_SYSKEYDOWN:
 		case WM_KEYDOWN:
-			OnKey_Action(wParam,1);
-	
+			Sys_Keyboard_Event (wParam,1);
 			break;
 		case WM_SYSKEYUP:
 		case WM_KEYUP:
-			OnKey_Action(wParam,0);
-			
+			Sys_Keyboard_Event (wParam,0);
 			break;
 
 
 			case WM_LBUTTONDOWN:
 			case WM_RBUTTONDOWN:
 			case WM_MBUTTONDOWN:
+			Key_MouseDown(wParam);
+			break;
 
-			OnMouseDown(wParam);
-			
-				break;
 			case WM_RBUTTONUP:
 			case WM_LBUTTONUP:
 			case WM_MBUTTONUP:
-
-			OnMouseUp(wParam);
+			Key_MouseUp(wParam);
 			break;
 
 			case WM_MOUSEMOVE:
@@ -2395,24 +2426,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			x=LOWORD(lParam);
 			y=HIWORD(lParam);
 
-			// FIRST TIME :
-			if (oldx<0 && oldy<0)
-			{
-				oldx=x;
-				oldy=y;
-				UI_main(UI_MOUSE_EVENT,x,y,0,0,0,0,0);	
-
-
-			}
-			else 
-			{
-		
-				UI_main(UI_MOUSE_EVENT,x-oldx,(y-oldy),0,0,0,0,0);	  
-				oldx=x;
-				oldy=y;
-			}
-			
-			
+			Key_Update_MousePosition (x,y );		
 			break;
 		
 		case WM_COMMAND:	
@@ -2551,6 +2565,7 @@ int Init_OpenGL ( void )
 	Con_Printf("Initializing OpenGl subsystem\n");
 
 
+
 	Con_Printf("...initializing AGL\n");
 	glide = LoadLibrary( "glide2x.dll" );
 	if( !glide )
@@ -2558,24 +2573,24 @@ int Init_OpenGL ( void )
 	if( glide ) {
 		FreeLibrary( glide );
 
-		dll =LoadLibrary (_3DFX_GL_DLL_NAME);
+		dll =LoadLibrary (_3DFX_DRIVER_NAME);
 		if (dll)
 		{
-			dllname = _3DFX_GL_DLL_NAME;
+			dllname = _3DFX_DRIVER_NAME;
 			glconfig.driverType=GLDRV_VOODOO;
 			FreeLibrary ( dll );
 		}
 		else 
 		{
 			glconfig.driverType=GLDRV_ICD;
-			dllname =WIN32_GL_DLL_NAME;
+			dllname =OPENGL_DRIVER_NAME;
 		}
 
 	}
 	else
 	{
 		glconfig.driverType=GLDRV_ICD;
-		dllname =WIN32_GL_DLL_NAME;
+		dllname =OPENGL_DRIVER_NAME;
 
 	}
 	

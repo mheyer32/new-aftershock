@@ -26,6 +26,7 @@
 #include "render.h"
 #include "opengl.h"
 #include "ui.h"
+#include "io.h"
 
 #include <windows.h>
 
@@ -91,10 +92,17 @@ int UnLoadUI (void )
 }
 
 
+void UI_KeyEvent (int Key )
+{
+	UI_main(UI_KEY_EVENT,Key,0,0,0,0,0,0);
+
+}
 
 
-
-
+void UI_MouseEvent (int x, int y )
+{
+	UI_main(UI_MOUSE_EVENT,x,y,0,0,0,0,0);	  
+}
 
 
 

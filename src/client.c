@@ -200,8 +200,7 @@ void CL_Run_Frame (void )
 
 		R_StartFrame();
 
-	 
-		Cbuf_Execute();
+	
 
 			
 		catcher=Key_GetCatcher ();
@@ -219,3 +218,11 @@ void CL_Run_Frame (void )
 }
 
 
+void CL_KeyEvent (int Key )
+{
+
+
+
+
+
+}

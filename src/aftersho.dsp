@@ -233,6 +233,10 @@ SOURCE=.\sys_file.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\sys_key.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\sys_mem.c
 # End Source File
 # Begin Source File
@@ -394,6 +398,10 @@ SOURCE=.\skybox.h
 # Begin Source File
 
 SOURCE=.\sys_file.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sys_key.h
 # End Source File
 # Begin Source File
 

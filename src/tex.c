@@ -359,7 +359,6 @@ byte * Tex_Load_TGA (const char *fname ,int *width, int * height , int * format)
 	tgaheader_t *tgahead;
     byte *img,*tga,*tgaend,*tgacur;
     int tgalen, len, depth = 0;
-	int		i,j;
 
 
     tgalen = FS_OpenFile (fname,&file,FS_READ);

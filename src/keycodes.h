@@ -143,7 +143,8 @@ typedef enum {
 	K_AUX15,
 	K_AUX16,
 
-	K_LAST_KEY		// this had better be <256!
+	K_LAST_KEY,		// this had better be <256!
+	K_TILDE // TODO !!!
 } keyNum_t;
 
 

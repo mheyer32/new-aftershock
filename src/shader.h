@@ -28,7 +28,6 @@
 /* Shader flags */
 enum
 {
-    SHADER_NOCULL        = 1 << 0,
     SHADER_TRANSPARENT   = 1 << 1,
     SHADER_DEPTHWRITE    = 1 << 2,  /* Also used for pass flag */
     SHADER_SKY           = 1 << 3,
@@ -146,7 +145,12 @@ enum {
 };
 
 
-
+// Culling :
+enum {
+	SHADER_CULL_DISABLE,
+	SHADER_CULL_FRONT,
+	SHADER_CULL_BACK
+};
 
 #define SHADER_BSP 0
 #define SHADER_MD3 1
@@ -196,9 +200,10 @@ typedef struct
 /* Shader info */
 typedef struct
 {	
-	char name [66];
+	char name [65];
 	byte sortkey ;  // a precalculated sortkey which is added to the shaderkey ; (TODO )
-	byte flush;      // FLUSH_ENUM 
+	byte flush;      // FLUSH_ENUM
+	byte cull;
     uint_t flags;
 //	int contents;
     int numpasses;

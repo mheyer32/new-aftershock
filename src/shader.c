@@ -69,8 +69,28 @@ static int *shaderfound;  /* Shader found in shader script files */
 static void
 shader_cull(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
-    if (!strcmp(args[0], "disable") || !strcmp(args[0], "none"))
-	shader->flags |= SHADER_NOCULL;
+
+	if (!stricmp(args[0], "disable") || !stricmp(args[0], "none"))
+	{
+		shader->cull=SHADER_CULL_DISABLE;
+	}
+	else if (numargs>1)
+	{
+		if (!stricmp (args[1] ,"front"))
+		{
+			shader->cull=SHADER_CULL_FRONT;
+		}
+		else if (!stricmp (args[1] ,"back"))
+		{
+			shader->cull=SHADER_CULL_BACK;
+		}
+
+	}
+	else
+	{
+		shader->cull=SHADER_CULL_FRONT;
+	}
+
 }
 
 static void
@@ -909,7 +929,7 @@ Shader_Readpass(shader_t *shader, shaderpass_t *pass, char ** ptr)
 	pass->tc_gen=TC_GEN_BASE;
 	pass->tc_mod[0].type=SHADER_TCMOD_NONE;
 	pass->num_tc_mod=0;
-
+	
 	while (ptr)
 	{
 		token =COM_ParseExt (ptr,1);
@@ -1025,9 +1045,7 @@ void Shader_Finish (shader_t *s )
 
 
 
-	
-	sort =  (s->flags &  SHADER_NOCULL ) + ((s->flags & SHADER_POLYGONOFFSET ) << 1) ;
-	       // need to integrate the flush directive !!!
+	sort = (s->flags & SHADER_POLYGONOFFSET) + (s->cull << 1 ) + ( s->flush << 4 );
 
 	s->sortkey =sort;
 
@@ -1046,7 +1064,8 @@ int R_LoadShader ( const char * name ,int type )
 	shader_t *s = &r_shaders[shadercount];
 
 
-	
+	if (strlen (name ) > MAX_APATH )
+		return -1;
 
 	// Test if already loaded :
 	for (i=0;i<shadercount;i++)
@@ -1072,7 +1091,7 @@ int R_LoadShader ( const char * name ,int type )
 		s->deform_vertices=DEFORMV_NONE;
 		s->skyheight=512.0f;
 		s->flush=SHADER_FLUSH_GENERIC;
-
+		s->cull=SHADER_CULL_DISABLE;
 
 		token = COM_ParseExt(&ptr,1);
 
@@ -1117,7 +1136,7 @@ int R_LoadShader ( const char * name ,int type )
 		switch (type )
 		{
 		case SHADER_2D :
-			s->flags = SHADER_NOCULL  | SHADER_NOPICMIP;
+			s->flags =  SHADER_NOPICMIP;
 			s->numpasses = 1;
 			s->pass[0].flags =  SHADER_BLEND ;
 			s->pass[0].blendsrc=GL_SRC_ALPHA;
@@ -1128,10 +1147,11 @@ int R_LoadShader ( const char * name ,int type )
 			s->sort = SHADER_SORT_ADDITIVE;
 			s->deform_vertices=DEFORMV_NONE;
 			s->flush=SHADER_FLUSH_GENERIC;
+			s->cull=SHADER_CULL_DISABLE;
 			break;
 
 		case SHADER_BSP :
-			 s->flags = SHADER_NOCULL ;
+			 s->flags =0;
 			 s->numpasses = 1;
 			 s->pass[0].flags = SHADER_DEPTHWRITE;
 			 s->pass[0].texref =R_Load_Texture (name ,0); 
@@ -1140,10 +1160,11 @@ int R_LoadShader ( const char * name ,int type )
 		     s->sort = SHADER_SORT_OPAQUE;
 			 s->deform_vertices=DEFORMV_NONE;
 			 s->flush=SHADER_FLUSH_GENERIC;
+			 s->cull=SHADER_CULL_FRONT;
 			break;
 
 		case SHADER_MD3 :
-			s->flags = SHADER_NOCULL ;
+			s->flags = 0;
 			s->numpasses = 1;
 			s->pass[0].flags = SHADER_DEPTHWRITE;
 			s->pass[0].texref = R_Load_Texture (name ,0);
@@ -1152,6 +1173,7 @@ int R_LoadShader ( const char * name ,int type )
 			s->sort = SHADER_SORT_OPAQUE;
 			s->deform_vertices=DEFORMV_NONE;
 			s->flush=SHADER_FLUSH_GENERIC;
+			s->cull=SHADER_CULL_DISABLE;
 			break;
 
 		default :
