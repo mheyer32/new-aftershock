@@ -1433,6 +1433,21 @@ void GL_BindTexture (int par1,int id )
 
 
 
+void * GL_GetProcAddress (const char * str )
+{
+	if (awglGetProcAddress)
+	{
+		return awglGetProcAddress(str);
+	}
+	else
+	{
+		return GetProcAddress(GL_dll,str);
+	}
+	
+}
+
+
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 
@@ -1807,7 +1822,7 @@ static int GL_ChoosePFD( int colorbits, int depthbits, int stencilbits )
 	}
 
 
-	if (!(bestpfd->dwFlags & PFD_GENERIC_FORMAT) && !(bestpfd->dwFlags & PFD_GENERIC_ACCELERATED))
+	if (!(bestpfd->dwFlags & PFD_GENERIC_FORMAT) )
 	{
 		Con_Printf("...hardware acceleration found\n");
 	}
@@ -2070,6 +2085,29 @@ int Init_OpenGL ( void )
 		// TODO !
 		// GL_S3_s3tc 
 
+			if (IsExtensionSupported("GL_S3_s3tc"))
+			{
+				Con_Printf("...ignoring GL_S3_s3tc\n");
+				gl_ext_info._GL_S3_s3tc=1;
+			}
+			else
+			{
+				Con_Printf("...GL_S3_s3tc not found\n");
+				gl_ext_info._GL_S3_s3tc=0;
+
+			}
+			if (IsExtensionSupported("GL_3DFX_texture_compression_FXT1"))
+			{
+
+				Con_Printf("...ignoring GL_3DFX_texture_compression_FXT1\n");
+				gl_ext_info._GL_3DFX_texture_compression_FXT1=1;
+
+			}
+			else
+			{
+				Con_Printf("...GL_3DFX_texture_compression_FXT1 not found\n");
+				gl_ext_info._GL_3DFX_texture_compression_FXT1=0;
+			}
 
 			if (IsExtensionSupported("GL_EXT_texture_env_add"))
 			{
@@ -2089,8 +2127,8 @@ int Init_OpenGL ( void )
 				Con_Printf ("...using WGL_EXT_swap_control\n");
 				gl_ext_info._WGL_swap_control=1;
 
-				wglSwapIntervalEXT= (WGLSETSWAPINTERVALPROC) awglGetProcAddress ("wglSwapIntervalEXT");
-				wglGetSwapIntervalEXT = (WGLGETSWAPINTERVALPROC) awglGetProcAddress("wglGetSwapIntervalEXT");
+				wglSwapIntervalEXT= (WGLSETSWAPINTERVALPROC) GL_GetProcAddress ("wglSwapIntervalEXT");
+				wglGetSwapIntervalEXT = (WGLGETSWAPINTERVALPROC) GL_GetProcAddress("wglGetSwapIntervalEXT");
 
 
 				if (!wglSwapIntervalEXT || !wglGetSwapIntervalEXT)
@@ -2113,10 +2151,10 @@ int Init_OpenGL ( void )
 				glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB,&glconfig.maxActiveTextures);
 
 				// Load :
-				glMultiTexCoord2fARB = (PFNGLMULTITEXCOORD2FARBPROC)awglGetProcAddress("glMultiTexCoord2fARB");
-				glMultiTexCoord2fvARB =(PFNGLMULTITEXCOORD2FVARBPROC)awglGetProcAddress("glMultiTexCoord2fvARB");  
-				glActiveTextureARB=(PFNGLACTIVETEXTUREARBPROC) awglGetProcAddress("glActiveTextureARB");
-				glClientActiveTextureARB =(PFNGLCLIENTACTIVETEXTUREARBPROC) awglGetProcAddress("glClientActiveTextureARB");
+				glMultiTexCoord2fARB = (PFNGLMULTITEXCOORD2FARBPROC)GL_GetProcAddress("glMultiTexCoord2fARB");
+				glMultiTexCoord2fvARB =(PFNGLMULTITEXCOORD2FVARBPROC)GL_GetProcAddress("glMultiTexCoord2fvARB");  
+				glActiveTextureARB=(PFNGLACTIVETEXTUREARBPROC) GL_GetProcAddress("glActiveTextureARB");
+				glClientActiveTextureARB =(PFNGLCLIENTACTIVETEXTUREARBPROC) GL_GetProcAddress("glClientActiveTextureARB");
 
 				if (!glMultiTexCoord2fARB || !glMultiTexCoord2fARB || !glMultiTexCoord2fvARB || !glActiveTextureARB || !glClientActiveTextureARB)
 					return 0;
@@ -2143,8 +2181,8 @@ int Init_OpenGL ( void )
 				
 				// Load:
 
-				glLockArraysEXT=(PFNGLLOCKARRAYSEXTPROC) awglGetProcAddress("glLockArraysEXT");
-				glUnlockArraysEXT=(PFNGLUNLOCKARRAYSEXTPROC) awglGetProcAddress("glUnlockArraysEXT");
+				glLockArraysEXT=(PFNGLLOCKARRAYSEXTPROC) GL_GetProcAddress("glLockArraysEXT");
+				glUnlockArraysEXT=(PFNGLUNLOCKARRAYSEXTPROC) GL_GetProcAddress("glUnlockArraysEXT");
 		
 				if(!glLockArraysEXT || !glUnlockArraysEXT)
 					return 0;

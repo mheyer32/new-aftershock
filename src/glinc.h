@@ -1732,6 +1732,32 @@ extern WGLGETEXTENSIONSSTRING_ARB_PROC wglGetExtensionsStringARB;
 #define GL_POLYGON_OFFSET_BIAS          0x8039
 
 
+// GL_S3_s3tc
+
+	// Could not find any documentation 
+#ifndef GL_S3_s3tc
+# define GL_S3_s3tc							1
+# define GL_RGB_S3TC						0x83A0
+# define GL_RGB4_S3TC						0x83A1
+# define GL_RGBA_S3TC						0x83A2
+# define GL_RGBA4_S3TC						0x83A3
+#endif
+
+
+
+
+// GL_3DFX_texture_compression_FXT1
+
+#define GL_3DFX_texture_compression_FXT1 1
+
+#define GL_COMPRESSED_RGB_FXT1_3DFX			  0x86B0
+#define GL_COMPRESSED_RGBA_FXT1_3DFX		  0x86B1
+
+
+
+
+
+
 
 
 

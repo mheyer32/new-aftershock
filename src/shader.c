@@ -739,10 +739,10 @@ int Shader_Init (void )
 		dirlen = strlen(dirptr);
 		Com_sprintf( filename, sizeof(filename), "scripts/%s", dirptr );
 
-		Con_Printf( "...loading '%s'\n", filename );
-
 		size = FS_OpenFile( filename, &file, FS_READ );
 		if( !file || !size ) continue;
+
+		Con_Printf( "...loading '%s'\n", filename );
 
 		FS_Read( pscripts, size, file );
 		FS_FCloseFile( file );
