@@ -586,6 +586,15 @@ int R_Load_Texture (const char *name, int flags)
 			memset (data, 255, img_width * img_height * 3);
 
 			glGenTextures (1, &r_textures_id[TEX_PREGEN_WHITE]);
+
+			if (!Tex_UploadTexture (&data, img_width, img_height, format, flags))
+			{
+				Con_Printf ("WARNING: Could not upload texture %s\n", name);
+				free (data);
+				return -1;
+			}
+
+			return r_textures_id[TEX_PREGEN_WHITE];
 		}
 		else {
 			return r_textures_id[TEX_PREGEN_WHITE];
@@ -606,6 +615,15 @@ int R_Load_Texture (const char *name, int flags)
 
 			memset (data, c, img_width * img_height * 3);
 			glGenTextures (1, &r_textures_id[TEX_PREGEN_IDENTITYLIGHT]);
+
+			if (!Tex_UploadTexture (&data, img_width, img_height, format, flags))
+			{
+				Con_Printf ("WARNING: Could not upload texture %s\n", name);
+				free (data);
+				return -1;
+			}
+
+			return r_textures_id[TEX_PREGEN_IDENTITYLIGHT];
 		}
 		else {
 			return r_textures_id[TEX_PREGEN_IDENTITYLIGHT];
