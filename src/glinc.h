@@ -58,6 +58,9 @@ typedef double GLclampd;
 typedef void GLvoid;
 
 
+#define sizei int 
+
+
 /* Version */
 #define GL_VERSION_1_1                    1
 
@@ -1732,18 +1735,67 @@ extern WGLGETEXTENSIONSSTRING_ARB_PROC wglGetExtensionsStringARB;
 #define GL_POLYGON_OFFSET_BIAS          0x8039
 
 
+// ARB_texture_compression 
+
+#define GL_ARB_texture_compression 1
+
+
+
+#define	GL_COMPRESSED_ALPHA_ARB				0x84E9
+#define	GL_COMPRESSED_LUMINANCE_ARB			0x84EA
+#define	GL_COMPRESSED_LUMINANCE_ALPHA_ARB	0x84EB
+#define	GL_COMPRESSED_INTENSITY_ARB			0x84EC
+#define	GL_COMPRESSED_RGB_ARB				0x84ED
+#define	GL_COMPRESSED_RGBA_ARB				0x84EE
+
+#define GL_TEXTURE_COMPRESSION_HINT_ARB		0x84EF
+
+#define GL_TEXTURE_COMPRESSED_IMAGE_SIZE_ARB 0x86A0
+#define	GL_TEXTURE_COMPRESSED_ARB			0x86A1
+
+#define	GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB	0x86A2
+#define	GL_COMPRESSED_TEXTURE_FORMATS_ARB		0x86A3
+
+
+extern void (* glCompressedTexImage3DARB)(enum target, int level,
+                                 int internalformat, int width,
+                                 sizei height, sizei depth,
+                                 int border, sizei imageSize,
+                                 const void *data);
+extern void (*glCompressedTexImage2DARB)(enum target, int level,
+                                 int internalformat, sizei width,
+                                 sizei height, int border, 
+                                 sizei imageSize, const void *data);
+extern void (*glCompressedTexImage1DARB)(enum target, int level,
+                                 int internalformat, sizei width,
+                                 int border, sizei imageSize,
+                                 const void *data);
+extern void (*glCompressedTexSubImage3DARB)(enum target, int level, 
+                                    int xoffset, int yoffset,
+                                    int zoffset, sizei width,
+                                    sizei height, sizei depth,
+                                    enum format, sizei imageSize,
+                                    const void *data);
+extern void (*glCompressedTexSubImage2DARB)(enum target, int level, 
+                                    int xoffset, int yoffset,
+                                    sizei width, sizei height,
+                                    enum format, sizei imageSize,
+                                    const void *data);
+extern void (*glCompressedTexSubImage1DARB)(enum target, int level, 
+                                    int xoffset, sizei width,
+                                    enum format, sizei imageSize,
+                                    const void *data);
+extern void (*glGetCompressedTexImageARB)(enum target, int lod,
+                                  const void *img);
+
+
 // GL_S3_s3tc
 
-	// Could not find any documentation 
-#ifndef GL_S3_s3tc
-# define GL_S3_s3tc							1
-# define GL_RGB_S3TC						0x83A0
-# define GL_RGB4_S3TC						0x83A1
-# define GL_RGBA_S3TC						0x83A2
-# define GL_RGBA4_S3TC						0x83A3
-#endif
 
-
+#define  GL_COMPRESSED_RGB_S3TC_DXT1_EXT                   0x83F0
+#define  GL_COMPRESSED_RGBA_S3TC_DXT1_EXT                  0x83F1
+#define  GL_COMPRESSED_RGBA_S3TC_DXT3_EXT                  0x83F2
+#define  GL_COMPRESSED_RGBA_S3TC_DXT5_EXT                  0x83F3
 
 
 // GL_3DFX_texture_compression_FXT1

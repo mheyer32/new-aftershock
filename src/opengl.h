@@ -100,6 +100,7 @@ typedef struct {
 	int _WGL_ARB_extensions_string;
 	int _WGL_3DFX_gamma;
 	int _WGL_swap_control;
+	int _GL_ARB_texture_compression;
 	int _GL_3DFX_texture_compression_FXT1;
 	int _GL_S3_s3tc ;
 }ext_info_t;

@@ -57,10 +57,7 @@ int round_2 (int x )
 	int v=2;
 
 	while (x>v)
-	{
 		v*=2;
-
-	}
 	
 	return v;
 }
@@ -742,14 +739,42 @@ int Tex_UploadTexture (byte **data ,int width ,int height , int format ,int flag
 
 
 	// Set the internal_format :
-
-	if (format == GL_RGB )
-		internal_format =(r_texturebits->integer <= 16) ? GL_RGB5 : GL_RGB8;
-	else if (format == GL_RGBA)
-		internal_format = (r_texturebits->integer <= 16 ) ? GL_RGBA4 : GL_RGBA8;
-	else 
-		return 0;
-
+	if (r_ext_compress_textures->integer)
+	{
+		if (gl_ext_info._GL_S3_s3tc)
+		{
+			if (format==GL_RGB)
+				internal_format=GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+			else 
+				internal_format=(r_texturebits->integer <=16) 
+				? GL_COMPRESSED_RGBA_S3TC_DXT3_EXT : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+		}
+		else if(gl_ext_info._GL_3DFX_texture_compression_FXT1)
+		{
+			if (format==GL_RGB)
+				internal_format=GL_COMPRESSED_RGB_FXT1_3DFX;
+			else 
+				internal_format=GL_COMPRESSED_RGBA_FXT1_3DFX;
+		}
+		else
+		{
+			if (format == GL_RGB )
+				internal_format =(r_texturebits->integer <= 16) ? GL_RGB5 : GL_RGB8;
+			else if (format == GL_RGBA)
+				internal_format = (r_texturebits->integer <= 16 ) ? GL_RGBA4 : GL_RGBA8;
+			else 
+				return 0;
+		}
+	}
+	else
+	{
+		if (format == GL_RGB )
+			internal_format =(r_texturebits->integer <= 16) ? GL_RGB5 : GL_RGB8;
+		else if (format == GL_RGBA)
+			internal_format = (r_texturebits->integer <= 16 ) ? GL_RGBA4 : GL_RGBA8;
+		else 
+			return 0;
+	}
 
 
 
@@ -774,9 +799,7 @@ int Tex_UploadTexture (byte **data ,int width ,int height , int format ,int flag
 	}
 
 
-	// Makes Problems !!!
-
-	/*if (!(flags & SURF_NOMIPMAP) ) {
+	if (!(flags & SHADER_NOMIPMAPS) ) {
 		if ( !A_stricmp(r_textureMode->string, "GL_NEAREST"))
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 		else if ( !A_stricmp(r_textureMode->string, "GL_LINEAR"))
@@ -791,18 +814,10 @@ int Tex_UploadTexture (byte **data ,int width ,int height , int format ,int flag
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 		else
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-
-		//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, textureMode);
-		//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, textureMode);
 	} else {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}	
-	*/
-	// BUGFIX !
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
+	
 	if (flags & SHADER_CLAMP)
     {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -817,7 +832,7 @@ int Tex_UploadTexture (byte **data ,int width ,int height , int format ,int flag
 	// Final Step :
 
 
-	if (flags & SHADER_NOMIPMAPS)
+	if (flags & SHADER_NOMIPMAPS )
     {
 		glTexImage2D(GL_TEXTURE_2D, 0, internal_format
 			, w, h, 0, format,
@@ -851,7 +866,6 @@ int R_Load_Texture ( const char * name , int flags )
 	strcpy (fname,name );
 
 
-
 	// Check if already loaded 
 	for (i=0;i<r_num_textures;i++)
 	{
@@ -859,9 +873,8 @@ int R_Load_Texture ( const char * name , int flags )
 			return textures[i].id;
 	}
 
-
-
-
+	if (r_num_textures==MAX_TEX)
+		Error ("Out of Textures ! ");
 
 	if (!stricmp(fname,"*white") || !stricmp (fname,"white"))
 	{

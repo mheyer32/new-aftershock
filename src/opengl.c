@@ -411,6 +411,41 @@ GETDEVICEGAMMARAMP3DFXPROC  wglGetDeviceGammaRamp3DFX=NULL;
 
 WGLGETEXTENSIONSSTRING_ARB_PROC wglGetExtensionsStringARB =NULL;
 
+// ARB_texture_compression 
+void (* glCompressedTexImage3DARB)(enum target, int level,
+                                 int internalformat, sizei width,
+                                 sizei height, sizei depth,
+                                 int border, sizei imageSize,
+                                 const void *data)=0;
+void (*glCompressedTexImage2DARB)(enum target, int level,
+                                 int internalformat, sizei width,
+                                 sizei height, int border, 
+                                 sizei imageSize, const void *data)=0;
+void (*glCompressedTexImage1DARB)(enum target, int level,
+                                 int internalformat, sizei width,
+                                 int border, sizei imageSize,
+                                 const void *data)=0;
+void (*glCompressedTexSubImage3DARB)(enum target, int level, 
+                                    int xoffset, int yoffset,
+                                    int zoffset, sizei width,
+                                    sizei height, sizei depth,
+                                    enum format, sizei imageSize,
+                                    const void *data)=0;
+void (*glCompressedTexSubImage2DARB)(enum target, int level, 
+                                    int xoffset, int yoffset,
+                                    sizei width, sizei height,
+                                    enum format, sizei imageSize,
+                                    const void *data)=0;
+void (*glCompressedTexSubImage1DARB)(enum target, int level, 
+                                    int xoffset, sizei width,
+                                    enum format, sizei imageSize,
+                                    const void *data)=0;
+void (*glGetCompressedTexImageARB)(enum target, int lod,
+                                  const void *img)=0;
+
+
+
+
 
 int GL_LoadDll ( char * name )
 {
@@ -1446,6 +1481,15 @@ void * GL_GetProcAddress (const char * str )
 	
 }
 
+// TODO !!!
+void GL_Set_Gamma (byte red[256],byte green[256],byte blue[256])
+{
+
+
+
+
+
+}
 
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -1821,6 +1865,7 @@ static int GL_ChoosePFD( int colorbits, int depthbits, int stencilbits )
 			}
 	}
 
+	bestpfd = & pfdlist[best];
 
 	if (!(bestpfd->dwFlags & PFD_GENERIC_FORMAT) )
 	{
@@ -1958,6 +2003,9 @@ int Init_OpenGL ( void )
 	char * dllname ;
 
 
+	if (opengl_initialized)
+		return 1;
+
 	Con_Printf("Initializing OpenGl subsystem\n");
 
 
@@ -2081,13 +2129,36 @@ int Init_OpenGL ( void )
 		{
 			Con_Printf("Initializing Open Gl extensions\n");
 
+			// this is internal
+			if (IsExtensionSupported("GL_ARB_texture_compression"))
+			{
+				gl_ext_info._GL_ARB_texture_compression=1;
 
-		// TODO !
-		// GL_S3_s3tc 
+				glCompressedTexImage3DARB=GL_GetProcAddress("glCompressedTexImage3DARB");
+                glCompressedTexImage2DARB=GL_GetProcAddress("glCompressedTexImage2DARB");
+				glCompressedTexImage1DARB=GL_GetProcAddress("glCompressedTexImage1DARB");
+				glCompressedTexSubImage3DARB=GL_GetProcAddress("glCompressedTexSubImage3DARB");
+				glCompressedTexSubImage2DARB=GL_GetProcAddress("glCompressedTexSubImage2DARB");
+				glCompressedTexSubImage1DARB=GL_GetProcAddress("glCompressedTexSubImage1DARB");
+				glGetCompressedTexImageARB=GL_GetProcAddress("glGetCompressedTexImageARB");
+                                 
+			}
+			else
+			{
+				gl_ext_info._GL_ARB_texture_compression=0;
+				
+				glCompressedTexImage3DARB=0;
+                glCompressedTexImage2DARB=0;
+				glCompressedTexImage1DARB=0;
+				glCompressedTexSubImage3DARB=0;
+				glCompressedTexSubImage2DARB=0;
+				glCompressedTexSubImage1DARB=0;
+				glGetCompressedTexImageARB=0;
+			}
 
 			if (IsExtensionSupported("GL_S3_s3tc"))
 			{
-				Con_Printf("...ignoring GL_S3_s3tc\n");
+				Con_Printf("...using GL_S3_s3tc\n");
 				gl_ext_info._GL_S3_s3tc=1;
 			}
 			else
@@ -2099,7 +2170,7 @@ int Init_OpenGL ( void )
 			if (IsExtensionSupported("GL_3DFX_texture_compression_FXT1"))
 			{
 
-				Con_Printf("...ignoring GL_3DFX_texture_compression_FXT1\n");
+				Con_Printf("...using GL_3DFX_texture_compression_FXT1\n");
 				gl_ext_info._GL_3DFX_texture_compression_FXT1=1;
 
 			}
@@ -2259,6 +2330,47 @@ int Init_OpenGL ( void )
 	Con_Printf("texturemode: %s\n",r_textureMode->string);
 	Con_Printf("picmip:%i\n",r_picmip->integer);
 	Con_Printf("texture bits:%i\n",r_texturebits->integer);
+
+
+	Con_Printf("multitexture: ");
+	if (!r_ext_multitexture->integer)
+	{
+		Con_Printf("disabled\n"
+	}
+	else
+	{
+		Con_Printf("enabled\n");
+	}
+
+	Con_Printf ("compiled vertex arrays: ");
+	if (r_ext_compiled_vertex_array->integer)
+	{
+		Con_Printf("enabled\n");
+	}
+	else
+	{
+		Con_Printf("disabled\n");
+	}
+
+	Con_Printf("texenv add: ");
+	if (r_ext_texture_env_add->integer)
+	{
+		Con_Printf("enabled\n");
+	}
+	else
+	{
+		Con_Printf("disabled\n");
+	}
+
+	Con_Printf("compressed textures: ");
+	if (r_ext_compress_textures->integer)
+	{
+		Con_Printf("enabled\n");
+	}
+	else
+	{
+		Con_Printf("disabled\n");
+	}
 
 
 

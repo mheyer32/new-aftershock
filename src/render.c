@@ -330,7 +330,7 @@ void R_Init(void)
 
     R_backend_init();
 
-	Con_Printf (" ----- R_INIT : finished ---- \n");
+	Con_Printf (" ... finsished R_Init ... \n");
 
 }
 
@@ -987,7 +987,7 @@ void R_RenderScene( const refdef_t *fd )
 // WORKS !!!
 	glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-	gluPerspective(fd->fov_y,fd->fov_x/fd->fov_y/*((float)winY/(float)winX)*/,0.1,3000.0);
+	gluPerspective(fd->fov_y,fd->fov_x/fd->fov_y,r_znear->value,3000.0);
 
 //Setup the Matrix :
 // Finally WORKS !!!

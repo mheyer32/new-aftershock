@@ -26,7 +26,7 @@
 #include "console.h"
 #include "render.h"
 
-#define MAXSHADERS 1024
+#define MAXSHADERS 512
 
 
 

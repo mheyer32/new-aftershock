@@ -272,13 +272,12 @@ static void Render1in1(shaderpass_t *pass,uint_t lmtex)
 // Added by Martin Kraus 
 // this function flushes the rendering Pipeline using Multitexturing and Compiled Vertex Arrays 
 static void flushmultitex(int shadernum,int lmtex)
-
 {
 
+	shader_t *s;
+    if (!arrays.numverts || shadernum<0) return;
 
-	shader_t *s = &r_shaders[shadernum];
-    if (arrays.numverts == 0) return;
-
+	s = &r_shaders[shadernum];
 
 
 	if (s->flags & SHADER_NOCULL)
@@ -286,7 +285,14 @@ static void flushmultitex(int shadernum,int lmtex)
 	else 
 		GL_Enable (GL_CULL_FACE);
 
-		//glPolygonOffset
+	if (s->flags & SHADER_POLYGONOFFSET)
+	{
+		GL_Enable (GL_POLYGON_OFFSET);
+	}
+	else
+	{
+		GL_Disable(GL_POLYGON_OFFSET);
+	}
 
 	R_Make_Vertices (s );
     glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
@@ -1232,7 +1238,7 @@ render_flush(int shadernum, int lmtex)
     int p;
     shader_t *shader = &r_shaders[shadernum];
     
-    if (arrays.numverts == 0) return;
+    if (arrays.numverts == 0 || shadernum<0) return;
 
     /* Face culling */
     if (shader->flags & SHADER_NOCULL)
