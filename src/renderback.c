@@ -248,6 +248,8 @@ colour_t * R_Make_Rgba (shaderpass_t * pass )
 			col[i][3] = alpha;
 		}
 		// TODO
+		break;	// Vic
+
 	case ALPHA_GEN_DEFAULT :
 	case ALPHA_GEN_VERTEX :
 	case ALPHA_GEN_ENTITY:
@@ -982,6 +984,8 @@ static byte * Render_Backend_Make_Colors ( shaderpass_t * pass )
 			col[i][3] = alpha;
 		}
 		// TODO
+		break;		// Vic
+
 	case ALPHA_GEN_DEFAULT :
 	case ALPHA_GEN_VERTEX :
 	case ALPHA_GEN_ENTITY:

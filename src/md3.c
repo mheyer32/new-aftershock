@@ -34,11 +34,11 @@ md3model2_t *r_md3models=NULL;;
 
 
 
-int r_md3Modelcount=0;
+int r_md3Modelcount=1;
 
 
 skin_t md3skins [ MAX_MD3_SKINS];
-int md3skin_count =0;
+int md3skin_count = 1;
 
 static int  R_LoadSkin(skin_t *skin, const char *name ) ;
 
@@ -48,7 +48,8 @@ int MD3_Init (void )
 
 	r_md3models=malloc (MAX_MD3MODELS* sizeof (md3model2_t ));
 	memset (r_md3models,0,MAX_MD3MODELS *sizeof (md3model2_t ));
-	r_md3Modelcount=0;
+	r_md3Modelcount=1;
+	md3skin_count = 1;
 	return 1;
 }
 
@@ -68,9 +69,9 @@ int MD3_Shutdown (void )
 
 
 
-	r_md3Modelcount=0;
+	r_md3Modelcount=1;
 
-	md3skin_count =0;
+	md3skin_count =1;
 
 
 	return 1;
@@ -88,7 +89,7 @@ int MD3_free (int num )
 	int i;
 
 
-	if ( num<0 || num >= MAX_MD3MODELS)
+	if ( num< 1 || num >= MAX_MD3MODELS)
 	{
 		return 0;
 
@@ -489,70 +490,35 @@ int  LoadMD3(md3model2_t * md3, const char *filename)
 
 int R_RegisterModel( const char *name ) 
 {
-
 	int i;
 
-
- // Check if already existing 
-	for (i=0;i<r_md3Modelcount;i++)
+	// Check if already existing 
+	for (i = 1; i < r_md3Modelcount; i++)
 	{
-
-		if (!strcmp(r_md3models[i].name,name))
-			return i+1;
-
-
-
+		if (!strcmp(r_md3models[i].name, name))
+			return i;
 	}
-
-	
-
 
 	if (LoadMD3(&r_md3models[r_md3Modelcount], name))
-	{
-		r_md3Modelcount++;
-	}
-	else 
-	{
-		return 0;
+		return r_md3Modelcount++;
 
-	}
-	return r_md3Modelcount;
-
-	
-
-
+	return 0;
 }
 
-
-
-int  R_RegisterSkin( const char *name ) 
+int R_RegisterSkin( const char *name ) 
 {
-	int res ,i;
+	int i;
 
-
-	for (i=0;i<md3skin_count;i++)
+	for (i = 1; i < md3skin_count; i++)
 	{
-		if (!strcmp(name,md3skins[i].name))
-			return i+1;
-		
+		if (!strcmp(name, md3skins[i].name))
+			return i;
 	}
 
+	if (R_LoadSkin (&md3skins[md3skin_count], name ))
+		return md3skin_count++;
 
-
-	res =R_LoadSkin (&md3skins[md3skin_count], name );
-	
-
-	if (res )
-	{
-		md3skin_count++;
-
-		return md3skin_count ;
-
-
-	}
-	else 
-		return 0;
-
+	return 0;
 }
 
 
@@ -624,15 +590,12 @@ static int  R_LoadSkin(skin_t *skin, const char *name )
 			// ????
 
 		}
-	}; 
-
+	}
 
 	free (buf );
 
 
 	skin->num_mesh_skins=meshcount;
-
-	FS_FCloseFile(file); 
 
 	return 1;
 

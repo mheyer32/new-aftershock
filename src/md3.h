@@ -26,7 +26,7 @@
 #define MD3_ID_HEADER	 (*(int*)"IDP3")
 #define MD3_ALIAS_VERSION	15
 #define MAX_MD3_MESHES      16
-#define MAX_MD3_SKINS       128
+#define MAX_MD3_SKINS       128+1
 
 
 
@@ -168,7 +168,7 @@ int MD3_Shutdown (void );
 int MD3_Init(void );
 int LoadMD3(md3model2_t * md3, const char *filename);
 
-#define MAX_MD3MODELS 256
+#define MAX_MD3MODELS 256+1
 
 extern md3model2_t *r_md3models;
 extern skin_t md3skins [MAX_MD3_SKINS];
