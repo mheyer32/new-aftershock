@@ -1,0 +1,10 @@
+#include "a_shared.h"
+
+
+void Matrix4_Identity(mat4_t mat );
+void Matrix4_Multiply(mat4_t a, mat4_t b, mat4_t product);
+void Matrix_Multiply_Vec4 (mat4_t a, vec4_t b, vec4_t product);
+void Matrix_Multiply_Vec2 (mat4_t a, vec2_t b, vec2_t product);
+
+void Matrix3_Identity (vec3_t mat [3]);
+void Matrix3_Multiply (vec3_t in1[3], vec3_t in2[3], vec3_t out[3]);

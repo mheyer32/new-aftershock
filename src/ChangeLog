@@ -1,0 +1,16 @@
+1999-12-30  Stephen Taylor <lazyX@home.com>
+
+	* md3.c: Corrected MD3 header struct.
+
+	* render.c: Enable depth mask before glClear as per spec.
+
+1999-12-30  Tim Rowley <tor@cs.brown.edu>
+
+	* util.h, bsp.c, md3.c, shader.c, tex.c: Added big-endian support
+	(BYTESWAP macros).
+
+1999-12-24  Stephen Taylor  <lazyX@home.com>
+
+	* ChangeLog: added
+	
+
