@@ -95,6 +95,7 @@ typedef struct {
 	int _TexEnv_Add;
 	int _TexEnv_Combine;
 	int _TexEnv_Combine4;
+	int _GL_NV_register_combiners;
 	int _ARB_Multitexture;
 	int _CompiledVertex_Arrays;
 	int _WGL_ARB_extensions_string;

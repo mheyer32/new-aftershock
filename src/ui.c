@@ -36,7 +36,7 @@ char  UI_name[]="uix86.dll";
 
 EntryFunc *UI_entry;
 MainFunc *UI_main;
-extern HINSTANCE UI_inst;
+extern void * UI_inst;
 
 
 static int uiLoaded=0;

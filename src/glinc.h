@@ -1694,35 +1694,35 @@ extern WGLGETEXTENSIONSSTRING_ARB_PROC wglGetExtensionsStringARB;
 #define	GL_COMPRESSED_TEXTURE_FORMATS_ARB		0x86A3
 
 
-extern void (* glCompressedTexImage3DARB)(enum target, int level,
+extern void (APIENTRY * glCompressedTexImage3DARB)(enum target, int level,
                                  int internalformat, int width,
                                  sizei height, sizei depth,
                                  int border, sizei imageSize,
                                  const void *data);
-extern void (*glCompressedTexImage2DARB)(enum target, int level,
+extern void (APIENTRY *glCompressedTexImage2DARB)(enum target, int level,
                                  int internalformat, sizei width,
                                  sizei height, int border, 
                                  sizei imageSize, const void *data);
-extern void (*glCompressedTexImage1DARB)(enum target, int level,
+extern void (APIENTRY *glCompressedTexImage1DARB)(enum target, int level,
                                  int internalformat, sizei width,
                                  int border, sizei imageSize,
                                  const void *data);
-extern void (*glCompressedTexSubImage3DARB)(enum target, int level, 
+extern void (APIENTRY *glCompressedTexSubImage3DARB)(enum target, int level, 
                                     int xoffset, int yoffset,
                                     int zoffset, sizei width,
                                     sizei height, sizei depth,
                                     enum format, sizei imageSize,
                                     const void *data);
-extern void (*glCompressedTexSubImage2DARB)(enum target, int level, 
+extern void (APIENTRY *glCompressedTexSubImage2DARB)(enum target, int level, 
                                     int xoffset, int yoffset,
                                     sizei width, sizei height,
                                     enum format, sizei imageSize,
                                     const void *data);
-extern void (*glCompressedTexSubImage1DARB)(enum target, int level, 
+extern void (APIENTRY *glCompressedTexSubImage1DARB)(enum target, int level, 
                                     int xoffset, sizei width,
                                     enum format, sizei imageSize,
                                     const void *data);
-extern void (*glGetCompressedTexImageARB)(enum target, int lod,
+extern void (APIENTRY *glGetCompressedTexImageARB)(enum target, int lod,
                                   const void *img);
 
 
@@ -1743,10 +1743,138 @@ extern void (*glGetCompressedTexImageARB)(enum target, int lod,
 #define GL_COMPRESSED_RGBA_FXT1_3DFX		  0x86B1
 
 
+// NV_register_combiners
+// I think one time  we will use this 
+// this is very powerful
 
+#define GL_NV_register_combiners 1
 
+#define GL_COMBINER0_NV                       0x8550
+#define GL_COMBINER1_NV                       0x8551
+#define GL_COMBINER2_NV                       0x8552
+#define GL_COMBINER3_NV                       0x8553
+#define GL_COMBINER4_NV                       0x8554
+#define GL_COMBINER5_NV                       0x8555
+#define GL_COMBINER6_NV                       0x8556
+#define GL_COMBINER7_NV                       0x8557
 
+#define GL_VARIABLE_A_NV                      0x8523
+#define GL_VARIABLE_B_NV                      0x8524
+#define GL_VARIABLE_C_NV                      0x8525
+#define GL_VARIABLE_D_NV                      0x8526
+#define GL_VARIABLE_E_NV                      0x8527
+#define GL_VARIABLE_F_NV                      0x8528
+#define GL_VARIABLE_G_NV                      0x8529
 
+#define GL_CONSTANT_COLOR0_NV                 0x852a
+#define GL_CONSTANT_COLOR1_NV                 0x852b
+#define GL_PRIMARY_COLOR_NV                   0x852c
+#define GL_SECONDARY_COLOR_NV                 0x852d
+#define GL_SPARE0_NV                          0x852e
+#define GL_SPARE1_NV                          0x852f
+
+#define GL_UNSIGNED_IDENTITY_NV               0x8536
+#define GL_UNSIGNED_INVERT_NV                 0x8537
+#define GL_EXPAND_NORMAL_NV                   0x8538
+#define GL_EXPAND_NEGATE_NV                   0x8539
+#define GL_HALF_BIAS_NORMAL_NV                0x853a
+#define GL_HALF_BIAS_NEGATE_NV                0x853b
+#define GL_SIGNED_IDENTITY_NV                 0x853c
+#define GL_SIGNED_NEGATE_NV                   0x853d
+
+#define GL_E_TIMES_F_NV                       0x8531
+#define GL_SPARE0_PLUS_SECONDARY_COLOR_NV     0x8532
+
+#define GL_SCALE_BY_TWO_NV                    0x853e
+#define GL_SCALE_BY_FOUR_NV                   0x853f
+#define GL_SCALE_BY_ONE_HALF_NV               0x8540
+
+#define GL_BIAS_BY_NEGATIVE_ONE_HALF_NV       0x8541
+
+#define GL_DISCARD_NV                         0x8530
+
+#define GL_COMBINER_INPUT_NV                  0x8542
+#define GL_COMBINER_MAPPING_NV                0x8543
+#define GL_COMBINER_COMPONENT_USAGE_NV        0x8544
+
+#define GL_COMBINER_AB_DOT_PRODUCT_NV         0x8545
+#define GL_COMBINER_CD_DOT_PRODUCT_NV         0x8546
+#define GL_COMBINER_MUX_SUM_NV                0x8547
+#define GL_COMBINER_SCALE_NV                  0x8548
+#define GL_COMBINER_BIAS_NV                   0x8549
+#define GL_COMBINER_AB_OUTPUT_NV              0x854a
+#define GL_COMBINER_CD_OUTPUT_NV              0x854b
+#define GL_COMBINER_SUM_OUTPUT_NV             0x854c
+
+#define GL_NUM_GENERAL_COMBINERS_NV           0x854e
+#define GL_COLOR_SUM_CLAMP_NV                 0x854f
+
+#define GL_MAX_GENERAL_COMBINERS_NV           0x854d
+
+void (APIENTRY *glCombinerParameterfvNV)(GLenum pname,
+                          const GLfloat *params);
+
+void (APIENTRY *glCombinerParameterivNV)(GLenum pname,
+                          const GLint *params);
+
+void (APIENTRY *glCombinerParameterfNV)(GLenum pname,
+                         GLfloat param);
+
+void (APIENTRY *glCombinerParameteriNV)(GLenum pname,
+                         GLint param);
+
+extern void (APIENTRY *glCombinerInputNV)(GLenum stage,
+                    GLenum portion,
+                    GLenum variable,
+                    GLenum input,
+                    GLenum mapping,
+                    GLenum componentUsage);
+
+extern void (APIENTRY *glCombinerOutputNV)(GLenum stage,
+                     GLenum portion, 
+                     GLenum abOutput,
+                     GLenum cdOutput,
+                     GLenum sumOutput,
+                     GLenum scale,
+                     GLenum bias,
+                     GLboolean abDotProduct,
+                     GLboolean cdDotProduct,
+                     GLboolean muxSum);
+
+extern void (APIENTRY *glFinalCombinerInputNV)(GLenum variable,
+                         GLenum input,
+                         GLenum mapping,
+                         GLenum componentUsage);
+
+extern void (APIENTRY *glGetCombinerInputParameterfvNV)(GLenum stage,
+                                  GLenum portion,
+                                  GLenum variable,
+                                  GLenum pname,
+                                  GLfloat *params);
+
+extern void (APIENTRY *glGetCombinerInputParameterivNV)(GLenum stage,
+                                  GLenum portion,
+                                  GLenum variable,
+                                  GLenum pname,
+                                  GLint *params);
+
+extern void (APIENTRY *glGetCombinerOutputParameterfvNV)(GLenum stage,
+                                   GLenum portion, 
+                                   GLenum pname,
+                                   GLfloat *params);
+
+extern void (APIENTRY *glGetCombinerOutputParameterivNV)(GLenum stage,
+                                   GLenum portion, 
+                                   GLenum pname,
+                                   GLint *params);
+
+extern void (APIENTRY *glGetFinalCombinerInputParameterfvNV)(GLenum variable,
+                                       GLenum pname,
+                                       GLfloat *params);
+
+extern void (APIENTRY *glGetFinalCombinerInputParameterivNV)(GLenum variable,
+                                       GLenum pname,
+                                       GLfloat *params);
 
 
 

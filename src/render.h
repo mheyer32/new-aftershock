@@ -250,7 +250,7 @@ typedef struct
 }reference_t;
 
 
-
+/*
 #include <windows.h>
 
 
@@ -258,7 +258,7 @@ extern HINSTANCE hInst;
 extern HDC dc;
 extern HWND hWnd;
 extern HGLRC hRC;
-
+*/
 
 
 void R_StartFrame (void );

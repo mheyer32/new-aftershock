@@ -131,7 +131,7 @@ typedef int MainFunc( int command, int arg0, int arg1, int arg2, int arg3, int a
 
 extern EntryFunc *UI_entry;
 extern MainFunc *UI_main;
-extern HINSTANCE UI_inst;
+extern void* UI_inst;
 
 
 extern char  UI_name[];

@@ -48,6 +48,7 @@ int MD3_Init (void )
 
 	r_md3models=malloc (MAX_MD3MODELS* sizeof (md3model2_t ));
 	memset (r_md3models,0,MAX_MD3MODELS *sizeof (md3model2_t ));
+	r_md3Modelcount=0;
 	return 1;
 }
 
@@ -194,6 +195,9 @@ int  LoadMD3(md3model2_t * md3, const char *filename)
 		Con_Printf("Model name exceeds MAX_APATH\n");
 		return(0);
 	}
+
+	if (r_md3Modelcount== MAX_MD3MODELS)
+		Error (" MD 3 Overflow !");
 
 
 	size=FS_OpenFile(filename,&file,FS_READ);

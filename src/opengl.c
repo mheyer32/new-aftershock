@@ -32,10 +32,7 @@ static int opengl_initialized =0;
 static char WIN32_GL_DLL_NAME [] = "opengl32.dll";
 static char  _3DFX_GL_DLL_NAME [] = "3dfxvrgl.dll"; // FIXME !!!!
 
-
 HINSTANCE GL_dll=NULL;
-
-#define ISSE_FLAG	0x2000000
 
 
 
@@ -406,36 +403,105 @@ GETDEVICEGAMMARAMP3DFXPROC  wglGetDeviceGammaRamp3DFX=NULL;
 WGLGETEXTENSIONSSTRING_ARB_PROC wglGetExtensionsStringARB =NULL;
 
 // ARB_texture_compression 
-void (* glCompressedTexImage3DARB)(enum target, int level,
+void (APIENTRY * glCompressedTexImage3DARB)(enum target, int level,
                                  int internalformat, sizei width,
                                  sizei height, sizei depth,
                                  int border, sizei imageSize,
                                  const void *data)=0;
-void (*glCompressedTexImage2DARB)(enum target, int level,
+void (APIENTRY *glCompressedTexImage2DARB)(enum target, int level,
                                  int internalformat, sizei width,
                                  sizei height, int border, 
                                  sizei imageSize, const void *data)=0;
-void (*glCompressedTexImage1DARB)(enum target, int level,
+void (APIENTRY *glCompressedTexImage1DARB)(enum target, int level,
                                  int internalformat, sizei width,
                                  int border, sizei imageSize,
                                  const void *data)=0;
-void (*glCompressedTexSubImage3DARB)(enum target, int level, 
+void (APIENTRY *glCompressedTexSubImage3DARB)(enum target, int level, 
                                     int xoffset, int yoffset,
                                     int zoffset, sizei width,
                                     sizei height, sizei depth,
                                     enum format, sizei imageSize,
                                     const void *data)=0;
-void (*glCompressedTexSubImage2DARB)(enum target, int level, 
+void (APIENTRY *glCompressedTexSubImage2DARB)(enum target, int level, 
                                     int xoffset, int yoffset,
                                     sizei width, sizei height,
                                     enum format, sizei imageSize,
                                     const void *data)=0;
-void (*glCompressedTexSubImage1DARB)(enum target, int level, 
+void (APIENTRY *glCompressedTexSubImage1DARB)(enum target, int level, 
                                     int xoffset, sizei width,
                                     enum format, sizei imageSize,
                                     const void *data)=0;
-void (*glGetCompressedTexImageARB)(enum target, int lod,
+void (APIENTRY *glGetCompressedTexImageARB)(enum target, int lod,
                                   const void *img)=0;
+
+
+// NV_register_combiners
+
+void (APIENTRY *glCombinerParameterfvNV)(GLenum pname,
+                          const GLfloat *params);
+
+void (APIENTRY *glCombinerParameterivNV)(GLenum pname,
+                          const GLint *params);
+
+void (APIENTRY *glCombinerParameterfNV)(GLenum pname,
+                         GLfloat param);
+
+void (APIENTRY *glCombinerParameteriNV)(GLenum pname,
+                         GLint param);
+
+void (APIENTRY *glCombinerInputNV)(GLenum stage,
+                    GLenum portion,
+                    GLenum variable,
+                    GLenum input,
+                    GLenum mapping,
+                    GLenum componentUsage);
+
+void (APIENTRY *glCombinerOutputNV)(GLenum stage,
+                     GLenum portion, 
+                     GLenum abOutput,
+                     GLenum cdOutput,
+                     GLenum sumOutput,
+                     GLenum scale,
+                     GLenum bias,
+                     GLboolean abDotProduct,
+                     GLboolean cdDotProduct,
+                     GLboolean muxSum);
+
+void (APIENTRY *glFinalCombinerInputNV)(GLenum variable,
+                         GLenum input,
+                         GLenum mapping,
+                         GLenum componentUsage);
+
+void (APIENTRY *glGetCombinerInputParameterfvNV)(GLenum stage,
+                                  GLenum portion,
+                                  GLenum variable,
+                                  GLenum pname,
+                                  GLfloat *params)=0;
+
+void (APIENTRY *glGetCombinerInputParameterivNV)(GLenum stage,
+                                  GLenum portion,
+                                  GLenum variable,
+                                  GLenum pname,
+                                  GLint *params)=0;
+
+void (APIENTRY *glGetCombinerOutputParameterfvNV)(GLenum stage,
+                                   GLenum portion, 
+                                   GLenum pname,
+                                   GLfloat *params)=0;
+
+void (APIENTRY *glGetCombinerOutputParameterivNV)(GLenum stage,
+                                   GLenum portion, 
+                                   GLenum pname,
+                                   GLint *params)=0;
+
+void (APIENTRY *glGetFinalCombinerInputParameterfvNV)(GLenum variable,
+                                       GLenum pname,
+                                       GLfloat *params)=0;
+
+void (APIENTRY *glGetFinalCombinerInputParameterivNV)(GLenum variable,
+                                       GLenum pname,
+                                       GLfloat *params)=0;
+
 
 
 
@@ -2364,16 +2430,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
 
-
-
-
-
-
-
-#define MAX_PFDS 64
-
-
-
+#define MAX_PFDS 128
 static int GL_ChoosePFD( int colorbits, int depthbits, int stencilbits )
 {
 	PIXELFORMATDESCRIPTOR pfdlist[MAX_PFDS];
@@ -2472,85 +2529,9 @@ static int IsExtensionSupported(char *ext)
 }
 
 
-
-
-static int  LoadExtensions(void)
-{
-
-	
-	if (gl_ext_info._ARB_Multitexture)
-	{
-		glMultiTexCoord2fARB = (PFNGLMULTITEXCOORD2FARBPROC)awglGetProcAddress("glMultiTexCoord2fARB");
-		glMultiTexCoord2fvARB =(PFNGLMULTITEXCOORD2FVARBPROC)awglGetProcAddress("glMultiTexCoord2fvARB");  
-		glActiveTextureARB=(PFNGLACTIVETEXTUREARBPROC) awglGetProcAddress("glActiveTextureARB");
-		glClientActiveTextureARB =(PFNGLCLIENTACTIVETEXTUREARBPROC) awglGetProcAddress("glClientActiveTextureARB");
-
-		if (!glMultiTexCoord2fARB || !glMultiTexCoord2fARB || !glMultiTexCoord2fvARB || !glActiveTextureARB || !glClientActiveTextureARB)
-			return 0;
-
-	}
-	if (gl_ext_info._CompiledVertex_Arrays)
-	{
-	 glLockArraysEXT=(PFNGLLOCKARRAYSEXTPROC) awglGetProcAddress("glLockArraysEXT");
-	 glUnlockArraysEXT=(PFNGLUNLOCKARRAYSEXTPROC) awglGetProcAddress("glUnlockArraysEXT");
-		
-		if(!glLockArraysEXT || !glUnlockArraysEXT)
-			return 0;
-
-	}
-	if (gl_ext_info._TexEnv_Add)
-	{
-		// nothing to do 
-
-
-	}
-	if (gl_ext_info._TexEnv_Combine)
-	{
-
-		// nothing to do 
-
-	}
-	if (gl_ext_info._TexEnv_Combine4)
-	{
-		// nothing to do 
-
-
-	}
-	if (gl_ext_info._WGL_3DFX_gamma)
-	{
-
-		wglSetDeviceGammaRamp3DFX= (SETDEVICEGAMMARAMP3DFXPROC  ) awglGetProcAddress ("wglSetDeviceGammaRamp3DFX");
-		wglGetDeviceGammaRamp3DFX= (GETDEVICEGAMMARAMP3DFXPROC  ) awglGetProcAddress ("wglGetDeviceGammaRamp3DFX");
-
-		if (!wglSetDeviceGammaRamp3DFX || !wglGetDeviceGammaRamp3DFX )
-			return 0;
-
-
-	}
-	if (gl_ext_info._WGL_swap_control)
-	{
-		wglSwapIntervalEXT= (WGLSETSWAPINTERVALPROC) awglGetProcAddress ("wglSwapIntervalEXT");
-		wglGetSwapIntervalEXT = (WGLGETSWAPINTERVALPROC) awglGetProcAddress("wglGetSwapIntervalEXT");
-
-
-		if (!wglSwapIntervalEXT || !wglGetSwapIntervalEXT)
-			return 0;
-
-
-	}
-
-	
-
-	return 1;
-}
-
-// detecting hardware :
 void  GetGlConfig(glconfig_t * config)
 {
-
 	memcpy (config,&glconfig,sizeof (glconfig_t ));
-
-
 }
 
 
@@ -2669,7 +2650,7 @@ int Init_OpenGL ( void )
 	else
 		Con_Printf ("succeded\n");
 
-	if (1)
+	if (1)  // TODO : Make function !!!
 	{
 		const char *vendor=glGetString(GL_VENDOR);
 		const char *ext=glGetString(GL_EXTENSIONS);
@@ -2685,7 +2666,7 @@ int Init_OpenGL ( void )
 
 		if (r_allowExtensions->integer)
 		{
-			Con_Printf("Initializing Open Gl extensions\n");
+			Con_Printf("Initializing OpenGl extensions\n");
 
 			// this is internal
 			if (IsExtensionSupported("GL_ARB_texture_compression"))
@@ -2749,6 +2730,62 @@ int Init_OpenGL ( void )
 				Con_Printf ("... GL_EXT_texture_env_add not found\n");
 				gl_ext_info._TexEnv_Add=0;
 				glconfig.textureEnvAddAvailable=0;
+			}
+			if (IsExtensionSupported ("GL_EXT_texture_env_combine"))
+			{
+				Con_Printf("...ignoring GL_EXT_texture_env_combine\n");
+				gl_ext_info._TexEnv_Combine=1;
+			}
+			else
+			{
+				Con_Printf("...GL_EXT_texture_env_combine not found\n");
+				gl_ext_info._TexEnv_Combine=0;
+			}
+			if (IsExtensionSupported ("GL_NV_texture_env_combine4"))
+			{
+				Con_Printf("...ignoring GL_NV_texture_env_combine4\n");
+				gl_ext_info._TexEnv_Combine4=1;
+			}
+			else
+			{
+				Con_Printf("...GL_NV_texture_env_combine4 not found\n");
+				gl_ext_info._TexEnv_Combine4=0;
+			}
+			if (IsExtensionSupported ("GL_NV_register_combiners"))
+			{
+				Con_Printf("...ignoring GL_NV_register_combiners\n");
+				gl_ext_info._GL_NV_register_combiners=1;
+
+				
+				glCombinerParameterfvNV=GL_GetProcAddress("glCombinerParameterfvNV");
+				glCombinerParameterivNV=GL_GetProcAddress("glCombinerParameterivNV");
+
+				glCombinerParameterfNV=GL_GetProcAddress("glCombinerParameterfNV");
+
+				glCombinerParameteriNV=GL_GetProcAddress("glCombinerParameteriNV");
+
+				glCombinerInputNV=GL_GetProcAddress("glCombinerInputNV");
+	
+				glCombinerOutputNV=GL_GetProcAddress("glCombinerOutputNV");
+				glFinalCombinerInputNV=GL_GetProcAddress("glFinalCombinerInputNV");
+
+				glGetCombinerInputParameterfvNV=GL_GetProcAddress("glGetCombinerInputParameterfvNV");
+
+				glGetCombinerInputParameterivNV=GL_GetProcAddress("glGetCombinerInputParameterivNV");
+
+				glGetCombinerOutputParameterfvNV=GL_GetProcAddress("glGetCombinerOutputParameterfvNV");
+
+				glGetCombinerOutputParameterivNV=GL_GetProcAddress("glGetCombinerOutputParameterivNV");
+
+				glGetFinalCombinerInputParameterfvNV=GL_GetProcAddress("glGetFinalCombinerInputParameterfvNV");
+
+				glGetFinalCombinerInputParameterivNV=GL_GetProcAddress("glGetFinalCombinerInputParameterivNV");
+
+			}
+			else
+			{
+				Con_Printf("... GL_NV_register_combiners not found\n");
+				gl_ext_info._GL_NV_register_combiners=0;
 			}
 
 			if (IsExtensionSupported ("WGL_EXT_swap_control"))
@@ -3003,19 +3040,16 @@ int Shutdown_OpenGL (void )
 
 	
 	if (!opengl_initialized) 
+		return 1;
+
+	if (!WIN_Destroy_Window ())
 		return 0;
-
-
-
-	WIN_Destroy_Window ();
 		
 	if (!GL_UnloadDll())
 		return 0;
-
 	
-	WIN_Reset_DisplaySettings ();
-
-
+	if (!WIN_Reset_DisplaySettings ())
+		return 0;
 
 	opengl_initialized=0;
 
