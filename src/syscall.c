@@ -486,15 +486,11 @@ int GAME_Call (int arg,...)
 	va_list mark;
 	va_start (mark,arg);
 
-
 	switch (arg)
 	{
-		
 		case G_PRINT:		// ( const char *string );
 			Con_Printf(va_arg(mark,const char *));
 			break;
-			
-
 
 		case G_ERROR:		// ( const char *string );
 			Error (va_arg (mark,const char * ));
@@ -507,12 +503,15 @@ int GAME_Call (int arg,...)
 		case G_CVAR_REGISTER:	// ( vmCvar_t *vmCvar, const char *varName, const char *defaultValue, int flags );
 			Call_Cvar_Register (va_arg (mark,int),va_arg(mark,const char*),va_arg(mark,const char*),va_arg(mark,vmCvar_t*) );
 			break;
+
 		case G_CVAR_UPDATE:	// ( vmCvar_t *vmCvar );
 			Cvar_Update(va_arg(mark, vmCvar_t *));
 			break;
+
 		case G_CVAR_SET:		// ( const char *var_name, const char *value );
 			Call_Cvar_Set(va_arg(mark,char*),va_arg(mark,char*));
 			break;
+
 		case G_CVAR_VARIABLE_INTEGER_VALUE:	// ( const char *var_name );
 			return Cvar_VariableIntegerValue(va_arg(mark,const char *));
 			break;
@@ -532,19 +531,21 @@ int GAME_Call (int arg,...)
 		case G_FS_FOPEN_FILE:	// ( const char *qpath, fileHandle_t *file, fsMode_t mode );
 			return Call_FOpenFile(va_arg(mark,int), va_arg(mark,int*),va_arg(mark, const char*) ) ;
 			break;
+
 		case G_FS_READ:		// ( void *buffer, int len, fileHandle_t f );
 			Call_FS_Read(va_arg(mark,int),va_arg(mark,int), va_arg(mark,void*));
 			break;
+
 		case G_FS_WRITE:		// ( const void *buffer, int len, fileHandle_t f );
 			Call_FS_Write( va_arg(mark,int)   ,va_arg(mark,int ),va_arg(mark,const void *)); 
 			break;
+
 		case G_FS_FCLOSE_FILE:		// ( fileHandle_t f );
 			FS_FCloseFile( va_arg(mark,int) ); 
-
 			break;
+
 		case G_SEND_CONSOLE_COMMAND:	// ( const char *text );
 			Cbuf_AddText(va_arg(mark,const char *));
-
 			break;
 		
 			//=========== server specific functionality =============
@@ -552,7 +553,8 @@ int GAME_Call (int arg,...)
 		case G_LOCATE_GAME_DATA:		// ( gentity_t *gEnts, int numGEntities, int sizeofGEntity_t,
 			Call_SV_LocateGameData (va_arg(mark,int),va_arg(mark,playerState_t *),
 				va_arg(mark,int) ,va_arg(mark,int) , va_arg(mark,void *));
-			break;	
+			break;
+
 		case G_DROP_CLIENT:		// ( int clientNum, const char *reason );
 			break;
 			// kick a client off the server with a message

@@ -1018,9 +1018,8 @@ int _VectorCompare( const vec3_t v1, const vec3_t v2 ) {
 }
 
 vec_t VectorNormalize( vec3_t v ) {
-	float	length, ilength;
-
-	length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
+	float	length = DotProduct(v, v), ilength;
+	
 	length = sqrt (length);
 
 	if ( length ) {
@@ -1039,9 +1038,7 @@ vec_t VectorNormalize( vec3_t v ) {
 //
 void VectorNormalizeFast( vec3_t v )
 {
-	float ilength;
-
-	ilength = A_rsqrt( DotProduct( v, v ) );
+	float ilength = 1 / sqrt( DotProduct( v, v ) );
 
 	v[0] *= ilength;
 	v[1] *= ilength;
@@ -1049,9 +1046,7 @@ void VectorNormalizeFast( vec3_t v )
 }
 
 vec_t VectorNormalize2( const vec3_t v, vec3_t out) {
-	float	length, ilength;
-
-	length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
+	float	length = DotProduct( v, v ), ilength;
 
 	if (length)
 	{

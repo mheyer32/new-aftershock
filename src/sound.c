@@ -37,7 +37,7 @@ typedef struct
 
 static sample_t samples[MAX_SAMPLES];
 static int s_num_samples = 0;
-static int s_intialized = 0;
+static aboolean s_intialized = afalse;
 
 typedef struct cvarTable_s {
 	cvar_t	**cvar;
@@ -106,16 +106,18 @@ void S_GetCvars (void)
 	}
 }
 
-int S_Init (void)
+aboolean S_Init (void)
 {
 	int khz;
 
 	S_GetCvars();
 
+	return afalse;
+
 	if (FSOUND_GetVersion() < FMOD_VERSION)
 	{
 		Con_Printf("WARNING: You are using the wrong FMOD DLL version!  You should be using FMOD %.02f\n", FMOD_VERSION);
-		return 0;
+		return afalse;
 	}
 
 	memset (samples, 0, MAX_SAMPLES * sizeof (sample_t));
@@ -127,14 +129,14 @@ int S_Init (void)
 	if (!FSOUND_Init(khz, NUM_CHANNELS, 0))
 	{
 		Con_Printf ("WARNING: Could not initialize Sound!\n");
-		return 0;
+		return afalse;
 	}
 
 	FSOUND_3D_Listener_SetDopplerFactor(s_doppler->value);
 
-	s_intialized = 1;
+	s_intialized = atrue;
 
-	return 1;
+	return atrue;
 }
 
 void S_Shutdown (void)
@@ -144,7 +146,7 @@ void S_Shutdown (void)
 	if (!s_intialized)
 		return;
 
-	for (i=0;i<s_num_samples;i++ )
+	for (i = 0; i < s_num_samples; i++ )
 	{
 		FSOUND_Sample_Free(samples[i].handle);
 	}
@@ -152,7 +154,7 @@ void S_Shutdown (void)
 	FSOUND_Close ();
 
 	s_num_samples = 0;
-	s_intialized = 0;
+	s_intialized = afalse;
 }
 
 // normal sounds will have their volume dynamically changed as their entity
@@ -164,6 +166,8 @@ void S_StartSound( vec3_t origin, int entityNum, int entchannel, sfxHandle_t sfx
 	int act_channel = -1;
 
 	if (sfx < 0 || sfx > MAX_SAMPLES) 
+		return;
+	if (!s_intialized)
 		return;
 
 	s = &samples[sfx];
@@ -185,6 +189,8 @@ void S_StartLocalSound( sfxHandle_t sfx, int channelNum )
 
 	if (sfx < 0 || sfx >= s_num_samples || !s_intialized)
 		return;
+	if (!s_intialized)
+		return;
 
 	s = &samples[sfx];
 	
@@ -198,19 +204,32 @@ void S_StartLocalSound( sfxHandle_t sfx, int channelNum )
 
 void S_ClearLoopingSounds( void )
 {
+	if (!s_intialized)
+		return;
+
 }
+
 void S_AddLoopingSound( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx )
 {
+	if (!s_intialized)
+		return;
+
 }
 
 void S_UpdateEntityPosition( int entityNum, const vec3_t origin )
 {
+	if (!s_intialized)
+		return;
+
 }
 
 // repatialize recalculates the volumes of sound as they should be heard by the
 // given entityNum and position
 void S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater )
 {
+	if (!s_intialized)
+		return;
+
 }
 
 sfxHandle_t	S_RegisterSound ( const char *sample )		// returns buzz if not found
@@ -280,5 +299,8 @@ sfxHandle_t	S_RegisterSound ( const char *sample )		// returns buzz if not found
 
 void S_StartBackgroundTrack( const char *intro, const char *loop )	// empty name stops music
 {
+	if (!s_intialized)
+		return;
+
 }
 

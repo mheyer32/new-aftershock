@@ -47,8 +47,8 @@ typedef struct
 {
 	cplane_t *plane;
 	int children[2];
-	vec3_t mins;
-	vec3_t maxs;
+	int	mins[3];
+	int	maxs[3];
 } cnode_t;
 
 typedef struct 

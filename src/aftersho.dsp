@@ -454,10 +454,6 @@ SOURCE=.\unzip.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\vec.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\Zconf.h
 # End Source File
 # Begin Source File

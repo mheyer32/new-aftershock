@@ -39,18 +39,17 @@
 
 /* FIXME: The manner in which faces are "pushed" to the arrays is really
    absimal.  I'm sure it could be highly optimized. */
+
 /* FIXME: It would be nice to have a consistent view of faces, meshes,
    mapents, etc. so we don't have to have a "push" function for each. */
 
 
+void Render_Backend_Flush (int shadernum, int lmtex);
 
-void Render_Backend_Flush (int shadernum ,int lmtex );
-
-static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex );
-static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmtex );
-static void Render_Backend_Flush_Multitexture_Combine (shader_t *s,int lmtex );
-static void Render_Backend_Flush_Vertex_Lit (shader_t *s, int lmtex );
-
+static void Render_Backend_Flush_Generic (shader_t *s, int lmtex);
+static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s, int lmtex);
+static void Render_Backend_Flush_Multitexture_Combine (shader_t *s, int lmtex);
+static void Render_Backend_Flush_Vertex_Lit (shader_t *s, int lmtex);
 
 static void render_pushface(cface_t *face);
 static void render_pushmesh(mesh_t *mesh);
@@ -61,12 +60,10 @@ static int render_setstate(shaderpass_t *pass, uint_t lmtex);
 arrays_t arrays;
 
 aboolean r_overlay = afalse;
-static aboolean r_reflection = afalse;
-static aboolean r_reflection_ = afalse;
 
 extern reference_t transform_ref;
 
-void R_backend_init(void)
+void Render_Backend_Init(void)
 {
     arrays.verts = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
 	arrays.norms = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
@@ -92,7 +89,7 @@ void R_backend_init(void)
 	}
 }
 
-void R_backend_shutdown(void )
+void Render_Backend_Shutdown(void)
 {
 	free(arrays.verts);
     free(arrays.tex_st);
@@ -135,7 +132,7 @@ void R_Push_Quad (quad_t *q)
 	}
 }
 
-void Render_backend_Overlay (quad_t *q, int numquads)
+void Render_Backend_Overlay (quad_t *q, int numquads)
 {
 	int i, shader = q->shader;
 	quad_t *quad;
@@ -159,7 +156,7 @@ void Render_backend_Overlay (quad_t *q, int numquads)
 	Render_Backend_Flush(shader, 0);
 }
 
-void render_backend(facelist_t *facelist)
+void Render_Backend(facelist_t *facelist)
 {
     int f, shader = 0, lmtex = 0;
     uint_t key = (uint_t)-1;
@@ -202,7 +199,7 @@ void render_backend(facelist_t *facelist)
 	Render_Backend_Flush(shader, lmtex);
 }
 
-void render_backend_sky(int numsky, int *skylist)
+void Render_Backend_Sky(int numsky, int *skylist)
 {
     int s, i, shader;
     float skyheight;
@@ -290,18 +287,19 @@ static void render_pushmesh(mesh_t *mesh)
 
 	// any way to implement faceculling here in the engine ?
 
-    for (i = 0; i < mesh->numelems/3; ++i)
+    for (i = 0; i < mesh->numelems / 3; i++)
     {
 		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
 		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
 		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
     }
 	
-	for (i = 0;i < mesh->size[1] * mesh->size[0]; i++)
+	for (i = 0; i < mesh->size[1] * mesh->size[0]; i++)
 	{
 	    VectorCopy(mesh->points[i], arrays.verts[arrays.numverts]);
 	    Vector2Copy(mesh->tex_st[i], arrays.tex_st[arrays.numverts]);
 	    Vector2Copy(mesh->lm_st[i], arrays.lm_st[arrays.numverts]);
+
 	    arrays.numverts++;
 	}
 }
@@ -432,19 +430,28 @@ void Render_Backend_Make_Vertices (shader_t *s)
 	}
 }
 
+void CalcNormal(vec3_t p, vec3_t p1, vec3_t p2, vec3_t n)
+{
+	vec3_t pa, pb;
+    
+	VectorSubtract(p1, p, pa);
+	VectorSubtract(p2, p, pb);
+	VectorNormalize(pa);
+	VectorNormalize(pb);
+	CrossProduct (pa, pb, n);
+	VectorNormalize(n);   
+}
+
 float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 {
 	int i = arrays.numverts, n = 0;
 	vec2_t *in = arrays.tex_st;
 	vec2_t *out;
-	vec3_t pos, v, tv;
-	vec3_t dir;
+	vec3_t dir, pos;
 	int j;
 	float rot;
 	float cost;
 	float sint;
-
-	r_reflection = afalse;
 
 	switch (pass->tc_gen)
 	{
@@ -456,59 +463,40 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 			in = arrays.lm_st;
 			break;
 			
+		// FIXME !!!
+		// this is not cube-mapping!
+
+		// TODO !!!
 		case TC_GEN_ENVIRONMENT:
-			if (!r_allowExtensions->integer || !gl_ext_info._GL_NV_texgen_reflection)
+			in = arrays.stage_tex_st[stage];
+			
+			VectorCopy (r_eyepos, pos);
+
+			if (!transform_ref.matrix_identity)
 			{
-				// TODO !!!
-				in = arrays.stage_tex_st[stage];
-					
-				// FIXME !!!
-				// this is not cube-mapping !
-
-				VectorCopy (r_eyepos, pos);
-
-				if (!transform_ref.matrix_identity)
+				if (!transform_ref.inv_matrix_calculated)	
 				{
-					if (!transform_ref.inv_matrix_calculated)	
-					{
-						if (!Matrix4_Inverse(transform_ref.inv_matrix,transform_ref.matrix))
-							Matrix4_Identity(transform_ref.inv_matrix);
-						
-						transform_ref.inv_matrix_calculated = atrue;	
-					}
+					if (!Matrix4_Inverse(transform_ref.inv_matrix, transform_ref.matrix))
+						Matrix4_Identity(transform_ref.inv_matrix);
 					
-					Matrix_Multiply_Vec3(transform_ref.inv_matrix,pos,pos);
+					transform_ref.inv_matrix_calculated = atrue;	
 				}
-					
-				for (j = 0; j < arrays.numverts; j++)
-				{
-					VectorCopy (arrays.verts[j], v);
-					VectorSubtract(v, pos, dir);
-					VectorNormalize(dir);
-						
-					VectorCopy (arrays.norms[j], tv);
-						
-					dir[0] += tv[0];
-					dir[1] += tv[1];
-						
-					in[j][0] = dir[0];
-					in[j][1] = dir[1];
-				}
-
-				r_reflection = afalse;
+				
+				Matrix_Multiply_Vec3(transform_ref.inv_matrix, pos, pos);
 			}
-			else
-			{
-				// TODO !!!
-				in = arrays.stage_tex_st[stage];
 
-				r_reflection = atrue;
+			for (j = 0; j < arrays.numverts; j++)
+			{
+				VectorSubtract(pos, arrays.verts[j], dir);
+				VectorNormalizeFast(dir);
+															
+				in[j][0] = dir[0] + arrays.norms[j][0];
+				in[j][1] = dir[1] + arrays.norms[j][1];
 			}
 
 			break;
 			
-		case TC_GEN_VECTOR:
-			// Is this right ?
+		case TC_GEN_VECTOR:		// Is this right ?
 			in = arrays.stage_tex_st[stage];
 				
 			for (j = 0; j < arrays.numverts; j++)
@@ -641,6 +629,7 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 	int i;
 	byte c;
 	colour_t *col = NULL;
+	byte alpha;
 
 	switch (pass->rgbgen)
 	{
@@ -663,7 +652,7 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 			break;
 
 		case RGB_GEN_WAVE:
-			c = (byte)(255.0f * (float)render_func_eval(pass->rgbgen_func.func,
+			c = FloatToByte(255.0f * (float)render_func_eval(pass->rgbgen_func.func,
 							pass->rgbgen_func.args));
 			for (i = 0; i < arrays.numverts;i++) 
 			{
@@ -717,7 +706,7 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 	switch (pass->alpha_gen)
 	{
 		case ALPHA_GEN_WAVE:
-			c = (byte)(255.0f * (float)render_func_eval(pass->alphagen_func.func,
+			c = FloatToByte(255.0f * (float)render_func_eval(pass->alphagen_func.func,
 							pass->alphagen_func.args));
 
 			for (i = 0; i < arrays.numverts;i++) 
@@ -729,8 +718,8 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 			for (i = 0; i < arrays.numverts; i++)
 			{
 				// TODO 
-				int alpha = (byte)(255.0 / Distance (r_eyepos, arrays.verts[i]));
-				col[i][3] = (byte)(min (alpha, 255));
+				alpha = FloatToByte(255.0 / Distance (r_eyepos, arrays.verts[i]));
+				col[i][3] = min (alpha, 255);
 			}
 			break;
 
@@ -905,7 +894,7 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 	shaderpass_t *pass;
 	int i, texture;
 
-	switch (s->cull )
+	switch (s->cull)
 	{
 		case SHADER_CULL_DISABLE:
 			GL_Disable (GL_CULL_FACE);
@@ -915,7 +904,6 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 			GL_Enable (GL_CULL_FACE);
 			GL_CullFace (GL_FRONT);
 			break;
-			
 			
 		case SHADER_CULL_BACK:
 			GL_Enable (GL_CULL_FACE);
@@ -929,6 +917,7 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 		GL_Disable (GL_POLYGON_OFFSET);
 
 	Render_Backend_Make_Vertices(s);
+
 	glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
 
 	if (glLockArraysEXT)
@@ -1006,31 +995,6 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 				GL_DepthMask(GL_FALSE);
 		}
 
-		if (r_reflection != r_reflection_)
-		{
-			if (r_reflection)
-			{
-				GL_Enable(GL_NORMALIZE);
-				GL_Enable(GL_TEXTURE_GEN_S);
-				GL_Enable(GL_TEXTURE_GEN_T);
-			}
-			else
-			{
-				GL_Disable(GL_NORMALIZE);
-				GL_Disable(GL_TEXTURE_GEN_S);
-				GL_Disable(GL_TEXTURE_GEN_T);
-				r_reflection = 0;
-			}
-
-			r_reflection_ = r_reflection;
-		}
-
-		if (r_reflection) {
-			// here is all we have to do to work our magic, pretty simple huh?
-			glTexGenf(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
-			glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
-		}
-
 		// Draw it
 		glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
 		       arrays.elems);
@@ -1085,7 +1049,7 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 	glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
 
 	if (glLockArraysEXT)
-		glLockArraysEXT(0,arrays.numverts);
+		glLockArraysEXT(0, arrays.numverts);
 
 	// Preparations
 	GL_DisableClientState (GL_COLOR_ARRAY);
@@ -1138,31 +1102,6 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 		return;
 
 	GL_BindTexture(GL_TEXTURE_2D, texture);
-
-	if (r_reflection != r_reflection_)
-	{
-		if (r_reflection)
-		{
-			GL_Enable(GL_NORMALIZE);
-			GL_Enable(GL_TEXTURE_GEN_S);
-			GL_Enable(GL_TEXTURE_GEN_T);
-		}
-		else
-		{
-			GL_Disable(GL_NORMALIZE);
-			GL_Disable(GL_TEXTURE_GEN_S);
-			GL_Disable(GL_TEXTURE_GEN_T);
-			r_reflection = 0;
-		}
-		
-		r_reflection_ = r_reflection;
-	}
-	
-	if (r_reflection) {
-		// here is all we have to do to work our magic, pretty simple huh?
-		glTexGenf(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
-		glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
-	}
 
 	// draw it
 	glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,

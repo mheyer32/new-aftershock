@@ -22,7 +22,7 @@
 #include "entity.h"
 #include "brushtest.h"
 
-static unsigned char brushflag[ 1025 ];
+static unsigned char brushflag[1025];
 
 static vec3_t smins, smaxs;
 static int content_mask;

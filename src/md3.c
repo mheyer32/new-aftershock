@@ -40,10 +40,10 @@ void MD3_Init (void)
 
 void MD3_Shutdown (void)
 {
-/*	int i;
+	int i;
 
 	for (i = 1; i < r_md3Modelcount; i++) MD3_Free(i);
-*/
+
 	r_md3Modelcount = 1;
 	r_md3Skincount = 1;
 }
@@ -102,7 +102,8 @@ void MD3_Free (int num)
 			if (mesh->numskins > 0)
 				free (mesh->skins);
 
-			free (mesh);
+			if (mesh)
+				free (mesh);
 		}
 	}
 }

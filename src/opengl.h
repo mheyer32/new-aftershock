@@ -48,10 +48,6 @@ typedef enum {
 	GLHW_PERMEDIA2			// where you don't have src*dst
 } glHardwareType_t;
 
-
-
-
-
 typedef struct {
 	char					renderer_string[MAX_STRING_CHARS];
 	char					vendor_string[MAX_STRING_CHARS];
@@ -93,7 +89,6 @@ typedef struct {
 	int _TexEnv_Combine;
 	int _TexEnv_Combine4;
 	int _GL_NV_register_combiners;
-	int	_GL_NV_texgen_reflection;
 	int _ARB_Multitexture;
 	int _CompiledVertex_Arrays;
 	int _WGL_ARB_extensions_string;

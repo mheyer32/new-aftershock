@@ -553,7 +553,7 @@ int Tex_UploadTexture (byte **data, int width, int height, int format, int flags
     }
 
 	// Final Step
-	if (flags & SHADER_NOMIPMAPS )
+	if (flags & SHADER_NOMIPMAPS)
 		glTexImage2D(GL_TEXTURE_2D, 0, internal_format,	w, h, 0, format, GL_UNSIGNED_BYTE, *data);
     else
 		GL_Build2DMipmaps(GL_TEXTURE_2D, internal_format, w, h, format, GL_UNSIGNED_BYTE, *data);
@@ -667,8 +667,6 @@ int R_Load_Texture (const char *name, int flags)
 		
 		if (!ext[0])
 		{
-			Con_Printf ("%s\n", fname);
-
 			// .tga by default
 			A_strncpyz (ext, "tga", 3);
 			A_strcat (fname, MAX_APATH, ".tga");

@@ -242,8 +242,8 @@ extern int shader_white;
 extern int shader_text;
 extern int shader_console;
 
-int Shader_Init (void);
-int Shader_Shutdown (void);
+aboolean Shader_Init (void);
+void Shader_Shutdown (void);
 
 int R_RegisterShaderNoMip(const char *name);
 int R_RegisterShader (const char *name);

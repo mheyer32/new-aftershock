@@ -46,8 +46,8 @@ extern cvar_t *s_occfactor;
 extern cvar_t *s_occ_eq;
 
 
-int         S_Init ( void );
-void        S_Shutdown (void ); 
+aboolean    S_Init (void);
+void        S_Shutdown (void); 
 
 void		S_StartSound( vec3_t origin, int entityNum, int entchannel, sfxHandle_t sfx );
 

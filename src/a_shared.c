@@ -1012,7 +1012,7 @@ void Info_SetValueForKey( char *s, const char *key, const char *value )
 		return;
 	}
 
-	A_strcat (s, 0, newi);
+	strcat (s, newi);
 }
 
 //====================================================================

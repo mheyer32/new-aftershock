@@ -43,7 +43,7 @@ static void CM_Load_Shaderrefs (aboolean load_rdata)
 	int i;
 	dshaderref_t *shaders;
 	 
-	cm.num_shaderrefs = CM_ReadLump(SHADERREFS, &shaders, sizeof (dshaderref_t));
+	cm.num_shaderrefs = CM_ReadLump(LUMP_SHADERS, &shaders, sizeof (dshaderref_t));
 	cm.shaderrefs = malloc (cm.num_shaderrefs * sizeof (cshaderref_t));
 
 	for (i = 0; i < cm.num_shaderrefs; i++)
@@ -63,7 +63,7 @@ static void CM_Load_Planes (void)
 	int i;
 	dplane_t *planes;
 
-	cm.num_planes = CM_ReadLump (DPLANES, &planes, sizeof (dplane_t ));
+	cm.num_planes = CM_ReadLump (LUMP_PLANES, &planes, sizeof (dplane_t ));
 	cm.planes = malloc (cm.num_planes * sizeof (cplane_t ));
 
 	for (i = 0; i < cm.num_planes; i++ )
@@ -85,7 +85,7 @@ static void CM_Load_Nodes (void)
 	int i;
 	dnode_t *nodes;
 
-	cm.num_nodes = CM_ReadLump (NODES, &nodes, sizeof(dnode_t));
+	cm.num_nodes = CM_ReadLump (LUMP_NODES, &nodes, sizeof(dnode_t));
 	cm.nodes = malloc (cm.num_nodes * sizeof (cnode_t));
 
 	for (i = 0; i < cm.num_nodes; i++ )
@@ -93,13 +93,13 @@ static void CM_Load_Nodes (void)
 		cm.nodes[i].children[0] = LittleLong (nodes[i].children[0]);
 		cm.nodes[i].children[1] = LittleLong (nodes[i].children[1]);
 
-		cm.nodes[i].mins[0] = (float)LittleLong (nodes[i].mins[0]);
-		cm.nodes[i].mins[1] = (float)LittleLong (nodes[i].mins[1]);
-		cm.nodes[i].mins[2] = (float)LittleLong (nodes[i].mins[2]);
+		cm.nodes[i].mins[0] = LittleLong (nodes[i].mins[0]);
+		cm.nodes[i].mins[1] = LittleLong (nodes[i].mins[1]);
+		cm.nodes[i].mins[2] = LittleLong (nodes[i].mins[2]);
 
-		cm.nodes[i].maxs[0] = (float)LittleLong (nodes[i].maxs[0]);
-		cm.nodes[i].maxs[1] = (float)LittleLong (nodes[i].maxs[1]);
-		cm.nodes[i].maxs[2] = (float)LittleLong (nodes[i].maxs[2]);
+		cm.nodes[i].maxs[0] = LittleLong (nodes[i].maxs[0]);
+		cm.nodes[i].maxs[1] = LittleLong (nodes[i].maxs[1]);
+		cm.nodes[i].maxs[2] = LittleLong (nodes[i].maxs[2]);
 
 		cm.nodes[i].plane = &cm.planes [LittleLong (nodes[i].plane)];
 	}
@@ -112,7 +112,7 @@ static void CM_Load_Leaves (void)
 	int i;
 	dleaf_t *leafs;
 
-	cm.num_leaves = CM_ReadLump (LEAFS, &leafs, sizeof (dleaf_t));
+	cm.num_leaves = CM_ReadLump (LUMP_LEAFS, &leafs, sizeof (dleaf_t));
 	cm.leaves = malloc (cm.num_leaves * sizeof (cleaf_t));
 
 	for (i = 0; i < cm.num_leaves; i++ )
@@ -143,7 +143,7 @@ static void CM_Load_LFaces (aboolean load_rdata)
 
 	if (load_rdata)
 	{
-		cm.num_lfaces = CM_ReadLump (LFACES, &cm.lfaces, sizeof(int));
+		cm.num_lfaces = CM_ReadLump (LUMP_LEAFSURFACES, &cm.lfaces, sizeof(int));
 
 		for (i = 0; i < cm.num_lfaces; i++)
 			cm.lfaces[i] = LittleLong (cm.lfaces[i]);
@@ -154,7 +154,7 @@ static void CM_Load_LBrushes(void)
 {
 	int i;
 
-	cm.num_lbrushes = CM_ReadLump (BRUSH_LIST, &cm.lbrushes, sizeof(int));
+	cm.num_lbrushes = CM_ReadLump (LUMP_LEAFBRUSHES, &cm.lbrushes, sizeof(int));
 
 	for (i = 0; i < cm.num_lbrushes; i++)
 		cm.lbrushes[i] = LittleLong (cm.lbrushes[i]);
@@ -165,7 +165,7 @@ static void CM_Load_Models (aboolean load_rdata)
 	int i;
 	dmodel_t *models;
 
-	cm.num_models = CM_ReadLump (MODELS, &models, sizeof (dmodel_t));
+	cm.num_models = CM_ReadLump (LUMP_MODELS, &models, sizeof (dmodel_t));
 	cm.models = malloc (cm.num_models * sizeof (cmodel_t));
 
 	for (i = 0; i < cm.num_models; i++)
@@ -196,7 +196,7 @@ static void CM_Load_Brushes (void)
 	int i;
 	dbrush_t *brushes;
 
-	cm.num_brushes = CM_ReadLump (BRUSHES, &brushes, sizeof (dbrush_t));
+	cm.num_brushes = CM_ReadLump (LUMP_BRUSHES, &brushes, sizeof (dbrush_t));
 	cm.brushes = malloc ( cm.num_brushes * sizeof (cbrush_t)); 
 	
 	for (i = 0; i < cm.num_brushes; i++ )
@@ -204,7 +204,6 @@ static void CM_Load_Brushes (void)
 		cm.brushes[i].shaderref = &cm.shaderrefs[LittleLong (brushes[i].shader)];
 		cm.brushes[i].numsides = LittleLong (brushes[i].numsides);
 		cm.brushes[i].sides = &cm.brushsides[LittleLong (brushes[i].firstside)];
-
 	}
 
 	free (brushes);
@@ -215,7 +214,7 @@ static void CM_Load_BrushSides (void)
 	int i;
 	dbrushside_t *sides;
 
-	cm.num_brushsides = CM_ReadLump (BRUSH_SIDES, &sides, sizeof (dbrushside_t));
+	cm.num_brushsides = CM_ReadLump (LUMP_BRUSHSIDES, &sides, sizeof (dbrushside_t));
 	cm.brushsides = malloc (cm.num_brushsides * sizeof (cbrushside_t));
 
 	for (i = 0; i < cm.num_brushsides; i++)
@@ -233,25 +232,29 @@ static void CM_Load_Vertices (aboolean load_rdata)
 
 	if (load_rdata)
 	{
-		cm.num_vertices = CM_ReadLump (VERTS, &cm.vertices, sizeof (dvertex_t));
+		cm.num_vertices = CM_ReadLump (LUMP_DRAWVERTS, &cm.vertices, sizeof (dvertex_t));
 
 		for (i= 0; i < cm.num_vertices; i++)
 		{
 			cm.vertices[i].lm_st[0] = LittleFloat(cm.vertices[i].lm_st[0]);
 			cm.vertices[i].lm_st[1] = LittleFloat(cm.vertices[i].lm_st[1]);
 
-			cm.vertices[i].tex_st[0] = LittleFloat (cm.vertices[i].tex_st[0]);
-			cm.vertices[i].tex_st[1] = LittleFloat (cm.vertices[i].tex_st[1]);
+			cm.vertices[i].tex_st[0] = LittleFloat(cm.vertices[i].tex_st[0]);
+			cm.vertices[i].tex_st[1] = LittleFloat(cm.vertices[i].tex_st[1]);
 
-			cm.vertices[i].v_norm [0] = LittleFloat (cm.vertices[i].v_norm[0]);
-			cm.vertices[i].v_norm [1] = LittleFloat (cm.vertices[i].v_norm[1]);
-			cm.vertices[i].v_norm [2] = LittleFloat (cm.vertices[i].v_norm[2]);
+			cm.vertices[i].v_norm[0] = LittleFloat(cm.vertices[i].v_norm[0]);
+			cm.vertices[i].v_norm[1] = LittleFloat(cm.vertices[i].v_norm[1]);
+			cm.vertices[i].v_norm[2] = LittleFloat(cm.vertices[i].v_norm[2]);
 
-			cm.vertices[i].v_point[0] = LittleFloat (cm.vertices[i].v_point[0]);
-			cm.vertices[i].v_point[1] = LittleFloat (cm.vertices[i].v_point[1]);
-			cm.vertices[i].v_point[2] = LittleFloat (cm.vertices[i].v_point[2]);
+			cm.vertices[i].v_point[0] = LittleFloat(cm.vertices[i].v_point[0]);
+			cm.vertices[i].v_point[1] = LittleFloat(cm.vertices[i].v_point[1]);
+			cm.vertices[i].v_point[2] = LittleFloat(cm.vertices[i].v_point[2]);
 
-			// TODO ? Colour 
+			// TODO ? Colour
+			cm.vertices[i].colour[0] = LittleLong (cm.vertices[i].colour[0]);
+			cm.vertices[i].colour[1] = LittleLong (cm.vertices[i].colour[1]);
+			cm.vertices[i].colour[2] = LittleLong (cm.vertices[i].colour[2]);
+			cm.vertices[i].colour[3] = LittleLong (cm.vertices[i].colour[3]);
 		}
 	}
 }
@@ -262,7 +265,7 @@ static void CM_Load_Elems (aboolean load_rdata)
 
 	if (load_rdata)
 	{
-		cm.num_elems = CM_ReadLump (ELEMS, &cm.elems, sizeof (int));
+		cm.num_elems = CM_ReadLump (LUMP_DRAWINDEXES, &cm.elems, sizeof (int));
 
 		for (i = 0; i < cm.num_elems; i++)
 			cm.elems[i] = LittleLong (cm.elems[i]);
@@ -276,7 +279,7 @@ static void CM_Load_Fog (aboolean load_rdata)
 
 	if (load_rdata)
 	{
-		cm.num_fog = CM_ReadLump (FOGZONES, &fogs, sizeof(dfogzone_t));
+		cm.num_fog = CM_ReadLump (LUMP_FOGS, &fogs, sizeof(dfogzone_t));
 		cm.fog = malloc (cm.num_fog * sizeof (cfogzone_t));
 
 		for (i = 0; i < cm.num_fog; i++)
@@ -297,7 +300,7 @@ static void CM_Load_Faces (aboolean load_rdata)
 
 	if (load_rdata)
 	{
-		cm.num_faces = CM_ReadLump (FACES, &faces, sizeof(dface_t));
+		cm.num_faces = CM_ReadLump (LUMP_SURFACES, &faces, sizeof(dface_t));
 		cm.faces = malloc (cm.num_faces * sizeof (cface_t));
 
 		for (i = 0; i < cm.num_faces; i++ )
@@ -349,7 +352,7 @@ static void CM_Load_Faces (aboolean load_rdata)
 static void CM_Load_Lightmaps (aboolean load_rdata)
 {
 	if (load_rdata)
-		cm.lightmapdata_size = CM_ReadLump (LIGHTMAPS, &cm.lightmapdata, 1); 
+		cm.lightmapdata_size = CM_ReadLump (LUMP_LIGHTMAPS, &cm.lightmapdata, 1); 
 }
 
 aboolean CM_LoadMap (const char *mapname, aboolean load_rdata)
@@ -391,7 +394,7 @@ aboolean CM_LoadMap (const char *mapname, aboolean load_rdata)
 	header->id = LittleLong (header->id);
 	header->ver = LittleLong (header->ver);
 
-	for (i = 0; i < NUM_LUMPS; i++)
+	for (i = 0; i < HEADER_LUMPS; i++)
 	{
 		header->lumps[i].filelen = LittleLong (header->lumps[i].filelen);
 		header->lumps[i].fileofs = LittleLong (header->lumps[i].fileofs);
@@ -411,7 +414,7 @@ aboolean CM_LoadMap (const char *mapname, aboolean load_rdata)
 	}
 
 	// now load the lumps
-	CM_ReadLump (ENTITIES, &cm.entityspawn, 1);
+	CM_ReadLump (LUMP_ENTITIES, &cm.entityspawn, 1);
 	CM_Load_Shaderrefs (load_rdata);
 	CM_Load_Planes ();
 	CM_Load_Nodes ();

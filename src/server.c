@@ -34,8 +34,8 @@ cvar_t			*sv_hostname;
 cvar_t			*sv_maxclients;
 cvar_t          *sv_privateClients;
 cvar_t          *sv_keywords;
-cvar_t          *timelimit ;
-cvar_t          *fraglimit ;
+cvar_t          *timelimit;
+cvar_t          *fraglimit;
 cvar_t          *dmflags;
 cvar_t          *sv_floodProtect;
 cvar_t          *sv_maxRate;
@@ -189,18 +189,18 @@ static void SV_Startup( void )
 
 static void SV_Map( const char *mapname )
 {
-	char buf [MAX_INFO_STRING];
+	char buf[MAX_INFO_STRING];
 
 	if (GAME_main) {
 		GAME_main (GAME_SHUTDOWN, 0, 0, 0, 0, 0, 0, 0);
 		UnLoadGame();
 	}
 
-	Con_Printf( "------ Server Initialization ------\n" );
+	Con_Printf("------ Server Initialization ------\n");
 
-	Con_Printf( "Server: %s\n", mapname );
+	Con_Printf("Server: %s\n", mapname);
 
-	if( !Cvar_VariableValue( "sv_running" ) ) {
+	if ( Cvar_VariableValue("sv_running") ) {
 		SV_Startup();
 	}
 
@@ -323,7 +323,8 @@ void SV_Frame (int millisec)
 
 void SV_Shutdown (void)
 {
-	if( !sv_running || !sv_running->integer ) return;
+	if ( !sv_running || !sv_running->integer ) 
+		return;
 
 	Con_Printf( "----- Server Shutdown -----\n" );
 

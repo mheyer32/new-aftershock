@@ -22,7 +22,7 @@
 #define MAX_CVARS 1024
 
 extern int cvar_count;
-extern cvar_t			*cvarlist ;
+extern cvar_t			*cvarlist;
 
 
 cvar_t *Cvar_Set( const char *var_name, const char *value );

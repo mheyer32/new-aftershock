@@ -24,7 +24,7 @@
 #include "console.h"
 #include "render.h"
 
-#define MAXSHADERS 1024
+#define MAX_SHADERS		1024
 
 
 #define DEFAULT_TEXT_SHADER_NAME "gfx/2d/bigchars"
@@ -80,99 +80,89 @@ static void shader_cull(shader_t *shader, shaderpass_t *pass, int numargs, char 
 		shader->cull = SHADER_CULL_FRONT;
 }
 
-static void shader_surfaceparm(shader_t *shader, shaderpass_t *pass, int numargs,
-		   char **args)
+static void shader_surfaceparm(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
     if (!strcmp(args[0], "trans"))
 	{
 		shader->flags |= SHADER_TRANSPARENT;
-//	shader->contents |=CONTENTS_TRANSLUCENT;
+//		shader->contents |= CONTENTS_TRANSLUCENT;
 	}
     else if (!strcmp(args[0], "sky"))
 	{
 		shader->flags |= SHADER_SKY;
-//	shader->contents |= SURF_SKY;
+//		shader->contents |= SURF_SKY;
 	}
 	else if (!strcmp(args[0], "nomipmaps"))
 	{
 		shader->flags |= SHADER_NOMIPMAPS;
-//	shader->contents|=SURF_NOMIPMAP;
+//		shader->contents |= SURF_NOMIPMAP;
 	}
 	// Is this needed ??
 	/*
 	else if (!strcmp(args[0], "nomarks"))
-		shader->contents|=SURF_NOMARKS;
+		shader->contents |= SURF_NOMARKS;
 	else if (!strcmp(args[0], "nonsolid"))
-		shader->contents|=SURF_NONSOLID;
+		shader->contents |= SURF_NONSOLID;
 	else if (!strcmp(args[0], "nodraw"))
-		shader->contents|=SURF_NODRAW;
+		shader->contents |= SURF_NODRAW;
 	else if (!strcmp(args[0], "nodlight"))
-		shader->contents|=SURF_NODLIGHT;
+		shader->contents |= SURF_NODLIGHT;
 	else if (!strcmp(args[0], "structural"))
-		shader->contents|=CONTENTS_STRUCTURAL;
+		shader->contents |= CONTENTS_STRUCTURAL;
 	else if (!strcmp(args[0], "metalsteps"))
-		shader->contents|=SURF_METALSTEPS	;
-	else if (!strcmp(args[0], "playerclip" ))
-		shader->contents|=CONTENTS_PLAYERCLIP;
+		shader->contents |= SURF_METALSTEPS;
+	else if (!strcmp(args[0], "playerclip"))
+		shader->contents |= CONTENTS_PLAYERCLIP;
 	else if (!strcmp(args[0], "alphashadow"))
-		shader->contents|=SURF_ALPHASHADOW;
-	else if (!strcmp(args[0], "nolightmap" ))
-		shader->contents|=SURF_NOLIGHTMAP;
-	else if (!strcmp(args[0], "noimpact" ))
-		shader->contents|=SURF_NOIMPACT;
-	else if (!strcmp(args[0] , "lava" ))
-		shader->contents|= CONTENTS_LAVA ;
+		shader->contents |= SURF_ALPHASHADOW;
+	else if (!strcmp(args[0], "nolightmap"))
+		shader->contents |= SURF_NOLIGHTMAP;
+	else if (!strcmp(args[0], "noimpact"))
+		shader->contents |= SURF_NOIMPACT;
+	else if (!strcmp(args[0], "lava"))
+		shader->contents |= CONTENTS_LAVA;
 	else if (!strcmp(args[0], "fog" ))
-		shader->contents|= CONTENTS_FOG;
-	else if (!strcmp(args[0],"nodrop"))
-		shader->contents|=CONTENTS_NODROP;
+		shader->contents |= CONTENTS_FOG;
+	else if (!strcmp(args[0], "nodrop"))
+		shader->contents |= CONTENTS_NODROP;
 	else if (!strcmp(args[0], "detail"))
-		shader->contents|=CONTENTS_DETAIL;
+		shader->contents |= CONTENTS_DETAIL;
 	else if (!strcmp(args[0], "donotenter"))
-		shader->contents|=CONTENTS_DONOTENTER;
+		shader->contents |= CONTENTS_DONOTENTER;
 	else 
 	{
 
-		Con_Printf("Unknown surfaceparam : %s\n",args [0]);
+		Con_Printf("Unknown surfaceparam: %s\n", args[0]);
 	}
 	*/
-
 }
 
-static void
-shader_skyparms(shader_t *shader, shaderpass_t *pass, int numargs,
-		char **args)
+static void shader_skyparms(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
     shader->skyheight = atof(args[1]);
+
 	// TODO : nearbox , farbox;
 }
 
-static void
-shader_nomipmaps(shader_t *shader, shaderpass_t *pass, int numargs,
-		 char **args)
+static void shader_nomipmaps(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
     shader->flags |= SHADER_NOMIPMAPS;
 }
 
-static void
-shader_nopicmip(shader_t *shader, shaderpass_t *pass, int numargs,
-		 char **args)
+static void shader_nopicmip(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
     shader->flags |= SHADER_NOPICMIP;
 	shader->flags |= SHADER_NOMIPMAPS;
 }
 
-static void
-shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numargs,
-		      char **args)
+static void shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
 	if (!A_stricmp(args[0], "wave"))
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
 		shader->deform_params[0] = atof (args[1]);
-		shader_parsefunc(&args[2], &shader->deformv_wavefunc);
-		
 		shader->deform_vertices = DEFORMV_WAVE;
+		shader_parsefunc(&args[2], &shader->deformv_wavefunc);		
 	}
 	else if (!A_stricmp(args[0], "normal"))
 	{
@@ -185,7 +175,6 @@ shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numargs,
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
 		shader->deform_vertices = DEFORMV_BULGE;
-	
 		shader->deform_params[0] = atof (args[1]); // Width 
 		shader->deform_params[1] = atof (args[2]); // Height
 		shader->deform_params[2] = atof (args[3]); // Speed 
@@ -194,11 +183,9 @@ shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numargs,
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
 		shader->deform_vertices = DEFORMV_MOVE;
-
 		shader->deform_params[0] = atof (args[1]); // x 
 		shader->deform_params[1] = atof (args[2]); // y
 		shader->deform_params[2] = atof (args[3]); // z
-		
 		shader_parsefunc(&args[4], &shader->deformv_wavefunc);
 	}
 	else if (!A_stricmp (args[0], "autosprite"))
@@ -218,23 +205,19 @@ shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numargs,
 	}
 }
 
-static void shader_fogparams (shader_t *shader, shaderpass_t *pass, int numargs,
-		      char **args)
+static void shader_fogparams (shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
-
 	shader->flags |= SHADER_FOG;
-
 	shader->fog_params[0] = atof(args[0]); // R
 	shader->fog_params[1] = atof(args[1]); // G
 	shader->fog_params[2] = atof(args[2]); // B
 	shader->fog_params[3] = atof(args[3]); // Dist
 }
 
-static void shader_sort (shader_t *shader, shaderpass_t *pass, int numargs,
-		      char **args)
+static void shader_sort (shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
 	if (!A_stricmp( args[0], "portal" ) ) {
-			shader->sort = SHADER_SORT_PORTAL;
+		shader->sort = SHADER_SORT_PORTAL;
 	} else if( !A_stricmp( args[0], "sky" ) ) {
 		shader->sort = SHADER_SORT_SKY;
 	} else if( !A_stricmp( args[0], "opaque" ) ) {
@@ -252,16 +235,12 @@ static void shader_sort (shader_t *shader, shaderpass_t *pass, int numargs,
 	}
 }
 
-static void shader_q3map (shader_t *shader, shaderpass_t *pass, int numargs,
-		      char **args)
+static void shader_q3map (shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
 	// Just do nothing 
-
-
 }
 
-static void shader_portal(shader_t *shader, shaderpass_t *pass, int numargs,
-		      char **args)
+static void shader_portal(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
 	shader->sort = SHADER_SORT_PORTAL;
 }
@@ -269,13 +248,12 @@ static void shader_portal(shader_t *shader, shaderpass_t *pass, int numargs,
 static void shader_entitymergable (shader_t *shader, shaderpass_t *pass, int numargs,
 		      char **args)
 {
-	// TODO ! (? )
+	// TODO! (?)
 
 }
-static void shader_polygonoffset (shader_t *shader, shaderpass_t *pass, int numargs,
-		      char **args)
+static void shader_polygonoffset (shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
-	shader->flags|=SHADER_POLYGONOFFSET;
+	shader->flags |= SHADER_POLYGONOFFSET;
 }
 
 static shaderkey_t shaderkeys[] =
@@ -284,31 +262,30 @@ static shaderkey_t shaderkeys[] =
     {"surfaceparm", 1, 1, shader_surfaceparm},
     {"skyparms", 3, 3, shader_skyparms},
     {"nomipmaps", 0, 0, shader_nomipmaps},
-	{"nopicmip",0,0,shader_nopicmip},
-	{"polygonoffset",0,0,shader_polygonoffset },
-	{"sort",1,1,shader_sort},
+	{"nopicmip", 0, 0, shader_nopicmip},
+	{"polygonoffset", 0, 0, shader_polygonoffset },
+	{"sort", 1, 1, shader_sort},
     {"deformvertexes", 1, 9, shader_deformvertexes},
-	{"q3map_lightimage",0,9,shader_q3map},
-	{"q3map_globaltexture",0,9,shader_q3map},
-	{"q3map_surfacelight",0,9,shader_q3map},
-	{"q3map_flare",0,9,shader_q3map},
-	{"tesssize",0,9,shader_q3map},
-	{"qer_editorimage",0,9,shader_q3map},
-	{"qer_trans",0,9,shader_q3map},
-	{"qer_nocarve",0,9,shader_q3map},
-	{"q3map_sun",0,9,shader_q3map},
-	{"q3map_lightsubdivide",0,9,shader_q3map},
-	{"light",0,1,shader_q3map }, // (?)
-	{"portal",0,0,shader_portal},
-	{"entitymergable",0,0,shader_entitymergable},
-	{"fogparams",4,4,shader_fogparams},
+	{"q3map_lightimage", 0, 9, shader_q3map},
+	{"q3map_globaltexture", 0, 9, shader_q3map},
+	{"q3map_surfacelight", 0, 9, shader_q3map},
+	{"q3map_flare", 0, 9, shader_q3map},
+	{"tesssize", 0, 9, shader_q3map},
+	{"qer_editorimage", 0, 9, shader_q3map},
+	{"qer_trans", 0, 9, shader_q3map},
+	{"qer_nocarve", 0, 9, shader_q3map},
+	{"q3map_sun", 0, 9, shader_q3map},
+	{"q3map_lightsubdivide", 0, 9, shader_q3map},
+	{"light", 0, 1, shader_q3map }, // (?)
+	{"portal", 0, 0, shader_portal},
+	{"entitymergable", 0, 0, shader_entitymergable},
+	{"fogparams", 4, 4, shader_fogparams},
     {NULL, 0, 0, NULL}  /* Sentinel */
 };
 
 /****************** shader pass keyword functions *******************/
 
-static void
-shaderpass_map(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
+static void shaderpass_map(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
 	if (!A_stricmp(args[0], "$lightmap"))
 	{
@@ -348,7 +325,7 @@ static void
 shaderpass_clampmap(shader_t *shader, shaderpass_t *pass, int numargs,
 		    char **args)
 {
-	pass->tc_gen= TC_GEN_BASE;
+	pass->tc_gen = TC_GEN_BASE;
     pass->texref = R_Load_Texture(args[0],shader->flags | SHADER_CLAMP);
 }
 
@@ -694,24 +671,28 @@ static void Load_Standard_Shaders (void)
 	shader_console = R_LoadShader (CONSOLE_SHADER_NAME, SHADER_2D);
 }
 
-int Shader_Init (void)
+aboolean Shader_Init (void)
 {
-	int i,size = 0, dirlen, numdirs;
-	char dirlist[256 * MAX_APATH];
+	int i, size = 0, dirlen, numdirs;
+	char dirlist[MAX_APATH << 8];
+	char loadedlist[MAX_APATH << 8];
 	char *dirptr, *pscripts;
 	int file;
 	char filename[MAX_APATH];
 
 	Con_Printf ("Initializing Shaders:\n");
 
-	r_shaders = (shader_t *)malloc(MAXSHADERS * sizeof(shader_t ));
+	r_shaders = (shader_t *)malloc(MAX_SHADERS * sizeof(shader_t ));
 
 	numdirs = FS_GetFileList ("scripts", "shader", dirlist, 256 * MAX_APATH);
 
-	if (!numdirs)
+	if (!numdirs) {
 		Error ("Could not find any shaders!");
+		return afalse;
+	}
 
 	memset (filename, 0, MAX_APATH);
+	memset (loadedlist, 0, MAX_APATH);
 
 	// find the size of all shader scripts
 	dirptr = dirlist;
@@ -720,8 +701,11 @@ int Shader_Init (void)
 
 		if (!dirlen)
 			continue;
+		if (strstr(loadedlist, dirptr))
+			continue;
 
 		Com_sprintf(filename, sizeof(filename), "scripts/%s", dirptr);
+		A_strcat (loadedlist, MAX_APATH << 8, dirptr);
 
 		size += FS_FileSize(filename) + 1;
 	}
@@ -733,6 +717,7 @@ int Shader_Init (void)
 	pscripts = shaderbuf = (char * )malloc (size);
 
 	memset (filename, 0, MAX_APATH);
+	memset (loadedlist, 0, MAX_APATH);
 
 	// now load all the scripts
 	dirptr = dirlist;
@@ -741,11 +726,14 @@ int Shader_Init (void)
 
 		if (!dirlen)
 			continue;
+		if (strstr(loadedlist, dirptr))
+			continue;
 
 		Com_sprintf( filename, sizeof(filename), "scripts/%s", dirptr );
+		A_strcat (loadedlist, MAX_APATH << 8, dirptr);
 
 		size = FS_OpenFile( filename, &file, FS_READ );
-		if( !file || !size ) continue;
+		if ( !file || !size ) continue;
 
 		Con_Printf( "...loading '%s'\n", filename );
 
@@ -754,11 +742,11 @@ int Shader_Init (void)
 
 		pscripts += size;
 
-		/* make sure there's a whitespace between two files */
+		// make sure there's a whitespace between two files
 		*(pscripts++) = '\n';
 	}
 
-	/* terminate this big string */
+	// terminate this big string
 	*pscripts = 0;
 
 	Shader_MakeCache();
@@ -769,7 +757,7 @@ int Shader_Init (void)
 
 	Load_Standard_Shaders ();	
 
-	return 1;
+	return atrue;
 }
 
 void Shader_MakeCache (void)
@@ -860,7 +848,7 @@ int Shader_GetOffset (const char *name)
 }
 
 
-int Shader_Shutdown (void)
+void Shader_Shutdown (void)
 {
 	free (r_shaders);
 	free (shaderbuf);
@@ -868,8 +856,6 @@ int Shader_Shutdown (void)
 	free (shadercache);
 
 	Tex_Shutdown();
-
-	return 0;
 }
 
 void Shader_Readpass(shader_t *shader, shaderpass_t *pass, char ** ptr)
@@ -1007,7 +993,13 @@ int R_LoadShader (const char *name, int type)
 {
 	char *ptr;
 	int offset, i;
-	shader_t *s = &r_shaders[shadercount];
+	shader_t *s;
+
+	if (shadercount >= MAX_SHADERS)
+	{
+		Con_Printf ("R_LoadShader: Shader limit exceeded.\n");
+		return -1;
+	}
 
 	if (strlen(name) > MAX_APATH) {
 		return -1;
@@ -1020,6 +1012,7 @@ int R_LoadShader (const char *name, int type)
 			return i;
 	}
 
+	s = &r_shaders[shadercount];
 	offset = Shader_GetOffset(name);
 
 	// the shader is in the shader scripts

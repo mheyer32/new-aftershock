@@ -27,7 +27,6 @@
 
 #define MAX_PAKFILES 64
 
-
 static unzFile pakfiles[MAX_PAKFILES];
 static unzFile actfile;
 static int pak_numfiles = 0;

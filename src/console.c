@@ -567,9 +567,8 @@ void Con_Printf(const char *format, ...)
 	va_start(args, format);
 	vsprintf(buffer, format, args);
 	va_end(args);
-	
-
-/*	if(logfile->integer && !conlog) {
+/*	
+	if(logfile->integer && !conlog) {
 		time_t t;
 		struct tm *local_time;
 
@@ -587,15 +586,12 @@ void Con_Printf(const char *format, ...)
 		FileClose(conlog);
 		conlog = 0;
 	}
-*/
-/*	if(conlog) {
+
+	if(conlog) {
 		FileWriteString(buffer, conlog);
 	}
 */
-
 	Con_AddToBuffer(buffer);
-
-
 }
 
 /* prints a line on the console only if developer is set */

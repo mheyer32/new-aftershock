@@ -132,7 +132,6 @@ void Sys_Keyboard_Event (unsigned int Vkey, aboolean down)
 			key = K_KP_PGDN;
 			break;
 
-
 		case VK_DIVIDE:
 			key = K_KP_SLASH;
 			break;

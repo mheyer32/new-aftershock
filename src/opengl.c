@@ -2803,16 +2803,6 @@ int Init_OpenGL (void)
 				gl_ext_info._TexEnv_Add=0;
 				glconfig.textureEnvAddAvailable=0;
 			}
-			if (IsExtensionSupported("GL_NV_texgen_reflection"))
-			{
-				Con_Printf ("...using GL_NV_texgen_reflection\n");
-				gl_ext_info._GL_NV_texgen_reflection = 1;
-			}
-			else
-			{
-				Con_Printf ("... GL_NV_texgen_reflection not found\n");
-				gl_ext_info._GL_NV_texgen_reflection=0;
-			}
 			if (IsExtensionSupported ("GL_EXT_texture_env_combine"))
 			{
 				Con_Printf("...ignoring GL_EXT_texture_env_combine\n");

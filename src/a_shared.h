@@ -441,7 +441,7 @@ typedef struct {
 
 #define CrossProduct(v1,v2,cross) (cross[0]=v1[1]*v2[2]-v1[2]*v2[1],cross[1]=v1[2]*v2[0]-v1[0]*v2[2],cross[2]=v1[0]*v2[1]-v1[1]*v2[0])
 
-#define VectorInverse(v)		((c[0]=-c[0]),(c[1]=-c[1]),(c[2]=-c[2]))
+#define VectorInverse(v)		((v[0]=-v[0]),(v[1]=-v[1]),(v[2]=-v[2]))
 #define VectorCompare(v1,v2)	((v1[0] == v2[0]) && (v1[1] == v2[1]) && (v1[2] == v2[2]))
 
 // just in case you do't want to use the macros
@@ -456,6 +456,8 @@ unsigned ColorBytes3 (float r, float g, float b);
 unsigned ColorBytes4 (float r, float g, float b, float a);
 
 float NormalizeColor( const vec3_t in, vec3_t out );
+
+#define ClearColor(a)	((a[0]=255),(a[1]=255),(a[2]=255),(a[3]=255))
 
 float RadiusFromBounds( const vec3_t mins, const vec3_t maxs );
 void ClearBounds( vec3_t mins, vec3_t maxs );
@@ -1055,5 +1057,13 @@ void *_cdecl malloc (unsigned int size);
 void *memcpy(void *, const void *, size_t);
 
 void Error(const char *fmt, ...);
+
+// Casting floats to unsigned chars is also very expensive, just
+// NEVER cast with (unsigned char)
+__forceinline byte __stdcall FloatToByte(float x) 
+{ 
+	float  t = x + (float) 0xC00000;
+	return * (byte *) &t; 
+}
 
 #endif

@@ -23,19 +23,17 @@
 
 typedef struct
 {
-    int size[2];    /* Mesh dimensions, u&v */
-    vec3_t *points;
-    colour_t *colour;
-    texcoord_t *tex_st;
-    texcoord_t *lm_st;
-    int numelems;
-    unsigned int  *elems;
-	
+    int				size[2];    // Mesh dimensions, u&v
+    vec3_t			*points;
+    colour_t		*colour;
+    texcoord_t		*tex_st;
+    texcoord_t		*lm_st;
+    int				numelems;
+    unsigned int	*elems;
 } mesh_t;
 
-extern float r_subdivisiontol;  /* A lower values produces more vertexes
-				   (smoother curve) */
-extern int r_maxmeshlevel;      /* Constraint on maximum num vertexes */
+extern float r_subdivisiontol;  // A lower values produces more vertexes (smoother curve)
+extern int r_maxmeshlevel;      // Constraint on maximum num vertexes
 extern int r_nummeshes;
 extern mesh_t *r_meshes;
 extern int *r_facemeshes;

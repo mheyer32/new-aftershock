@@ -238,8 +238,7 @@ typedef struct {
 	float r, g, b;
 } dlight_t;
 
-
-// used for everything which has its own coordinate system :
+// used for everything which has its own coordinate system
 typedef struct 
 {
 	mat4_t matrix;
@@ -249,38 +248,27 @@ typedef struct
 	aboolean inv_matrix_calculated;
 } reference_t;
 
-/*
-#include <windows.h>
+void R_StartFrame (void);
+void R_EndFrame (void);
 
-
-extern HINSTANCE hInst;
-extern HDC dc;
-extern HWND hWnd;
-extern HGLRC hRC;
-*/
-
-
-void R_StartFrame (void );
-void R_EndFrame (void );
-
-void R_DrawStretchPic( float x,float y,float w,float h,float s1,float t1,float s2,float t2,int hShader);
-void R_SetColor( const float *rgba );
+void R_DrawStretchPic (float x, float y, float w, float h, float s1, float t1, float s2, float t2, int hShader);
+void R_SetColor(const float *rgba);
 void R_Init(void);
 void R_Shutdown(void);
-void R_DrawString( int x, int y, const char *str, vec4_t color );
-void R_AddPolyToScene( const polyVert_t *verts , int numVerts, int Shader ) ;
-void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
+void R_DrawString(int x, int y, const char *str, vec4_t color);
+void R_AddPolyToScene(const polyVert_t *verts , int numVerts, int Shader);
+void R_AddLightToScene(const vec3_t org, float intensity, float r, float g, float b);
 void R_Update_Screen(void);
 void R_ClearScene (void);
-void R_RenderScene (const refdef_t * fd );
-void R_AddRefEntityToScene( const refEntity_t *re );
-int R_TestVis ( const vec3_t p1, const vec3_t p2 );
-void R_LerpTag( orientation_t *tag, int model, int startFrame, int endFrame, float frac, const char *tagName ) ;
+void R_RenderScene (const refdef_t *fd);
+void R_AddRefEntityToScene(const refEntity_t *re);
+int  R_TestVis(const vec3_t p1, const vec3_t p2);
+void R_LerpTag(orientation_t *tag, int model, int startFrame, int endFrame, float frac, const char *tagName);
 
-int R_RegisterModel( const char *name );
-int R_RegisterSkin( const char *name );
+int R_RegisterModel(const char *name);
+int R_RegisterSkin(const char *name);
 
-void R_LoadWorldMap( const char *mapname );
-void R_FreeWorldMap (void );
+void R_LoadWorldMap(const char *mapname);
+void R_FreeWorldMap (void);
 
 #endif /*__RENDER_H__*/

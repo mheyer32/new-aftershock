@@ -57,8 +57,6 @@ texfile_t *r_texfiles;
 
 skybox_t *r_skybox; 
 
-int r_numbrushes;
-int actLeaf = 0;
 float r_sinfov;
 float r_cosfov;
 
