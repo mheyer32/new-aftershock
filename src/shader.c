@@ -35,17 +35,9 @@
 #define CONSOLE_SHADER_NAME "console"
 
 
-typedef struct {
-	char * filename ;
-	char * textures;
-}shaderbind_t;
 
-
-
-static byte * shaders_in_use =NULL;
-char shaderlist[4096];
 int numshaders=0,numshadersloaded=0;
-shaderbind_t * shaderbinds=NULL;
+int shadercount=0;
 extern int *ids;
 
 
@@ -57,10 +49,11 @@ int shader_console =-1;
 /* Maps shader keywords to functions */
 
 static int shader_lookup(const char *name);
-static void shader_skip(void);
-static void shader_read(void);
-static void shader_readpass(shader_t *shader, shaderpass_t *pass);
-static void shader_parsetok(shader_t *shader, shaderpass_t *pass, shaderkey_t *keys, char *tok);
+void Shader_Skip ( char ** ptr );
+void Shader_Parsetok(shader_t *shader, shaderpass_t *pass, shaderkey_t *keys,
+		char *token,char ** ptr);
+void Shader_MakeCache (void );
+
 static void shader_makedefaults(void);
 static int shader_gettexref(const char *fname);
 static char* nexttok(void);
@@ -98,6 +91,8 @@ shader_surfaceparm(shader_t *shader, shaderpass_t *pass, int numargs,
 	{
 	shader->contents|=SURF_NOMIPMAP;
 	}
+	// Is this needed ??
+	/*
 	else if (!strcmp(args[0], "nomarks"))
 		shader->contents|=SURF_NOMARKS;
 	else if (!strcmp(args[0], "nonsolid"))
@@ -133,6 +128,7 @@ shader_surfaceparm(shader_t *shader, shaderpass_t *pass, int numargs,
 
 		Con_Printf("Unknown surfaceparam : %s\n",args [0]);
 	}
+	*/
 
 }
 
@@ -156,6 +152,7 @@ shader_nopicmip(shader_t *shader, shaderpass_t *pass, int numargs,
 		 char **args)
 {
     shader->flags |= SHADER_NOPICMIP;
+	 shader->flags |= SHADER_NOMIPMAPS;
 }
 
 static void
@@ -214,6 +211,20 @@ shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numargs,
 	{
 		Con_Printf ("WARNING: Unknown deformv param : %s \n",args[0]);
 	}
+
+
+}
+
+static void shader_fogparams (shader_t *shader, shaderpass_t *pass, int numargs,
+		      char **args)
+{
+
+	shader->flags	|= SHADER_FOG ;
+
+	shader->fog_params[0]=atof (args[0]); // R
+	shader->fog_params[1]=atof (args[1]); // G
+	shader->fog_params[2]=atof (args[2]); // B
+	shader->fog_params[3]=atof (args[3]); // Dist
 
 
 }
@@ -280,6 +291,8 @@ static shaderkey_t shaderkeys[] =
 	{"q3map_lightimage",0,9,shader_q3map},
 	{"q3map_globaltexture",0,9,shader_q3map},
 	{"q3map_surfacelight",0,9,shader_q3map},
+	{"q3map_flare",0,9,shader_q3map},
+	{"tesssize",0,9,shader_q3map},
 	{"qer_editorimage",0,9,shader_q3map},
 	{"qer_trans",0,9,shader_q3map},
 	{"qer_nocarve",0,9,shader_q3map},
@@ -288,6 +301,7 @@ static shaderkey_t shaderkeys[] =
 	{"light",0,1,shader_q3map }, // (?)
 	{"portal",0,0,shader_portal},
 	{"entitymergable",0,0,shader_entitymergable},
+	{"fogparams",4,4,shader_fogparams},
     {NULL, 0, 0, NULL}  /* Sentinel */
 };
 
@@ -305,12 +319,12 @@ shaderpass_map(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 	else if (!stricmp (args[0],"$whiteimage"))
 	{
 		pass->tc_gen=TC_GEN_BASE;
-		pass->texref=complete_texture_load("white",0 |  shader->flags & SURF_NOMIPMAP ? TEXFILE_NOMIPMAPS : 0  );
+		pass->texref=R_Load_Texture("white",shader->flags );
 	}
 	else
     {
 			pass->tc_gen=TC_GEN_BASE;
-			pass->texref=complete_texture_load(args[0],0 |  shader->flags & SURF_NOMIPMAP ? TEXFILE_NOMIPMAPS : 0  | shader->flags & SHADER_NOPICMIP ? TEXFILE_NOSCALEDOWN : 0);
+			pass->texref=R_Load_Texture(args[0],shader->flags );
     }
 	
 
@@ -350,9 +364,7 @@ shaderpass_rgbgen(shader_t *shader, shaderpass_t *pass, int numargs,
 	}
 	else if (!stricmp(args[0],"Vertex"))
 	{
-		
 		pass->rgbgen=RGB_GEN_VERTEX;
-
 	}
 	else if (!stricmp(args[0],"oneMinusVertex"))
 	{
@@ -362,6 +374,10 @@ shaderpass_rgbgen(shader_t *shader, shaderpass_t *pass, int numargs,
 	{
 		pass->rgbgen=RGB_GEN_LIGHTING_DIFFUSE ;
 
+	}
+	else if (!stricmp (args[0],"exactvertex"))
+	{
+		pass->rgbgen=RGB_GEN_EXACT_VERTEX;
 	}
 	else {
 		Con_Printf ("WARNING : Unknown rgb_gen param : % s \n",args[0]);
@@ -563,7 +579,7 @@ shaderpass_animmap(shader_t *shader, shaderpass_t *pass, int numargs,
     for (i=1; i < numargs; ++i)
 	{
 
-		pass->anim_frames[i-1]=complete_texture_load(args[i],0 |  shader->flags & SURF_NOMIPMAP ? TEXFILE_NOMIPMAPS : 0 | shader->flags & SHADER_NOPICMIP ? TEXFILE_NOSCALEDOWN : 0 );
+		pass->anim_frames[i-1]=R_Load_Texture(args[i],shader->flags );
 	}
 }
 
@@ -572,7 +588,7 @@ shaderpass_clampmap(shader_t *shader, shaderpass_t *pass, int numargs,
 		    char **args)
 {
 	pass->tc_gen= TC_GEN_BASE;
-    pass->texref = complete_texture_load(args[0],0| TEXFILE_CLAMP | shader->flags & SURF_NOMIPMAP ? TEXFILE_NOMIPMAPS : 0 | shader->flags & SHADER_NOPICMIP ? TEXFILE_NOSCALEDOWN : 0 );
+    pass->texref = R_Load_Texture(args[0],shader->flags | SHADER_CLAMP);
 }
 
 static void
@@ -617,8 +633,21 @@ static void shaderpass_alphagen (shader_t *shader, shaderpass_t *pass, int numar
 	{
 		pass->alpha_gen=ALPHA_GEN_PORTAL;
 	}
+	else if (!stricmp (args[0],"vertex"))
+	{
+		pass->alpha_gen=ALPHA_GEN_VERTEX ;
+	}
+	else if (!stricmp (args[0],"entity"))
+	{
+		pass->alpha_gen=ALPHA_GEN_ENTITY;
+	}
+	else if (!stricmp (args[0],"lightingspecular"))
+	{
+		pass->alpha_gen=ALPHA_GEN_LIGHTINGSPECULAR;
+	}
 	else
 	{
+		pass->alpha_gen=ALPHA_GEN_DEFAULT;
 		Con_Printf ("unknown alphagen param : %s \n",args[0]);
 	}
 
@@ -645,58 +674,23 @@ static shaderkey_t shaderpasskeys[] =
 
 /* *************************************************************** */
 
+typedef struct cache_s{
+	char name [MAX_APATH];
+	int offset ;
+}cache_t ;
 
-static void  Fill_Shaderbinds(void)
-{
-	int i=0,len=0;
-	char *Listpos=shaderlist;
-	char * filebuf=malloc(150000);
-    char *tok;
-
-
-	for(i=0;i<numshaders;i++)
-	{
-	
-
-		shaderbinds[i].filename=malloc(128);
-		shaderbinds[i].textures=malloc(128);
-		memset(shaderbinds[i].filename,0,128);
-		memset(shaderbinds[i].textures,0,128);
-		strcpy(shaderbinds[i].filename,Listpos);
-
-		len = pak_readfile(shaderbinds[i].filename, 150000, filebuf);
-
-
-		curpos = filebuf;
-		endpos = curpos + len;
-
-		strcat(shaderbinds[i].textures," ");
-		
-
-		while ((tok = nexttok()) != NULL)
-		{
-			shaderbinds[i].textures=realloc(shaderbinds[i].textures,strlen(shaderbinds[i].textures)+128);
-			strcat(shaderbinds[i].textures,tok);
-			strcat(shaderbinds[i].textures," ");
-			shader_skip();
-
-
-		}
+char *shaderfiles [MAX_APATH];
+cache_t * shadercache =NULL;
 
 
 
-		Listpos+=strlen(Listpos)+1;
-	}
 
-	free(filebuf);
-}
-
-static void load_Standard_Shaders (void)
+static void Load_Standard_Shaders (void)
 {
 
-	shader_white = shader_read_extern(WHITE_SHADER_NAME,SHADER_2D);
-	shader_text=shader_read_extern (DEFAULT_TEXT_SHADER_NAME,SHADER_2D);
-	shader_console =shader_read_extern (CONSOLE_SHADER_NAME,SHADER_2D);
+	shader_white = R_LoadShader(WHITE_SHADER_NAME,SHADER_2D);
+	shader_text=R_LoadShader (DEFAULT_TEXT_SHADER_NAME,SHADER_2D);
+	shader_console =R_LoadShader (CONSOLE_SHADER_NAME,SHADER_2D);
 
 }
 
@@ -704,193 +698,286 @@ static void load_Standard_Shaders (void)
 
 
 
-void shader_init(void)
+
+
+int Shader_Init (void )
 {
+	int i,size =0,dirlen,numdirs;
+	char dirlist [256 * MAX_APATH ];
+	char * dirptr,*pscripts;
+	int file;
+	char filename [MAX_APATH];
+
+
+	Con_Printf ("Initializing Shaders :\n");
 
 	r_shaders=malloc(MAXSHADERS*sizeof(shader_t ));
-	shaders_in_use =malloc (MAXSHADERS *sizeof(byte));
-	memset(shaders_in_use,0,MAXSHADERS);
-	
 
-	shaderbuf = (char*)malloc(SHADERBUF_SIZE);
+	numdirs =FS_GetFileList ("scripts","shader",dirlist,256 * MAX_APATH);
 
-	numshaders=FS_GetFileList ("",".shader",shaderlist,4096);
+	if (!numdirs )
+		Error ("Could not find any shaders !");
 
-	if (numshaders==0)
-		Error("NO SHADERS FOUND !");
+	/* find the size of all shader scripts */
+	dirptr = dirlist;
+	for (i=0; i<numdirs; i++, dirptr += dirlen+1) {
+		dirlen = strlen(dirptr);
+		Com_sprintf( filename, sizeof(filename), "scripts/%s", dirptr );
+
+		size += FS_FileSize(filename) + 1;
+	}
+
+	/* space for the terminator */
+	size++;
+
+	/* allocate the memory */
+	pscripts = shaderbuf = (char * ) malloc (size );
+
+	/* now load all the scripts */
+	dirptr = dirlist;
+	for (i=0; i<numdirs; i++, dirptr += dirlen+1) {
+		dirlen = strlen(dirptr);
+		Com_sprintf( filename, sizeof(filename), "scripts/%s", dirptr );
+
+		Con_Printf( "...loading '%s'\n", filename );
+
+		size = FS_OpenFile( filename, &file, FS_READ );
+		if( !file || !size ) continue;
+
+		FS_Read( pscripts, size, file );
+		FS_FCloseFile( file );
+
+		pscripts += size;
+
+		/* make sure there's a whitespace between two files */
+		*(pscripts++) = '\n';
+	}
+
+	/* terminate this big string */
+	*pscripts = 0;
+
+	Shader_MakeCache();
+
+	Con_Printf ("...Done\n");
+
+	Tex_Init ();
 
 
-	shaderbinds=malloc(numshaders*sizeof(shaderbind_t));
-	Fill_Shaderbinds();
-	tex_init();
-	load_Standard_Shaders ();	
+	Load_Standard_Shaders ();	
+
+
+
+	return 1;
 
 }
 
 
-void shader_shutdown (void)
+void Shader_MakeCache (void )
+{
+	char *ptr;
+	char *token ;
+	int i;
+	
+
+	ptr = shaderbuf ;
+
+	numshaders =0;
+
+	COM_BeginParseSession ();
+
+	while (ptr )
+	{
+		token =COM_ParseExt ( &ptr,1);
+		if (!token[0]) continue;
+		Shader_Skip (& ptr );
+		
+		numshaders ++;
+
+	}
+
+	
+	
+	shadercache = malloc ( numshaders * sizeof (cache_t ));
+
+
+	ptr = shaderbuf;
+	i=0;
+
+	while (ptr )
+	{
+		token =COM_ParseExt ( &ptr,1);
+		shadercache[i].offset= ptr - shaderbuf ;
+
+
+		if (!token[0]) continue;
+
+		strcpy (shadercache[i].name,token);
+
+		Shader_Skip (& ptr );	
+		i++;
+	}
+
+
+
+
+
+
+}
+
+
+void Shader_Skip ( char ** ptr )
+{
+	
+	char *tok,*tmp;
+    int brace_count;
+
+    /* Opening brace */
+    tok = COM_ParseExt (ptr,1);
+	
+	if (!ptr) return ;
+    
+	if (tok[0] != '{') 
+	{
+		tok = COM_ParseExt(ptr,1);
+	}
+	tmp = *ptr;
+
+    for (brace_count = 1; brace_count > 0 ; tmp++)
+    {
+		if (!tmp[0]) break ;
+		if (tmp[0] == '{')
+			brace_count++;
+		else if (tmp[0] == '}')
+			brace_count--;
+    }
+
+	*ptr = tmp;
+
+}
+
+int Shader_GetOffset (const char *name )
 {
 
 	int i;
 
-	if (r_shaders)
-		free(r_shaders);
-
-	if (shaders_in_use )
-		free (shaders_in_use);
-
-	if (shaderbuf)
-		free(shaderbuf);
-
-	if (shaderbinds)
-	{
-		for (i=0;i<numshaders;i++)
-		{
-
-			free(shaderbinds[i].filename);
-			free(shaderbinds[i].textures);
-		}
-		free (shaderbinds);
-	}
-	tex_shutdown();
-
-}
-
-
-
-
-static char *Find_ShaderFile_forTexture(const char *tex)
-{
-	int i=0;
-	char * tmp=malloc(128);
-
-	strcpy(tmp," ");
-	strcat(tmp,tex);
-	strcat(tmp," ");
-
-
-
+	
 	for (i=0;i<numshaders;i++)
 	{
-		if (strlen(shaderbinds[i].textures)>1)
-		{
-			
-		if (strstr(shaderbinds[i].textures,tmp))
-		{
-			free(tmp);
-			return shaderbinds[i].filename;
-		}
-		}
-
-
-
-	}
-
-
-	free(tmp);
-	return NULL;
-
-
-
-}
-
-static int find_free_Shader(void)
-{
-	int i=0;
-
-
-	for (i=0;i<MAXSHADERS;i++)
-	{
-		if (!shaders_in_use[i])
-			return i;
-
-
+		if (!stricmp (shadercache[i].name,name))
+			return shadercache[i].offset;
 	}
 
 	return -1;
 
-
 }
 
 
-// TODO :OPTIMIZE 
-/*
+int Shader_Shutdown (void )
+{
+
+
+
+	free (r_shaders );
+	free (shaderbuf );
+
+	free (shadercache );
+
+	Tex_Shutdown();
+
+	return 0;
+}
+
+
+
+
 void
-shader_readall(int numshaders)
+Shader_Readpass(shader_t *shader, shaderpass_t *pass, char ** ptr)
 {
-    int  i;
+    char *token;
 
-    Con_Printf("Initializing Shaders\n");
-   
-	r_lshaders=malloc (numshaders*sizeof (int));
+    /* Set defaults */
+    pass->flags = 0;
+    pass->texref = -1;
+    pass->depthfunc = GL_LEQUAL;
+    pass->rgbgen = RGB_GEN_IDENTITY;
+    pass->num_tc_mod = 0;
+	pass->alpha_gen =	ALPHA_GEN_DEFAULT ;
+    
 
-
-	for (i=0;i<numshaders;i++)
+	while (ptr)
 	{
-
-		r_lshaders[i]=shader_read_extern (r_shaderrefs[i].name,SHADER_BSP);
-		if (r_lshaders[i]<0) Con_Printf (" Could not load shader %s \n",r_shaderrefs[i].name);
-
-	}
-    Con_Printf("done.\n");
-}
-*/
-
-
-// Declares the shader as free and frees all texutres 
-void shader_free (int num )
-{
-	int i,j;
-	shader_t * s;
-
-	if (num <0 || num > MAXSHADERS)
-		return ;
-
-	if (shaders_in_use [num] )
-	{
+		token =COM_ParseExt (ptr,1);
 		
-		shaders_in_use [num]=0;
-		s=&r_shaders[num];
-		
-		for (i=0;i<s->numpasses;i++)
-		{
+		if (!token[0]) continue;
 
-			if (s->pass[i].flags & SHADER_LIGHTMAP) 
-				continue;
-			else if (s->pass[i].flags & SHADER_ANIMMAP)
-			{
-				for (j=0;j<s->pass[i].anim_numframes;j++)
-				{
-					texture_free(s->pass[i].anim_frames[j]);
-				}
-			}
-			else 
-			{
-				texture_free (s->pass[i].texref);
-			}
-  
-
-		}
-
+		if (token[0] == '}')
+			break;
+		else
+			Shader_Parsetok (shader,pass,shaderpasskeys,token,ptr);
 	}
+
 
 }
 
 void
-shader_freeall(void)
+Shader_Parsetok(shader_t *shader, shaderpass_t *pass, shaderkey_t *keys,
+		char *token,char ** ptr)
 {
+    shaderkey_t *key;
+    char *c, *args[SHADER_ARGS_MAX];
+	static char buf[SHADER_ARGS_MAX][128];
+    int numargs;
 
-	int i;
-
-    for (i=0;i<MAXSHADERS;i++)
+	for (key=keys; key->keyword != NULL ; key ++ )
 	{
-		if (shaders_in_use[i])
+		if (!stricmp (token , key->keyword))
 		{
-			shader_free(i);
+			numargs=0;
+			while (ptr )
+			{
+				c = COM_Parse (ptr);
+				
+				if (!c[0]) // NEW LINE 
+					break;
+
+
+				c =strlwr (c); // Lowercase ( FIXME !)
+				
+				strcpy(buf[numargs],c);
+				args[numargs]= buf[numargs];
+				numargs++;
+			}
+			if (numargs < key->minargs || numargs > key->maxargs)
+				Syntax();
+
+			if (key->func)
+				key->func(shader, pass, numargs, args);
+				return;
 			
 		}
+
+
+
 	}
+
+	// we could not find the keyword :
+	Con_Printf ("Shader_Parsetok : unknown param : % s \n",token);
+   
+	// Next Line :
+	while (ptr)
+	{
+		token = COM_Parse (ptr);
+		if (!token[0])
+			break;
+	}
+
+
 }
+
+
+
+
+
 
 
 static void shader_check_multitexture (shader_t *s )
@@ -944,366 +1031,135 @@ static void shader_check_multitexture (shader_t *s )
 
 }
 
-int 
-shader_read_extern(const char *name, int type)
+int R_LoadShader ( const char * name ,int type )
 {
-    int id,len=0,i;
-    char *tok;
-	char * Filename=NULL,*filebuf=NULL;
-	int found=0;
-	char *shadername=malloc(128);
-
-	strcpy(shadername,name);
+	char *ptr;
+	int offset ,i ;
+	shader_t *s = &r_shaders[shadercount];
 
 
-	for (i=0;i<numshadersloaded;i++)
+	
+
+	// Test if already loaded :
+	for (i=0;i<shadercount;i++)
 	{
-		if (!strcmp(r_shaders[i].name,name))
+		if (!strcmp (name,r_shaders[i].name))
 			return i;
-
 	}
 
-	id =find_free_Shader();
-	if (id<0) 
+
+	offset =Shader_GetOffset (name);
+
+
+	s->contents=0;
+	s->flags=0;
+	s->sort=0;
+	s->numpasses=0;
+
+	if (offset > -1 )
 	{
-		Error (" shader overflow ! " );
+		char * token ;
+		ptr = shaderbuf + offset;
 
 
-	}
+		token = COM_ParseExt(&ptr,1);
 
-	Filename=Find_ShaderFile_forTexture(name);
+		if (!ptr || token[0] != '{')
+			return -1;
 
-	if (!Filename) 
-	{
-	
-		goto failed;
-	}
+		while (ptr)
+		{
 
-	filebuf =malloc(500000);
+			token=COM_ParseExt (&ptr,1);
 
-	pak_open(Filename);
-	len=pak_getlen();
-	pak_read(filebuf,len,1);
+			if (!token[0])
+				continue;
 
+			if (token[0] == '{')
+			{
+				int pass = s->numpasses++;
+				Shader_Readpass(s, &s->pass[pass],&ptr);
 
-	curpos = filebuf;
-	endpos = curpos + len;
 
-
-	/* Set defaults */
-	r_shaders[id].flags = 0;
-	r_shaders[id].numpasses = 0;
-	r_shaders[id].contents=CONTENTS_SOLID;
-	r_shaders[id].sort =0;
-	r_shaders[id].deform_vertices=DEFORMV_NONE;
-	r_shaders[id].portalstate= 0;
-
-
-
-    while ((tok = nexttok()) != NULL  && curpos<endpos)
-    {
-	
-	
-	if (stricmp(tok,shadername))
-	{
-	    shader_skip();
-	    continue;
-	}
-
-	found=1;
-	
-	
-	/* Opening brace */
-	tok = nexttok();
-	if (tok[0] != '{') Syntax();
-
-	while ((tok = nexttok()) != NULL)
-	{
-	    if (tok[0] == '{') /* Start new pass */
-	    {
-		int pass = r_shaders[id].numpasses++;
-		shader_readpass(&r_shaders[id], &r_shaders[id].pass[pass]);
-	    }
-
-	    else if (tok[0] == '}') /* End of shader */
-		break;
-
-	    else
-		shader_parsetok(&r_shaders[id], NULL, shaderkeys, tok);
-	}
-	 shader_check_multitexture(&r_shaders[id]);
-		
-	 if (!r_shaders[id].sort)
-	 {
-		 if (r_shaders[id].pass[0].flags & SHADER_BLEND )
-			 r_shaders[id].sort= SHADER_SORT_ADDITIVE ;
-		 else 
-			r_shaders[id].sort = SHADER_SORT_OPAQUE ;
-	 }
-
-
-    }
-
-
-
-	if (!found)
-	{
-
-failed:
-
-
-	r_shaders[id].flags =0;
-	switch ( type )
-	{
-
-	case SHADER_2D :
-		
-
-		r_shaders[id].flags = SHADER_NOCULL | SHADER_NEEDCOLOURS | SHADER_NOPICMIP;
-	    r_shaders[id].numpasses = 1;
-	    r_shaders[id].pass[0].flags =  SHADER_BLEND ;
-		r_shaders[id].pass[0].blendsrc=GL_SRC_ALPHA;
-		r_shaders[id].pass[0].blenddst=GL_ONE_MINUS_SRC_ALPHA;
-	    r_shaders[id].pass[0].texref = complete_texture_load (name ,TEXFILE_NOMIPMAPS | TEXFILE_NOSCALEDOWN);
-	    r_shaders[id].pass[0].depthfunc = GL_ALWAYS;
-	    r_shaders[id].pass[0].rgbgen = RGB_GEN_VERTEX;
-		r_shaders[id].sort = SHADER_SORT_ADDITIVE;
-		
-		break;
-
-
-
-	case SHADER_BSP:
-		 r_shaders[id].flags = SHADER_NOCULL | SHADER_NEEDCOLOURS;
-	    r_shaders[id].numpasses = 1;
-	    r_shaders[id].pass[0].flags = SHADER_DEPTHWRITE;
-	    r_shaders[id].pass[0].texref =complete_texture_load (name ,0); 
-	    r_shaders[id].pass[0].depthfunc = GL_LEQUAL;
-	    r_shaders[id].pass[0].rgbgen = RGB_GEN_VERTEX;	 
-		r_shaders[id].sort = SHADER_SORT_OPAQUE;
-
-
-		break;
-
-	case SHADER_MD3:
-
-		r_shaders[id].flags = SHADER_NOCULL ;
-	    r_shaders[id].numpasses = 1;
-	    r_shaders[id].pass[0].flags = SHADER_DEPTHWRITE;
-	    r_shaders[id].pass[0].texref = complete_texture_load (name ,0);
-	    r_shaders[id].pass[0].depthfunc = GL_LESS;
-	    r_shaders[id].pass[0].rgbgen = RGB_GEN_IDENTITY;
-		r_shaders[id].sort = SHADER_SORT_OPAQUE;
-
-		break;
-
-
-
-	default:
-		free(shadername);
-		if (filebuf)
-		free(filebuf);
-		return -1;
-		break;
-
-	}
-
-
-		strcpy(r_shaders[id].name,name);
-
-	
-
-
-		free(shadername);
-		if (filebuf)
-		free(filebuf);
-
-
-			numshadersloaded++;
-		shaders_in_use[id]=1;
-		return id;	
-
-
-	}
-	else 
-	{
-
-		strcpy(r_shaders[id].name,name);
-		numshadersloaded++;
-		shaders_in_use[id]=1;
-		return id;
-
-	}
-
-
-	free(filebuf);
-	free(shadername);
-	return -1;
-
-
-
-}
-
-
-
-static void
-shader_skip(void)
-{
-    char *tok;
-    int brace_count;
-
-    /* Opening brace */
-    tok = nexttok();
-	if (!tok) return ;
-    if (tok[0] != '{') 
-	{
-		tok = nexttok();
-	}
-
-    for (brace_count = 1; brace_count > 0 && curpos < endpos; curpos++)
-    {
-	if (*curpos == '{')
-	    brace_count++;
-	else if (*curpos == '}')
-	    brace_count--;
-    }
-}
-
-static void
-shader_readpass(shader_t *shader, shaderpass_t *pass)
-{
-    char *tok;
-
-    /* Set defaults */
-    pass->flags = 0;
-    pass->texref = -1;
-    pass->depthfunc = GL_LEQUAL;
-    pass->rgbgen = RGB_GEN_IDENTITY;
-    pass->num_tc_mod = 0;
-	pass->alpha_gen =	ALPHA_GEN_DEFAULT ;
-    
-    while ((tok = nexttok()) != NULL)
-    {
-	if (tok[0] == '}') /* End of pass */
-	    break;
-
-	else
-	    shader_parsetok(shader, pass, shaderpasskeys, tok);
-    }
-}
-
-static void
-shader_parsetok(shader_t *shader, shaderpass_t *pass, shaderkey_t *keys,
-		char *tok)
-{
-    shaderkey_t *key;
-    char *c, *args[SHADER_ARGS_MAX];
-    int numargs;
-
-    /* Lowercase the token */
-    c = tok;
-    while (*c++) *c =  LOWERCASE(*c);
-    
-    /* FIXME: This should be done with a hash table! */
-
-    for (key = keys; key->keyword != NULL; key++)
-    {
-	if (stricmp(tok, key->keyword) == 0)
-	{
-		
-	    for (numargs=0; (c = nextarg()) != NULL; numargs++)
-	    {
-		/* Lowercase the argument */
-		args[numargs] = c;
-		while (*c) {*c = LOWERCASE(*c); c++;}
-	    }
-	    if (numargs < key->minargs || numargs > key->maxargs)
-		Syntax();
-	    
-	    if (key->func)
-		key->func(shader, pass, numargs, args);
-	    return;
-	}
-    }
-
-
-
-	Con_Printf ("Shader_Parsetok : unknown param : % s \n",tok);
-    /* Unidentified keyword: no error for now, just advance to end of line */
-    while (*curpos != '\n')
-	if (++curpos == endpos) break;    
-}
-
-
-
-static char*
-nexttok(void)
-{
-    char *tok;
-    
-    while (curpos < endpos)
-    {
-	/* Skip leading whitespace */
-	while (*curpos == ' ' || *curpos == '\t' || *curpos == '\n' ||
-	      *curpos == '\r' || *curpos=='\0')
-	    if (++curpos == endpos) return NULL;
-		
-
-	/* Check for comment */
-	if (curpos[0] == '/' && curpos[1] == '/')
-	{
-	    /* Skip to end of comment line */
-	    while (*curpos++ != '\n')
-		if (curpos == endpos) return NULL;
-	    /* Restart with leading whitespace */
-	    continue;
-	}
-	if ( *curpos=='/' && curpos[1] == '*' ) {
-			while ( *curpos && ( *curpos != '*' || curpos[1] != '/' ) ) {
-				curpos++;
 			}
+			else if (token[0] == '}')
+			{
+				break;
+
+			}
+			else
+			{
+				Shader_Parsetok(s, NULL, shaderkeys, token,&ptr);
+			}
+		
+
+		}
+
+
+	}
+	else
+	{
+
+
+		switch (type )
+		{
+		case SHADER_2D :
+			s->flags = SHADER_NOCULL | SHADER_NEEDCOLOURS | SHADER_NOPICMIP;
+			s->numpasses = 1;
+			s->pass[0].flags =  SHADER_BLEND ;
+			s->pass[0].blendsrc=GL_SRC_ALPHA;
+			s->pass[0].blenddst=GL_ONE_MINUS_SRC_ALPHA;
+			s->pass[0].texref = R_Load_Texture (name ,SHADER_NOMIPMAPS | SHADER_NOPICMIP);
+			s->pass[0].depthfunc = GL_ALWAYS;
+			s->pass[0].rgbgen = RGB_GEN_VERTEX;
+			s->sort = SHADER_SORT_ADDITIVE;
+
+			break;
+
+		case SHADER_BSP :
+			 s->flags = SHADER_NOCULL | SHADER_NEEDCOLOURS;
+			 s->numpasses = 1;
+			 s->pass[0].flags = SHADER_DEPTHWRITE;
+			 s->pass[0].texref =R_Load_Texture (name ,0); 
+	         s->pass[0].depthfunc = GL_LEQUAL;
+			 s->pass[0].rgbgen = RGB_GEN_VERTEX;	 
+		     s->sort = SHADER_SORT_OPAQUE;
+
+			break;
+
+		case SHADER_MD3 :
+			s->flags = SHADER_NOCULL ;
+			s->numpasses = 1;
+			s->pass[0].flags = SHADER_DEPTHWRITE;
+			s->pass[0].texref = R_Load_Texture (name ,0);
+			s->pass[0].depthfunc = GL_LESS;
+			s->pass[0].rgbgen = RGB_GEN_IDENTITY;
+			s->sort = SHADER_SORT_OPAQUE;
+
+
+			break;
+
+
+
+
+		default :
+			return -1;
+
+		}
+
+
 	}
 
-	/* Seek to end of token */
-	tok = curpos;
-	while (*curpos != ' ' && *curpos != '\t' && *curpos != '\n' &&
-	      *curpos != '\r')
-	    if (++curpos == endpos) break;
-
-	/* Zero whitespace character and advance by one */
-	*curpos++ = '\0';
-	return tok;
-    }
-    return NULL;
-}
-
-static char *
-nextarg(void)
-{
-    char *arg;
-
-    while (curpos < endpos)
-    {
-	/* Skip leading whitespace */
-	while (*curpos == ' ' || *curpos == '\t')
-	    if (++curpos == endpos) return NULL;
-
-	/* Check for newline or comment */
-	if (*curpos == '\n' || *curpos == '\r' ||
-	    (curpos[0] == '/' && curpos[1] == '/'))
-	    return NULL;
 	
-	/* Seek to end of token */
-	arg = curpos;
-	while (*curpos != ' ' && *curpos != '\t' && *curpos != '\n' &&
-	      *curpos != '\r')
-	    if (++curpos == endpos) break;
+	strcpy (s->name,name);
 
-	/* Zero whitespace character and advance by one */
-	*curpos++ = '\0';
-	return arg;
-    }
-    return NULL;
+
+	shadercount++;
+
+	return shadercount-1;
+
+
+
 }
 
 
@@ -1341,7 +1197,7 @@ shader_parsefunc(char **args, shaderfunc_t *func)
 int  R_RegisterShaderNoMip( const char *name ) 
 {
 
-	return shader_read_extern(name,SHADER_2D);
+	return R_LoadShader(name,SHADER_2D);
 	
 
 }
@@ -1350,6 +1206,6 @@ int R_RegisterShader ( const char * name )
 {
 
 
-	return shader_read_extern (name,SHADER_BSP );
+	return R_LoadShader (name,SHADER_BSP );
 
 }

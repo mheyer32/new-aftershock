@@ -32,11 +32,8 @@ void Error(const char *fmt, ...)
     sprintf(buf, fmt, ap);
     va_end(ap);
 
-		
-	awglMakeCurrent( NULL, NULL );
-	awglDeleteContext( hRC );
-   
-	 if (MessageBox(NULL,buf,"ERROR",MB_OK   ) ==MB_OK );
+
+	if (MessageBox(NULL,buf,"ERROR",MB_OK   ) ==MB_OK );
  
 
     exit(1);
@@ -60,7 +57,7 @@ int strcmpEXT (char * str,char * str2 ,int len)
 
 
 
-
+// UGLY !!!
 
 int Search (const char * name ,char * in, char * buf ,int bufsize)
 {

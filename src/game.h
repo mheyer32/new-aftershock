@@ -414,7 +414,8 @@ extern int (__cdecl *GAME_syscall)( int arg, ... );
 
 
 
-
+int LoadGame (void );
+int UnLoadGame (void );
 
 
 

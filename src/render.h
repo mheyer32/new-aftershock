@@ -230,13 +230,25 @@ typedef struct
 }quad_t;
 
 
-
-
 typedef struct {
 	vec3_t origin ;
 	float intensity;
 	float r,g,b;
 }dlight_t;
+
+
+// used for everything which has its own coordinate system :
+typedef struct 
+{
+	vec3_t matrix[3];
+	vec3_t inv_matrix [3];
+	vec3_t pos;
+	
+	aboolean matrix_identity;
+	aboolean pos_identity;
+	aboolean inv_matrix_calculated;
+}reference_t;
+
 
 
 #include <windows.h>

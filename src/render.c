@@ -28,6 +28,7 @@
 #include "c_var.h"
 #include "io.h"
 #include "matrix.h"
+#include "console.h"
 
 #include "brushtest.h"
 /* The front end of the rendering pipeline decides what to draw, and
@@ -205,6 +206,7 @@ void R_Recursive_World_Node (int n);
 void R_Render_Walk_Face (int num );
 int R_ClipFrustrum (vec3_t mins ,vec3_t maxs );
 void R_Render_Sprite (const refEntity_t * re );
+void R_Render_Bsp_Model (int num );
 
 unsigned int SortKey (cface_t * face );
 
@@ -259,10 +261,7 @@ int r_numbsp_faces =0;
 
 
 // This will be used by the backend when doing sfx like environment-mapping
-vec3_t reference_point ={0.0,0.0,0.0};
-vec3_t reference_matrix [3];
-aboolean ref_point_origin = atrue ; 
-aboolean ref_matrix_origin = atrue ;
+reference_t transform_ref;
 
 colour_t r_actcolor={255,255,255,255};
 
@@ -289,7 +288,7 @@ void R_Init(void)
 	if (!Init_OpenGL ())
 		Error (" Could not Init OpenGL ! ");
 
-	shader_init();
+	Shader_Init();
 	MD3_Init ();
 
 	GL_DepthMask (GL_TRUE);
@@ -311,6 +310,8 @@ void R_Init(void)
     GL_Enable(GL_TEXTURE_2D);
     GL_TexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
+
+	glPolygonOffset (r_offsetfactor->value, r_offsetunits->value);
 
 
 	glMatrixMode(GL_PROJECTION);
@@ -338,7 +339,7 @@ void R_Shutdown (void )
 
 	glFinish ();
 
-	shader_shutdown();
+	Shader_Shutdown();
 	MD3_Shutdown ();
 
 	free(facelist.faces);
@@ -359,7 +360,7 @@ void R_Shutdown (void )
 void R_AddPolyToScene(  const polyVert_t *verts , int numVerts, int Shader ) 
 {
 	poly_t * p=&Dyn_Polys[dyn_polys_count];
-	if (!verts || !numVerts)
+	if (dyn_polys_count == MAX_DYN_POLYS || !verts || !numVerts)
 		return;
 
 	p->hShader = Shader;
@@ -377,7 +378,6 @@ void R_AddPolyToScene(  const polyVert_t *verts , int numVerts, int Shader )
 
 	dyn_polys_count++;
 }
-
 
 
 
@@ -739,6 +739,7 @@ void R_render_model (const refEntity_t *re)
 	skin_t *skin ;
 	uint_t *elem;
 	int i,j,k,shaderref=-1;
+	float saved_time;
 
 	arrays.numverts = arrays.numelems = 0;
 
@@ -755,14 +756,14 @@ void R_render_model (const refEntity_t *re)
 	//ZOID: fixed z angle
     //glRotatef (e->angles[2],  1, 0, 0);
 
-
-	if (re->nonNormalizedAxes)
+	// TODO !
+/*	if (re->nonNormalizedAxes)
 	{
 		VectorNormalize (re->axis[0]);
 		VectorNormalize (re->axis[1]);
 		VectorNormalize (re->axis[2]);
 	}
-
+*/
 
 	Matrix4_Identity(mat);
 
@@ -781,15 +782,24 @@ void R_render_model (const refEntity_t *re)
 
 
 	// To keep Vertex or TC-mod right 
-	VectorCopy (re->origin,reference_point);
-	ref_point_origin= afalse ;
-	VectorCopy (re->axis[0],reference_matrix[0]);
-	VectorCopy (re->axis[1],reference_matrix[1]);
-	VectorCopy (re->axis[2],reference_matrix[2]);
-	ref_matrix_origin = afalse;
+	VectorCopy (re->axis[0],transform_ref.matrix[0]);
+	VectorCopy (re->axis[1],transform_ref.matrix[1]);
+	VectorCopy (re->axis[2],transform_ref.matrix[2]);
 
+	transform_ref.matrix_identity=afalse;
+	transform_ref.inv_matrix_calculated=afalse;
+	VectorCopy (re->origin,transform_ref.pos);
+	transform_ref.pos_identity=afalse;
 
 	glMultMatrixf(mat);
+
+
+	// Set the shader time :
+	saved_time = g_frametime ;
+
+	// is this right ?
+	g_frametime = saved_time - (float )re->shaderTime/ 1000.0;
+
 
 	for (j = 0; j < model->nummeshes; j++)
 	{
@@ -856,7 +866,7 @@ void R_render_model (const refEntity_t *re)
 			float frac =1.0 - re->backlerp;
 			int backframe = re->oldframe;
 			
-			if (backframe < 0) 
+			if (backframe < 0)   // wrap :
 				backframe = mesh->numframes- 1;
 
 			if ( backframe > mesh->numframes)
@@ -888,12 +898,16 @@ void R_render_model (const refEntity_t *re)
 	}
 
 
+	g_frametime = saved_time;
+
 	// Revert :
-	VectorClear(reference_point);
-	ref_point_origin= atrue ;
-	
-	Matrix3_Identity(reference_matrix);
-	ref_matrix_origin = atrue;
+	Matrix3_Identity(transform_ref.matrix);
+	transform_ref.matrix_identity=atrue;
+	transform_ref.inv_matrix_calculated=afalse;
+	VectorClear(transform_ref.pos);
+	transform_ref.pos_identity=atrue;
+
+
 
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
@@ -1015,11 +1029,13 @@ void R_RenderScene( const refdef_t *fd )
 
 	VectorCopy (fd->vieworg,r_eyepos);
 	
-// Reset the refences :
-	VectorClear ( reference_point );
-	Matrix3_Identity (reference_matrix );
-	ref_point_origin = atrue ; 
-	ref_matrix_origin = atrue ;
+// Reset the reference :
+	Matrix3_Identity (transform_ref.matrix);
+	transform_ref.matrix_identity = atrue;
+	transform_ref.inv_matrix_calculated = afalse ;
+	
+	VectorClear(transform_ref.pos);
+	transform_ref.pos_identity=atrue;
 
 // Make Clipplanes :
 	R_Setup_Clipplanes (fd);
@@ -1153,7 +1169,7 @@ void R_Setup_Clipplanes (const refdef_t * fd )
 
 }
 
-R_Render_Bsp_Model (int num )
+void R_Render_Bsp_Model (int num )
 {
 
 	if (!num )

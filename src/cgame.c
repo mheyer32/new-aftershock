@@ -39,7 +39,7 @@ static int cgameLoaded =0;
 
 int LoadCGAME (void )
 {
-	if (cgameLoaded) return 0;
+	if (cgameLoaded) return 1;
 
 
 	

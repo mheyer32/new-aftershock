@@ -32,6 +32,5 @@ uint_t pak_readfile(const char *path, uint_t bufsize, byte *buf);
 int pak_checkfile(const char *path);
 
 int  pak_FileListForDir(char * list ,const char * directory,const char* ext);
-int  pak_Search(const char * name,char * buf ,int bufsize);
 
 #endif /*__PAK_H__*/

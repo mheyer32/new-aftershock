@@ -1,7 +1,8 @@
 
 
 #include "a_shared.h"
-
+#include "io.h"
+#include "console.h"
 
 
 
@@ -39,7 +40,7 @@ int AAS_Load_Map ( char * mapname )
 	COM_StripExtension(mapname,fname);
 	strcat(fname,".aas");
 
-	len =FOpenFile (fname,& file ,FS_READ );
+	len =FS_OpenFile (fname,& file ,FS_READ );
 
 
 

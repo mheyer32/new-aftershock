@@ -401,16 +401,16 @@ int BSP_Load_Map(char *mapname )
 		Error ("BSP_LoadMap : bsploaded ");
 
 
-	COM_StripExtension(mapname,filename);
-	strcat(filename,".bsp");
+	//COM_StripExtension(mapname,filename);
+	sprintf (filename,"maps/%s.bsp",mapname);
 
-	len =FOpenFile (filename,& file ,FS_READ );
+	len =FS_OpenFile (filename,& file ,FS_READ );
 
 
 
 	if (!len || ! file )
 	{
-		Error ("Could not open .bsp file % s" , mapname );
+		return 0;
 	}
 
 	bsplen = len;
@@ -658,7 +658,7 @@ int BSP_Load_Map(char *mapname )
 
 
 
-
+	FS_FCloseFile (file);
 
 
 	return 1;

@@ -35,7 +35,7 @@ int LoadGame (void )
 
 
 
-	if (gameLoaded) return 0;
+	if (gameLoaded) return 1;
 
 	GAME_inst= LoadLibrary(GAME_name );
 	if (!GAME_inst) return 0;

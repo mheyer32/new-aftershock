@@ -32,6 +32,8 @@ cvar_t			*cvarlist = 0;
 static int		num_cvars = 0;
 static aboolean	cvar_dirty = afalse;
 
+char *copystring(const char *s);
+
 /*
 ============
 Cvar_FindVar

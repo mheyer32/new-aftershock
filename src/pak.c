@@ -26,59 +26,18 @@
  * unzip extensions to zlib (source included with distribution).
  */
 
+// This is too flexible , CUT !
 
-#define MAX_PAKFILES 64
+
+#define MAX_PAKFILES 8
 
 
 
 static unzFile pakfiles [MAX_PAKFILES] ;
-static char basedir[MAX_STRING_CHARS];
 static int handles_in_use [MAX_PAKFILES];
 static unzFile actfile;
 
 
-
-void pak_init (char * dir)
-{
-	int i;
-	char file[MAX_OSPATH];
-
-	A_strncpyz(basedir,dir,1024);
-	memset(pakfiles,0,sizeof (unzFile)*MAX_PAKFILES);
-	memset(handles_in_use,0,sizeof(int)*MAX_PAKFILES);
-
-	actfile=NULL;
-
-
-
-// open all pk3 files in the form pak0.pk3,pak1.pk3 ...
-
-	for (i=0; ;i++)
-	{
-		
-		sprintf(file,"%s/pak%i.pk3",dir,i);
-		
-		if (!pak_openpak(file))
-		{
-			
-			if (i==0)
-			{
-				Error("Could not find any pakfiles in basedir %s",dir);
-
-
-			}
-			break;
-
-
-		}
-	}
-
-
-	Con_Printf("found %i pk3 files in basedir %s\n",i,dir);
-
-
-
-}
 
 
 static int Find_free_Handle (void )
@@ -155,9 +114,9 @@ pak_open(const char *path)
 		
 		if (handles_in_use[i])
 		{
-			
-			if (Unz_Search (pakfiles[i] ,path,buf,4096))
-			{
+			strcpy(buf,path);
+			/*if (Unz_Search (pakfiles[i] ,path,buf,4096))
+			{*/
 			if (unzLocateFile(pakfiles[i], buf, 2) == UNZ_OK)
 			{
 				if (unzOpenCurrentFile(pakfiles[i]) == UNZ_OK)
@@ -166,7 +125,7 @@ pak_open(const char *path)
 					return 1;
 				}
 			}
-			}
+			//}
 
 		}
 
@@ -187,7 +146,7 @@ pak_read(void *buf, uint_t size, uint_t nmemb)
     int len;
 
     len = unzReadCurrentFile(actfile, buf, size * nmemb);
-    return len / size;
+    return (len==(size*nmemb));
 }
 
 uint_t
@@ -252,17 +211,50 @@ pak_checkfile(const char *path)
     return (status == UNZ_OK);
 }
 
-// FIXME : MULTI PAK SUPPORT !
 
-int pak_FileListForDir(char * list ,const char * directory,const char *ext)
+int pak_GetStringforDir (const char * dir,const char * extension,char *str,int bufsize )
 {
+	int len=0,alllen=0;
+	int i,state=0;
+	int found=0,allfound=0;
 	
-	return Get_NameListforDir(pakfiles[0],list,directory,ext);
 	
+	for (i=0;i<MAX_PAKFILES;i++)
+	{
+		if (handles_in_use[i])
+		{
+			found=Unz_GetStringForDir(pakfiles[0],dir,extension,str+alllen,bufsize-alllen,&len);
+			if (found)
+				{
+					allfound+=found;
+					state=1;
+					alllen+=len+1;
+				
+				}
+		}
 
+	}
+
+	return allfound;
 }
-int pak_Search(const char * name , char * buf ,int bufsize)
+
+
+int pak_FileExists (char * file )
 {
-	return Unz_Search (pakfiles[0] ,name,buf,bufsize);
+
+	int i;
+	for (i=0;i<MAX_PAKFILES;i++)
+	{
+		if (handles_in_use[i])
+		{
+			if (Unz_FileExists(pakfiles[i],file))
+				return 1;
+
+		}
+
+	}
+
+
+	return 0;
 
 }

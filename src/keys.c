@@ -22,6 +22,7 @@
 #include "ui.h"
 #include "command.h"
 #include "console.h"
+#include "io.h"
 
 
 

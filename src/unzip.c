@@ -12,6 +12,8 @@
 #include "zlib.h"
 #include "unzip.h"
 #include "memory.h"
+#include "a_shared.h"
+
 
 #ifdef STDC
 #  include <stddef.h>
@@ -162,7 +164,6 @@ typedef struct
 
 
      cacheelem_t ** cache;
-	 char * pak_NameList;
      int counts[HASHSIZE];
 	
 
@@ -404,8 +405,7 @@ int  Unz_GenCache(unz_s *s)
 	int key=0;
 	char szCurrentFileName[UNZ_MAXFILENAMEINZIP+1];
 	unzFile		file = (unzFile)s;
-	char *tmp;
-	int r_numfilescached=0;
+	int numfilescached=0;
 
 	
 
@@ -434,8 +434,6 @@ int  Unz_GenCache(unz_s *s)
 	}
 
 
-	s->pak_NameList=malloc(filecount*64);
-	memset(s->pak_NameList,0,filecount*64);
 
 	filecache=malloc(sizeof(cacheelem_t)*(filecount));
 	memset( filecache, 0, sizeof(cacheelem_t )*(filecount));
@@ -446,21 +444,17 @@ int  Unz_GenCache(unz_s *s)
 		unzGetCurrentFileInfo(file,NULL,
 								szCurrentFileName,sizeof(szCurrentFileName)-1,
 								NULL,0,NULL,0);
-		
-		tmp=(char *)_strlwr(szCurrentFileName);
-		strcat(s->pak_NameList,tmp);	
-		strcat(s->pak_NameList," ");
-		
-		strcpy( filecache[i].name, tmp );
+
+		strcpy( filecache[i].name, szCurrentFileName  );
 		filecache[i].filenum = s->num_file;
 		filecache[i].pos_in_central_dir = s->pos_in_central_dir;
 		err = unzGoToNextFile(file);
 		i++;
 	}
-	r_numfilescached=i;
+	numfilescached=i;
 	
 
-	for (i=0;i<r_numfilescached;i++)
+	for (i=0;i<numfilescached;i++)
 	{
 		key=hashstring(filecache[i].name) % HASHSIZE;
 		amounts[key]++;
@@ -471,7 +465,7 @@ int  Unz_GenCache(unz_s *s)
 	{
 		s->cache[i]=malloc(sizeof(cacheelem_t)*amounts[i]);
 
-		for (j=0;j<r_numfilescached;j++)
+		for (j=0;j<numfilescached;j++)
 		{
 			if (hashstring(filecache[j].name) % HASHSIZE== i )
 			{
@@ -492,7 +486,7 @@ int  Unz_GenCache(unz_s *s)
 
 
 	free(filecache);
-	return r_numfilescached;
+	return numfilescached;
 
 
 
@@ -636,7 +630,6 @@ extern int ZEXPORT unzClose (file)
 
 
 	}
-	free(s->pak_NameList);
 	free(s->cache);
 
 	TRYFREE(s);
@@ -949,150 +942,129 @@ extern int ZEXPORT unzGoToNextFile (file)
 }
 
 
-// Test :
 
-int Get_NameListforDir(unzFile *pak,char * List ,const char * dir,const char *ext)
+int Unz_GetStringForDir (unzFile * pak,const char * dir,const char *extension,char * buf ,int bufsize,int *len)
 {
+/*	int found=0;
+	char *start,*pos,*token,*bufpos;
 	unz_s *s=(unz_s*) pak;
-	int ret=0,len=0,Listlen=0;
-	char *pos,*nextpos,*token,*tmp,*Listend;
+	char ext [16];
 
+	pos=s->pak_NameList;
+	bufpos=buf;
+	*len =0;
 	
-	
-		ret=0;
-	pos =strstr(s->pak_NameList,dir);
-	Listend=pos+strlen(s->pak_NameList)-1;
+	COM_BeginParseSession ();
 
-	if (!pos)
+	while (pos )
 	{
-		return ret;
+		token =COM_Parse (&pos);	
+		if (!token[0])
+			continue;
 
+		if (dir[0])
+			if (strncmp (token,dir,strlen (dir)))
+				continue;
 
-	}
-	
-
-	token=malloc(64);
-
-	while (1){
-		memset(token ,0,64);
-
-		nextpos=pos;
-
-		while (nextpos[0]!=' ')
+		
+		/*if (extension[0])
+			if (strlen (token) > strlen (extension))
+				if (strcmpEXT(extension, token + strlen(token) - strlen(extension)))
+					continue;
+		*/			
+/*		COM_ExtractFileExtension(token,ext);		
+		if (!ext[0])
 		{
-			nextpos++;
+			ext[0]=*(token +strlen (token)-1);
+			ext[1]=0;
 		}
-		len=nextpos-pos;
-
-		
-		
-		
-		memcpy(token,pos,len);	
-		
-	
-		if (!strcmp(token+strlen(token)-strlen(ext),ext))
+			
+		if (!stricmp (ext,extension))
 		{
-			if (strlen(dir)>1)
-			{
-			tmp=token+strlen(dir)+1;
-			}
-			else {
-				tmp=token;
-			}
+			found++;
 
-			if (strlen(tmp)>=1)
-			{
-				strcpy(List+Listlen,tmp);
-				//strcat (List,tmp);
-				Listlen+=strlen(tmp)+1;
-				ret++;
-			}
+			token +=strlen (dir)+1;
+			A_strncpyz (bufpos,token,bufsize-*len);
 
+			bufpos+=strlen(token)+1;
+			*(bufpos-1)=0;
+			*len=bufpos-buf;
 
 		}
-		
-		pos=nextpos;
-		pos++;
-	
-		if (strcmpEXT(pos,dir,strlen(dir)))
-			break;
-		if (pos>=Listend)
-			break;
 
 	}
 
+	return found;
+*/
+
+	unz_s *s=(unz_s*) pak;
+	char * token,*bufpos;
+	int i,j,found=0;
 
 
-	free(token);
+//	s->cache
+//	s->counts
 
+	*len=0;
+	bufpos=buf;
 
-	return ret;
+	for (i=0;i<HASHSIZE;i++)
+	{
+		for (j=0;j<s->counts[i];j++)
+		{
+			token=s->cache[i][j].name;
+			
+			if (dir[0])
+			if (strncmp (token,dir,strlen (dir)))
+				continue;
+
+			if (dir[0])
+				if (strlen (token) <=strlen (dir)+ strlen (extension))
+					continue;
+
+			if (strlen (token) > strlen (extension))
+				if (!strncmp(extension, token + strlen(token) - strlen(extension),strlen(extension)))
+				{
+					found++;
+
+					if (dir[0])
+					token +=strlen (dir)+1;
+
+					A_strncpyz (bufpos,token,bufsize-*len);
+
+					bufpos+=strlen(token)+1;
+					*(bufpos-1)=0;
+					*len=bufpos-buf;	
+				}
+		}
+	}
+
+	return found;
+
 
 }
 
-
-int Unz_Search (unzFile *pak,const char * name , char * buf ,int bufsize)
+int Unz_FileExists (unzFile * pak, char * file )
 {
-
-	int i=0,len=0,ret=0;
+	int i,j;
 	unz_s *s=(unz_s*) pak;
-	char * actpos=s->pak_NameList;
-	char * tmppos=NULL;
-	char * token=malloc(128);
-	char * nextpos=NULL;
-	char * bufpos=buf;
-	char searchbuf [256];
-	char * searchname ;
 
-	strcpy (searchbuf,name);
-	searchname =_strlwr(searchbuf);
-
-
-	memset(buf,0,bufsize);
-
-	if (strlen(name)<1)
-		return 0;
-
-	while (strstr(actpos,searchname)!=NULL)
+	for (i=0;i<HASHSIZE ;i++ )
 	{
-
-		memset(token,0,128);
-		ret++;
-		tmppos=strstr(actpos,searchname);
-
-		while (*tmppos != ' ')
+		for (j=0;j<s->counts[i];j++)
 		{
-			tmppos--;
-
+			if (!stricmp (file,s->cache[i][j].name))
+				return 1;
 
 		}
-		tmppos++;
-		nextpos=tmppos;
-		len=0;
-		while (*nextpos != ' ')
-		{
-			len++;
-			nextpos++;
 
 
-		}
-		memcpy(token,tmppos,len);
-		strcat(bufpos,token);
-		bufpos+=strlen(token)+1;
-		actpos=nextpos;
-		
 
 
 	}
 
-	free(token);
 
-	return ret;
-
-
-
-
-
+	return 0;
 }
 
 
@@ -1105,54 +1077,6 @@ int Unz_Search (unzFile *pak,const char * name , char * buf ,int bufsize)
   UNZ_OK if the file is found. It becomes the current file.
   UNZ_END_OF_LIST_OF_FILE if the file is not found
 */
-#ifndef FILECACHE
-extern int ZEXPORT unzLocateFile (file, szFileName, iCaseSensitivity)
-	unzFile file;
-	const char *szFileName;
-	int iCaseSensitivity;
-{
-	unz_s* s;	
-	int err;
-
-	
-	uLong num_fileSaved;
-	uLong pos_in_central_dirSaved;
-
-
-	if (file==NULL)
-		return UNZ_PARAMERROR;
-
-    if (strlen(szFileName)>=UNZ_MAXFILENAMEINZIP)
-        return UNZ_PARAMERROR;
-
-	s=(unz_s*)file;
-	if (!s->current_file_ok)
-		return UNZ_END_OF_LIST_OF_FILE;
-
-	num_fileSaved = s->num_file;
-	pos_in_central_dirSaved = s->pos_in_central_dir;
-
-	err = unzGoToFirstFile(file);
-
-	while (err == UNZ_OK)
-	{
-		char szCurrentFileName[UNZ_MAXFILENAMEINZIP+1];
-		unzGetCurrentFileInfo(file,NULL,
-								szCurrentFileName,sizeof(szCurrentFileName)-1,
-								NULL,0,NULL,0);
-		if (strcmpcasenosensitive_internal (szCurrentFileName,
-										szFileName)==0)
-			return UNZ_OK;
-		err = unzGoToNextFile(file);
-	}
-
-	s->num_file = num_fileSaved ;
-	s->pos_in_central_dir = pos_in_central_dirSaved ;
-	return err;
-}
-#else 
-
-
 
 extern int ZEXPORT unzLocateFile (file, szFileName, iCaseSensitivity)
 	unzFile file;
@@ -1187,7 +1111,7 @@ extern int ZEXPORT unzLocateFile (file, szFileName, iCaseSensitivity)
 
 	for (i=0;i<s->counts[key];i++)
 	{
-		if (!strcmp(szFileName,s->cache[key][i].name))
+		if (!stricmp(szFileName,s->cache[key][i].name))
 		{
 
 			//	s->num_file = s->cache[key][i].name;
@@ -1220,14 +1144,6 @@ extern int ZEXPORT unzLocateFile (file, szFileName, iCaseSensitivity)
 		}
 
 
-
-
-
-
-
-
-
-
 	}
 
 
@@ -1237,16 +1153,8 @@ extern int ZEXPORT unzLocateFile (file, szFileName, iCaseSensitivity)
 
 
 
-
-
-
-
-
-
-
 }
 
-#endif
 //#endif
 //#endif
 

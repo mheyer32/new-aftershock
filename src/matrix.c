@@ -41,7 +41,7 @@ void Matrix4_Multiply(mat4_t a, mat4_t b, mat4_t product)
 
 void Matrix3_Multiply (vec3_t in1[3], vec3_t in2[3], vec3_t out[3])
 {
-		out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] +
+	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] +
 				in1[0][2] * in2[2][0];
 	out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] +
 				in1[0][2] * in2[2][1];
@@ -73,11 +73,22 @@ void Matrix3_Multiply_Vec3 (vec3_t a[3],vec3_t b,vec3_t product)
 }
 
 // This can be used to calc the inverse of a rotation matrix 
-// TODO !!!
 void Matrix3_Transponse (vec3_t in [3] ,vec3_t out [3])
 {
 
+	vec3_t tmp [3];
 
+	memcpy (tmp,in,9* sizeof (float ));
+
+	out [0][0] = tmp [0][0];
+	out [1][1] = tmp [1][1];
+	out [2][2] = tmp [2][2];
+
+	out [0][1] = tmp [1][0];
+	out [1][0] = tmp [0][1];
+
+	out [0][2] = tmp [2][0];
+	out [2][0] = tmp [0][2];
 
 }
 

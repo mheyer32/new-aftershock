@@ -83,7 +83,7 @@ void Cmd_exec(void)
 
 	if (file) {
 		
-		size = FOpenFile(file, &f, FS_READ);
+		size = FS_OpenFile(file, &f, FS_READ);
 		if(!size) {
 			/* TODO */
 				Con_Printf("couldn't execute %s\n", file);
@@ -115,7 +115,7 @@ void Cmd_Writeconfig(void)
 	else
 		A_strncpyz( filename, "q3config.cfg", sizeof(filename) );
 
-	FOpenFile( filename, &file, FS_WRITE );
+	FS_OpenFile( filename, &file, FS_WRITE );
 	if(file) {
 		//FS_Write( CONFIG_INTRO, strlen( CONFIG_INTRO ), file );
 		Key_WriteBindings( file );

@@ -38,7 +38,8 @@ enum
 	SHADER_POLYGONOFFSET = 1 << 7,
 	SHADER_FOG           = 1 << 8,
 	SHADER_MULTITEXTURE  = 1 << 9,
-	SHADER_NOPICMIP      = 1 << 10
+	SHADER_NOPICMIP      = 1 << 10,
+	SHADER_CLAMP         = 1 << 11  // will just be used for texture loading 
 };
 
 /* Shaderpass flags */
@@ -97,7 +98,7 @@ enum {
 	RGB_GEN_VERTEX=5,
 	RGB_GEN_ONE_MINUS_VERTEX=6,
 	RGB_GEN_LIGHTING_DIFFUSE =7,
-
+	RGB_GEN_EXACT_VERTEX =8
 };
 
 
@@ -106,7 +107,10 @@ enum {
 enum {
 	ALPHA_GEN_DEFAULT =0,
 	ALPHA_GEN_PORTAL =1,
-
+	ALPHA_GEN_VERTEX ,
+	ALPHA_GEN_ENTITY,
+	ALPHA_GEN_LIGHTINGSPECULAR,
+	ALPHA_GEN_WAVE // TODO !
 };
 
 
@@ -131,12 +135,6 @@ enum {
 	DEFORMV_AUTOSPRITE2
 };
 
-// Fog_Params :
-
-enum {
-	FOGPARAM_NONE,
-	FOGPARAM_DO_FOG
-};
 
 
 #define SHADER_BSP 0
@@ -232,12 +230,9 @@ typedef struct
 
 typedef struct
 {
-    int Handle;
 	int Flags;
 	int id;
-    char fname[MAX_APATH];
-	int inuse;
-	int shader;
+    char name[MAX_APATH];
 } texture_t;
 
 
@@ -252,14 +247,14 @@ extern int shader_white ;
 extern int shader_text ;
 extern int shader_console ;
 
-void shader_init (void);
-void shader_shutdown (void);
-void shader_readall(int numshaders);
-void shader_freeall(void);
-int shader_read_extern(const char *name, int type);
+int Shader_Init (void);
+int Shader_Shutdown (void);
+
 
 
 int  R_RegisterShaderNoMip( const char *name ) ;
 int R_RegisterShader ( const char * name );
+
+int R_LoadShader ( const char * name ,int type );
 
 #endif /*__SHADER_H__*/

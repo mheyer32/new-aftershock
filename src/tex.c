@@ -24,6 +24,8 @@
 #include "opengl.h"
 #include <jpeglib.h>
 #include "render.h"
+#include "io.h"
+#include "console.h"
 
 #define IMG_BUFSIZE (1024*1024-8)
 
@@ -47,6 +49,21 @@ typedef struct
     byte pixsize;
     byte imgdesc;
 } tgaheader_t;
+
+
+
+int round_2 (int x )
+{
+	int v=2;
+
+	while (x>v)
+	{
+		v*=2;
+
+	}
+	
+	return v;
+}
 
 
 static void tex_loadtexture(byte *rgb, int w, int h, int format, uint_t flags);
@@ -427,164 +444,541 @@ void tex_shutdown (void )
 }
 
 
-
-
-static texture_t * find_free_Texture (int *num )
+static char * Find_Texture ( const char * filename )
 {
+	char path[MAX_APATH];
+	char base[MAX_APATH];
+	char dirlist[200*MAX_APATH];
+	char s_base[MAX_APATH];
+	static char buf[MAX_APATH];
+	int numdirs;
+	char *dirptr;
+	int i;
+	int dirlen;
 
+	strcpy(buf, filename);
+
+	if(FS_FileExists(buf) ) {
+		return(buf);
+	}
+
+	COM_ExtractFilePath(buf, path);
+	COM_ExtractFileBase(buf, base);
+
+	/* remove the slash */
+	path[strlen(path)-1] = 0;
+
+	numdirs = FS_GetFileList(path, "", dirlist, sizeof(dirlist));
+
+	dirptr = dirlist;
+	for (i=0; i<numdirs; i++, dirptr += dirlen+1) {
+		dirlen = strlen(dirptr);
+		COM_ExtractFileBase(dirptr, s_base);
+		if( !A_stricmp(base, s_base) ) {
+			sprintf(buf, "%s/%s", path, dirptr);
+			return(buf);
+		}
+	}
+
+
+	return(0);
+}
+
+
+
+
+#define MAX_TEXTURES 512 
+
+static char img_buf [IMG_BUFSIZE];
+static int r_num_textures =0;
+static texture_t * textures = NULL;
+
+
+
+int Tex_Init ( void )
+{
+	r_num_textures =0;
+
+	textures = malloc (MAX_TEXTURES * sizeof (texture_t ));
+
+	return 1;
+
+}
+
+int Tex_Shutdown (void )
+{
 	int i;
 
-
-	for (i=0;i<MAX_TEX;i++)
+	for (i=0;i<r_num_textures;i++)
 	{
-
-		if (!r_dynamic_tex[i].inuse)
-		{
-			*num =i;
-			return &r_dynamic_tex[i];
-
-		}
-
+		glDeleteTextures (1,&textures[i].id);
 
 	}
 
 
-	*num=0;
-	Error (" No more free textures ! ");
+	r_num_textures =0;
 
-	return NULL;
+	free ( textures );
 
-
-
+	return 1;
 
 }
 
 
-void texture_free ( int id )
-{
-	int i;
-
-	if (id <0) return ;
-
-	for (i=0;i<MAX_TEX;i++)
-	{
-
-		if (r_dynamic_tex[i].inuse  && r_dynamic_tex[i].id==id)
-		{
-			r_dynamic_tex[i].inuse=0;
-			num_dynamic_tex--;
-		}
-	}
-
-}
-
-int complete_texture_load (const char * name ,const int flags)
+////////////////////////////////////////////
+// TODO !!!!!!!!!!!!!!!!!!!!!
+////////////////////////////////////////////////
+byte * Tex_Load_TGA (const char *fname ,int *width, int * height , int * format)
 {
 
-	char * filename=malloc(128);
+	int file;
+	tgaheader_t *tgahead;
+    byte *img, *tga, *tgacur, *tgaend;
+    int tgalen, len, depth = 0;
 
-	char *rgb=NULL;
-	int found=0,width,height,format,res=0,i,num;
-	texture_t * tex =find_free_Texture(&num);
+    tgalen = FS_OpenFile (fname,&file,FS_READ);
 
+	if (!tgalen || !file)
+		return NULL;
 
-	COM_StripExtension(name,filename);
+	FS_Read (img_buf,tgalen,file );
+    
+    if (!tgalen) return NULL;
+
+    tga = (byte*)img_buf;
+    tgaend = tga + tgalen;
+    
+    tgahead = (tgaheader_t*)tga;
+    tgahead->xorig=LittleShort(tgahead->xorig);
+    tgahead->yorig=LittleShort(tgahead->yorig);
+    tgahead->width=LittleShort(tgahead->width);
+    tgahead->height=LittleShort(tgahead->height);
+    if (tgahead->imgtype != 2 && tgahead->imgtype != 10)
+	Error("Bad tga image type");
+
+    if (tgahead->pixsize == 24)
+	depth = 3;
+    else if (tgahead->pixsize == 32)
+	depth = 4;
+    else
+	Error("Non 24 or 32 bit tga image");
+    
+    len = tgahead->width * tgahead->height * depth;
+    img = malloc(len);
+
+    tgacur = tga + sizeof(tgaheader_t) + tgahead->idlen;
+    if (tgahead->imgtype == 10)
+    {
+	int i, j, packetlen;
+	byte packethead;
+	byte *c = img, *end = img + len;
+	byte rlc[4];
 	
-		// misuse of imgbuf : dont care ? 
-	found=pak_Search(filename , imgbuf ,2048);
-
-	if (!found) 
+	while (c < end)
 	{
-		free(filename);
-		return -1;
+	    packethead = *tgacur;
+	    if (++tgacur > tgaend)
+		Error("Unexpected end of tga file");
+	    if (packethead & 0x80)
+	    {
+		/* Run-length packet */
+		packetlen = (packethead & 0x7f) + 1;
+		memcpy(rlc, tgacur, depth);
+		if ((tgacur += depth) > tgaend)
+		    Error("Unexpected end of tga file");
+		for (j=0; j < packetlen; ++j)
+		    for(i=0; i < depth; ++i)
+			*c++ = rlc[i];
+	    }
+	    else
+	    {
+		/* Raw data packet */
+		packetlen = packethead + 1;
+		memcpy(c, tgacur, depth * packetlen);
+		if ((tgacur += depth * packetlen) > tgaend)
+		    Error("Unexpected end of tga file");
+		c += packetlen * depth;
+	    }
 	}
 
-
-	strcpy(filename,imgbuf);
-
-
-	// Check if the Texture already exists 
-		for (i=0;i<num_dynamic_tex;i++)
+	/* Flip image in y */
 	{
-		if (!strcmp(r_dynamic_tex[i].fname,filename))
-		{
+	    int i, linelen;
+	    byte *temp;
+	    
+	    linelen = tgahead->width * depth;
+	    temp = malloc(linelen);
+	    for (i=0; i < tgahead->height/2; ++i)
+	    {
+		memcpy(temp, &img[i * linelen], linelen);
+		memcpy(&img[i * linelen], &img[(tgahead->height - i - 1)
+					      * linelen], linelen);
+		memcpy(&img[(tgahead->height - i - 1) * linelen], temp,
+		       linelen);
+	    }
+	    free(temp);
+	}	
+    }
+    else
+    {
+	int i, linelen;
+	
+	if (tgaend - tgacur + 1 < len)
+	    Error("Bad tga image data length");
+
+	/* Flip image in y */
+	linelen = tgahead->width * depth;
+	for (i=0; i < tgahead->height; ++i)
+	    memcpy(&img[i * linelen],
+		   &tgacur[(tgahead->height - i - 1) * linelen], linelen);
+    }    
+
+    /* Exchange B and R to get RGBA ordering */
+    {
+	int i;
+	byte temp;
+
+	for (i=0; i < len; i += depth)
+	{
+	    temp = img[i];
+	    img[i] = img[i+2];
+	    img[i+2] = temp;
+	}
+    }
+    
+    *width = tgahead->width;
+    *height = tgahead->height;
+    *format = (depth == 3) ? GL_RGB : GL_RGBA;
+
+	FS_FCloseFile (file );
+
+    return img;
+
+
+
+
+}
+
+
+byte * Tex_Load_JPG ( const char * fname ,int * width ,int * height,int *format )
+{
+	int file;
+	int len;
+	struct jpeg_decompress_struct cinfo;
+    struct jpeg_error_mgr jerr;
+	byte *img, *c;
+
+
+	len =FS_OpenFile (fname,&file,FS_READ);
+
+	if (!len || !file)
+		return NULL;
+
+
+	FS_Read (img_buf,len,file );
+
+
+    cinfo.err = jpeg_std_error(&jerr);
+    jpeg_create_decompress(&cinfo);
+    jpeg_mem_src(&cinfo, img_buf, len);
+    jpeg_read_header(&cinfo, TRUE);
+    jpeg_start_decompress(&cinfo);
+
+    if (cinfo.output_components != 3)
+	Error("Bad number of jpg components");
+
+    img = c = malloc(cinfo.output_width * cinfo.output_height * 3);
+    while (cinfo.output_scanline < cinfo.output_height)
+    {
+	jpeg_read_scanlines(&cinfo, &c, 1);
+	c += cinfo.output_width * 3;
+    }
+
+    *width = cinfo.output_width;
+    *height = cinfo.output_height;
+    *format = GL_RGB;
+
+    jpeg_finish_decompress(&cinfo);
+    jpeg_destroy_decompress(&cinfo);
+    
+
+	FS_FCloseFile (file );
+
+    return img;
+
+
+
+}
+
+int Tex_UploadTexture (byte **data ,int width ,int height , int format ,int flags)
+{
+	int internal_format ;
+	int w=round_2(width);
+	int h=round_2(height);
+
+	// Scale the image :
+
+	
+	if (glconfig.maxTextureSize < w )
+		w = glconfig.maxTextureSize;
+
+	if (glconfig.maxTextureSize < h )
+		h = glconfig.maxTextureSize;
+
+
+	if (! ( flags & SHADER_NOPICMIP) )
+	{
+		int i;
+		for (i = 0; i < r_picmip->integer; i++) {
 			
-			free(filename);
-			return r_dynamic_tex[i].id;
+			if (w > 4 && h > 4 )
+			{
+				w >>= 1;
+				h >>= 1;
+			}
 		}
 
-
 	}
-	
 
 
-	if (!strcmp(".tga",filename+strlen(filename)-strlen(".tga")))
-	{
-	
-		res=tga_read_extern(filename, &rgb, &width, &height,
-			     &format,imgbuf);
-	}
-	else if (!strcmp(".jpg",filename+strlen(filename)-strlen(".jpg")))
-	{
+	// Set the internal_format :
 
-		res=jpg_read_extern(filename, &rgb, &width, &height,
-  			     &format,imgbuf);
-
-
-	}
+	if (format == GL_RGB )
+		internal_format =(r_texturebits->integer <= 16) ? GL_RGB5 : GL_RGB8;
+	else if (format == GL_RGBA)
+		internal_format = (r_texturebits->integer <= 16 ) ? GL_RGBA4 : GL_RGBA8;
 	else 
-	{
-		res=0;
-	}
-	if (!res)
-	{
-		if (rgb)
-		free(rgb);
-		free(filename);
-		return -1;
-
-
-	}
-
-
-	// not really the right test 
+		return 0;
 
 
 
-	GL_BindTexture(GL_TEXTURE_2D, ids[num]);
-	if (!loadtexture_extern(rgb, width, height, format, flags))
-	{
-		
-		if (rgb)
-		free(rgb);
-		free(filename);
-		return -1;
 
+	glGenTextures (1 , &textures[r_num_textures].id);
 
-	}
+	GL_BindTexture(GL_TEXTURE_2D,textures[r_num_textures].id);
 	
 	
 
-	tex->Flags=flags;
-	tex->Handle=ids[num];
-	tex->id=ids[num];
-	tex->inuse=1;
-	strcpy(tex->fname,filename);
+	if (w!=width ||  h !=height )
+	{
+		byte *tmp=*data;
+		byte * scaled = malloc ( w * h * ( (format == GL_RGB)? 3 : 4 ));
 
-	num_dynamic_tex++;
+		gluScaleImage (format,width,height,GL_UNSIGNED_BYTE,tmp,w
+			,h,GL_UNSIGNED_BYTE,scaled);
 
+		free (tmp);
 
-	if (rgb)
-		free(rgb);
-	free(filename);
+		*data = scaled ;
 
-	
-
-	return ids[num];
+	}
 
 
+	// Makes Problems !!!
+
+	/*if (!(flags & SURF_NOMIPMAP) ) {
+		if ( !A_stricmp(r_textureMode->string, "GL_NEAREST"))
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+		else if ( !A_stricmp(r_textureMode->string, "GL_LINEAR"))
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+		else if ( !A_stricmp(r_textureMode->string, "GL_NEAREST_MIPMAP_NEAREST"))
+		    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+		else if ( !A_stricmp(r_textureMode->string, "GL_NEAREST_MIPMAP_LINEAR"))
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_NEAREST_MIPMAP_LINEAR);
+		else if ( !A_stricmp(r_textureMode->string, "GL_LINEAR_MIPMAP_NEAREST"))
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+		else if ( !A_stricmp(r_textureMode->string, "GL_LINEAR_MIPMAP_LINEAR"))
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
+		else
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+
+		//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, textureMode);
+		//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, textureMode);
+	} else {
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}	
+	*/
+	// BUGFIX !
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	if (flags & SHADER_CLAMP)
+    {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    }
+    else
+    {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    }
+
+	// Final Step :
 
 
+	if (flags & SHADER_NOMIPMAPS)
+    {
+		glTexImage2D(GL_TEXTURE_2D, 0, internal_format
+			, w, h, 0, format,
+		     GL_UNSIGNED_BYTE, *data);
+    }
+    else
+    {
+		gluBuild2DMipmaps(GL_TEXTURE_2D, internal_format
+			, w, h, format,
+			  GL_UNSIGNED_BYTE, *data);
+    }
+
+
+	return 1;
 
 }
 
+
+
+
+int R_Load_Texture ( const char * name , int flags )
+{
+	char fname [ MAX_APATH ];
+	byte * data = NULL;
+	int img_width=0,img_height=0,format,i;
+
+
+	if (!name[0] || !name)
+		return -1;
+
+	strcpy (fname,name );
+
+
+
+	// Check if already loaded 
+	for (i=0;i<r_num_textures;i++)
+	{
+		if (!strcmp(textures[i].name,name ))
+			return textures[i].id;
+	}
+
+
+
+
+
+	if (!stricmp(fname,"*white") || !stricmp (fname,"white"))
+	{
+		img_width=32;
+		img_height=32;
+		format = GL_RGB;
+
+		data = malloc ( 32 * 32 * 3);
+		
+		memset (data,255,32*32*3);
+
+
+	}
+	else if (!stricmp(fname,"*identityLight")) 
+	{
+		int c = 255;
+
+		img_width =32;
+		img_height =32;
+		format = GL_RGB;
+
+		data = malloc ( 32 * 32 *3 );
+
+		memset (data,c,32* 32* 3);
+
+	}
+	else if( !stricmp(fname, "*scratch" ))
+	{
+		img_width = 32;
+		img_height = 32;
+		format = GL_RGB;
+
+		// TODO !!!
+		data = malloc (32 * 32 * 3);
+
+		
+	}
+	else if (!stricmp (fname ,"$lightmap"))
+	{
+		return -1;
+
+	}
+	else
+	{
+
+		char * tex_name =NULL;
+		char ext[16];
+
+		tex_name =Find_Texture ( fname );
+		
+		if (!tex_name )
+		{
+			Con_Printf ("WARNING: Could not load texture %s \n",name);
+			return -1;
+		}
+
+
+		COM_ExtractFileExtension ( tex_name,ext);	
+		
+		if (!ext[0])
+		{
+			Con_Printf ("WARNING: Could not load texture %s \n",name);
+			return -1;
+		}
+
+		
+		if (!strcmp (ext,"tga"))
+		{
+			data =Tex_Load_TGA (tex_name,&img_width,&img_height,&format);
+			
+			if (! data )
+			{
+				Con_Printf ("WARNING: Could not load texture %s \n",name);
+				return -1;
+			}
+
+
+
+		}
+		else if (!strcmp (ext,"jpg"))
+		{
+			data =Tex_Load_JPG (tex_name,&img_width,&img_height,&format);
+			
+			if (! data )
+			{
+				Con_Printf ("WARNING: Could not load texture %s \n",name);
+				return -1;
+			}
+
+		}
+		else 
+		{
+			Con_Printf ("WARNING: Could not load texture %s \n",name);
+			return -1;
+
+		}
+
+
+
+	
+	}
+	
+
+
+	if (!Tex_UploadTexture (&data,img_width,img_height,format,flags ))
+	{
+		Con_Printf ("WARNING: Could not load texture %s \n",name);
+		return -1;
+	}
+
+	strcpy (textures[r_num_textures].name,name );
+
+	r_num_textures++;
+	free (data );
+
+	// Success !
+
+	return textures[r_num_textures-1].id;
+
+}

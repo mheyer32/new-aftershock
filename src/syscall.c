@@ -103,7 +103,7 @@ static void Call_Cvar_VariableStringBuffer( int bufsize,char *buffer, const char
 
 static int Call_FOpenFile ( int mode ,int  *handle,const char *path) 
 {
-	return FOpenFile(path,handle, mode ); 
+	return FS_OpenFile(path,handle, mode ); 
 }
 
 static void Call_FS_Read(int  handle,int len,void *buffer ) 

@@ -906,7 +906,7 @@ int GLU_UnloadDll (void )
 
 // some wrapping -functions whitch track the state :
 // i`m tracking only  the important states 
-#define TRACK_GL_STATE 0
+#define TRACK_GL_STATE 1
 
 
 #define MAX_TEX_UNITS 32
@@ -918,6 +918,7 @@ static int Tex_IDs [MAX_TEX_UNITS];
 static int Active_Tex_Unit=0;
 static int Blending_Enabled =0;
 static int Alpha_Test_Enabled =0;
+static int Polygon_Offset_Enabled=0;
 
 static int 	DepthMask_State=GL_TRUE;
 #endif 
@@ -960,6 +961,13 @@ void GL_Enable (int param )
 			Alpha_Test_Enabled=1;
 		}
 		break;
+
+	case GL_POLYGON_OFFSET:
+		if (!Polygon_Offset_Enabled)
+		{
+			glEnable (param);
+			Polygon_Offset_Enabled=1;
+		}
 
 	default :
 		glEnable( param );
@@ -1013,6 +1021,13 @@ void GL_Disable (int param )
 			Alpha_Test_Enabled=0;
 		}
 		break;
+
+	case GL_POLYGON_OFFSET:
+		if (Polygon_Offset_Enabled)
+		{
+			glDisable (param);
+			Polygon_Offset_Enabled=0;
+		}
 
 	default :
 		glDisable( param );
@@ -1534,6 +1549,8 @@ int WIN_CreateWindow ( HINSTANCE inst ,int nCmdShow)
 		Con_Printf ("Could not register Window Class \n");
 		return 0;
 	}
+	else 
+		Con_Printf ("... registered window class\n");
 
 
 
@@ -1563,7 +1580,15 @@ int WIN_CreateWindow ( HINSTANCE inst ,int nCmdShow)
                         NULL, NULL, hInst, NULL);
 
 		
-		WIN_ChangeResolution (mode.width,mode.height,r_colorbits->integer ? r_colorbits->integer : 16 );
+		Con_Printf ("...calling CDS :");
+		if (!WIN_ChangeResolution (mode.width,mode.height,r_colorbits->integer ? r_colorbits->integer : 16 ))
+		{
+			Con_Printf ("failed\n");
+			return 0;
+		}
+		else
+			Con_Printf ("ok\n");
+
    }
    if( !hWnd ) 
    {
@@ -1781,7 +1806,16 @@ static int GL_ChoosePFD( int colorbits, int depthbits, int stencilbits )
 			}
 	}
 
-	Con_Printf ("...Choosing Format %i \n",best);
+
+	if (!(bestpfd->dwFlags & PFD_GENERIC_FORMAT) && !(bestpfd->dwFlags & PFD_GENERIC_ACCELERATED))
+	{
+		Con_Printf("...hardware acceleration found\n");
+	}
+	else
+	{
+		Con_Printf("...hardware acceleration not found\n");
+	}
+
 	return( best );
 }
 
@@ -1898,125 +1932,6 @@ void  GetGlConfig(glconfig_t * config)
 
 
 
-static  void MakeGLConfig(void)
-{
-	DEVMODE mode;
-	const char *vendor=glGetString(GL_VENDOR);
-	const char *ext=glGetString(GL_EXTENSIONS);
-	const char *renderer=glGetString(GL_RENDERER);
-	const char *version=glGetString(GL_VERSION);
-
-	strcpy(glconfig.vendor_string,vendor);
-	strcpy(glconfig.extensions_string,ext);
-	strcpy(glconfig.renderer_string,renderer);
-	strcpy(glconfig.version_string,version);
-	// check extensions;
-	if (IsExtensionSupported("GL_ARB_multitexture"))
-	{
-		gl_ext_info._ARB_Multitexture=1;
-		glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB,&glconfig.maxActiveTextures);
-	}
-	else
-	{
-		gl_ext_info._ARB_Multitexture=0;
-		glconfig.maxActiveTextures=1;
-	}
-
-	if (IsExtensionSupported("GL_EXT_compiled_vertex_array"))
-		gl_ext_info._CompiledVertex_Arrays=1;
-	else
-		gl_ext_info._CompiledVertex_Arrays=0;
-
-	if (IsExtensionSupported("GL_EXT_texture_env_add"))
-	{
-		gl_ext_info._TexEnv_Add=1;
-		glconfig.textureEnvAddAvailable=1;
-	}
-	else
-	{
-		gl_ext_info._TexEnv_Add=0;
-		glconfig.textureEnvAddAvailable=0;
-	}
-	if (IsExtensionSupported("GL_EXT_texture_env_combine"))
-	{
-		gl_ext_info._TexEnv_Combine=1;
-	
-	}
-	else
-	{
-		gl_ext_info._TexEnv_Combine=0;
-	}
-	if (IsExtensionSupported("GL_NV_texture_env_combine4"))
-	{
-		gl_ext_info._TexEnv_Combine4=1;
-	}
-	else
-	{
-		gl_ext_info._TexEnv_Combine4=0;
-
-	}
-		
-
-
-	if (IsExtensionSupported ("WGL_ARB_extensions_string"))
-	{
-		gl_ext_info._WGL_ARB_extensions_string=1;
-
-	}
-	else 
-	{
-		// Don`t give up :
-
-		wglGetExtensionsStringARB= (WGLGETEXTENSIONSSTRING_ARB_PROC) awglGetProcAddress ("wglGetExtensionsStringARB");
-
-
-		if (wglGetExtensionsStringARB)
-		{
-			gl_ext_info._WGL_ARB_extensions_string=1;
-		}
-		else 
-		{
-			// There is another version of this with another name :
-			// maybe we should test for this too !? 
-			gl_ext_info._WGL_ARB_extensions_string=0;
-
-		}
-
-	}
-
-
-	if (IsExtensionSupported("WGL_3DFX_gamma_control"))
-	{
-		gl_ext_info._WGL_3DFX_gamma=1;
-	}
-	else 
-	{
-		gl_ext_info._WGL_3DFX_gamma=0;
-	}
-
-	if (IsExtensionSupported ("WGL_EXT_swap_control"))
-	{
-		gl_ext_info._WGL_swap_control=1;
-	}
-	else 
-	{
-
-		gl_ext_info._WGL_swap_control=0;
-
-	}
-
-	
-	glGetIntegerv(GL_MAX_TEXTURE_SIZE,&glconfig.maxTextureSize);
-
-	
-	glconfig.vidHeight=winY;
-	glconfig.vidWidth=winX;
-	
-		EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &mode);
-
-
-}
-
 
 int Init_OpenGL ( void )
 {
@@ -2027,6 +1942,11 @@ int Init_OpenGL ( void )
 	HINSTANCE dll ;
 	char * dllname ;
 
+
+	Con_Printf("Initializing OpenGl subsystem\n");
+
+
+	Con_Printf("...initializing AGL\n");
 	glide = LoadLibrary( "glide2x.dll" );
 	if( !glide )
 		glide = LoadLibrary( "glide3x.dll" );
@@ -2053,23 +1973,39 @@ int Init_OpenGL ( void )
 		dllname =WIN32_GL_DLL_NAME;
 
 	}
-
+	
+	Con_Printf("...calling Load Library ('%s');",dllname);
 	if (!GL_LoadDll ( dllname))
+	{
+		Con_Printf ("failed\n");
 		return 0;
+	}
+	else 
+		Con_Printf ("succeded\n");
 
+	// Remove !!!
 	if (!GLU_LoadDll ( "glu32"))
 		return 0;
 
 	if (! WIN_CreateWindow ( hInst ,nCmdShow))
-		Error (" Could not Create Window ");
+		return 0;
 
 
+	Con_Printf ("\n");
+	Con_Printf ("Initializing OpenGL driver\n");
 
 
-
-
-
+	Con_Printf ("...getting DC:");
+	
 	dc = GetDC( hWnd );
+
+	if (!dc)
+	{
+		Con_Printf("failed\n");
+		return 0;
+	}
+	else
+		Con_Printf("succeded\n");
 
 
 	iFormat=GL_ChoosePFD( 16, 16, 8 );
@@ -2085,30 +2021,207 @@ int Init_OpenGL ( void )
 	{
 		Con_Printf ("Init_OpenGL : Could not Set PixelFormat \n");
 		return 0;
-
-
+	}
+	else 
+	{
+		Con_Printf("...PIXELFORMAT %i selected\n",iFormat);
 	}
 
 		
-	
+	Con_Printf("...creating GL context :");
 	hRC = awglCreateContext( dc );
 
 	if (!hRC)
 	{
-		Con_Printf ("Init_OpenGl : Could not Create Context \n");
+		Con_Printf ("failed\n");
 		return 0;
+	}
+	else
+		Con_Printf("succeded\n");
+
+	Con_Printf("...making context current:");
+	if (!awglMakeCurrent( dc, hRC ))
+	{
+		Con_Printf ("failed\n");
+		return 0;
+	}
+	else
+		Con_Printf ("succeded\n");
+
+	if (1)
+	{
+		const char *vendor=glGetString(GL_VENDOR);
+		const char *ext=glGetString(GL_EXTENSIONS);
+		const char *renderer=glGetString(GL_RENDERER);
+		const char *version=glGetString(GL_VERSION);
+
+		strcpy(glconfig.vendor_string,vendor);
+		strcpy(glconfig.extensions_string,ext);
+		strcpy(glconfig.renderer_string,renderer);
+		strcpy(glconfig.version_string,version);
+
+
+
+		if (r_allowExtensions->integer)
+		{
+			Con_Printf("Initializing Open Gl extensions\n");
+
+
+		// TODO !
+		// GL_S3_s3tc 
+
+
+			if (IsExtensionSupported("GL_EXT_texture_env_add"))
+			{
+				Con_Printf ("...using GL_EXT_texture_env_add\n");
+				gl_ext_info._TexEnv_Add=1;
+				glconfig.textureEnvAddAvailable=1;
+			}
+			else
+			{
+				Con_Printf ("... GL_EXT_texture_env_add not found\n");
+				gl_ext_info._TexEnv_Add=0;
+				glconfig.textureEnvAddAvailable=0;
+			}
+
+			if (IsExtensionSupported ("WGL_EXT_swap_control"))
+			{
+				Con_Printf ("...using WGL_EXT_swap_control\n");
+				gl_ext_info._WGL_swap_control=1;
+
+				wglSwapIntervalEXT= (WGLSETSWAPINTERVALPROC) awglGetProcAddress ("wglSwapIntervalEXT");
+				wglGetSwapIntervalEXT = (WGLGETSWAPINTERVALPROC) awglGetProcAddress("wglGetSwapIntervalEXT");
+
+
+				if (!wglSwapIntervalEXT || !wglGetSwapIntervalEXT)
+					return 0;
+			}
+			else 
+			{
+				Con_Printf ("...WGL_EXT_swap_control not found\n");
+				gl_ext_info._WGL_swap_control=0;
+
+				wglSwapIntervalEXT=NULL;
+				wglGetSwapIntervalEXT=NULL;
+			}
+
+
+			if (IsExtensionSupported("GL_ARB_multitexture"))
+			{
+				Con_Printf ("...using GL_ARB_multitexture\n");
+				gl_ext_info._ARB_Multitexture=1;
+				glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB,&glconfig.maxActiveTextures);
+
+				// Load :
+				glMultiTexCoord2fARB = (PFNGLMULTITEXCOORD2FARBPROC)awglGetProcAddress("glMultiTexCoord2fARB");
+				glMultiTexCoord2fvARB =(PFNGLMULTITEXCOORD2FVARBPROC)awglGetProcAddress("glMultiTexCoord2fvARB");  
+				glActiveTextureARB=(PFNGLACTIVETEXTUREARBPROC) awglGetProcAddress("glActiveTextureARB");
+				glClientActiveTextureARB =(PFNGLCLIENTACTIVETEXTUREARBPROC) awglGetProcAddress("glClientActiveTextureARB");
+
+				if (!glMultiTexCoord2fARB || !glMultiTexCoord2fARB || !glMultiTexCoord2fvARB || !glActiveTextureARB || !glClientActiveTextureARB)
+					return 0;
+
+
+			}
+			else
+			{
+				Con_Printf ("...GL_ARB_multitexture not found\n");
+				gl_ext_info._ARB_Multitexture=0;
+				glconfig.maxActiveTextures=1;
+
+				glMultiTexCoord2fARB=NULL;
+				glMultiTexCoord2fvARB=NULL;
+				glActiveTextureARB=NULL;
+				glClientActiveTextureARB=NULL;
+			}
+
+
+			if (IsExtensionSupported("GL_EXT_compiled_vertex_array"))
+			{
+				Con_Printf ("...using GL_EXT_compiled_vertex_array\n");
+				gl_ext_info._CompiledVertex_Arrays=1;
+				
+				// Load:
+
+				glLockArraysEXT=(PFNGLLOCKARRAYSEXTPROC) awglGetProcAddress("glLockArraysEXT");
+				glUnlockArraysEXT=(PFNGLUNLOCKARRAYSEXTPROC) awglGetProcAddress("glUnlockArraysEXT");
+		
+				if(!glLockArraysEXT || !glUnlockArraysEXT)
+					return 0;
+
+			}
+			else
+			{
+				Con_Printf ("...GL_EXT_compiled_vertex_array not found\n");
+				gl_ext_info._CompiledVertex_Arrays=0;
+
+				glLockArraysEXT=NULL;
+				glUnlockArraysEXT=NULL;
+			}	
+
+
+
+			if (IsExtensionSupported("WGL_3DFX_gamma_control"))
+			{
+				Con_Printf ("...using WGL_3DFX_gamma_control\n");
+				gl_ext_info._WGL_3DFX_gamma=1;
+
+				// TODO !
+			}
+			else 
+			{
+				Con_Printf ("...WGL_3DFX_gamma_control not found\n");
+				gl_ext_info._WGL_3DFX_gamma=0;
+			}
+
+
+			Con_Printf("\n");
+
+		}
+
+
 
 	}
 
-	awglMakeCurrent( dc, hRC );
-	glViewport(0,0,winX,winY);
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE,&glconfig.maxTextureSize);
+	glconfig.vidHeight=winY;
+	glconfig.vidWidth=winX;
+	glconfig.displayFrequency=GetDeviceCaps( dc, VREFRESH );
+
+	Con_Printf ("GL_VENDOR: %s\n",glconfig.vendor_string);
+	Con_Printf ("GL_RENDERER: %s\n",glconfig.renderer_string);
+	Con_Printf ("GL_VERSION: %s\n",glconfig.version_string);
+	Con_Printf ("GL_EXTENSIONS: %s\n",glconfig.extensions_string);
+	Con_Printf ("GL_MAX_TEXTURE_SIZE: %i\n",glconfig.maxTextureSize);
+	Con_Printf ("GL_MAX_ACTIVE_TEXTURES_ARB: %i\n",glconfig.maxTextureSize);
 
 
+	Con_Printf ("\n");
+	Con_Printf ("PIXELFORMAT:color(%i -bits) Z (%i bit) stencil (%i Bits)\n",(int)pfd.cColorBits,(int)pfd.cDepthBits,(int)pfd.cStencilBits);
+	Con_Printf ("MODE: %i, %i * %i",r_mode->integer,glconfig.vidWidth,glconfig.vidHeight);
+	if (r_fullscreen->integer)
+	{
+		Con_Printf(" fullscreen");
+	}
+	else
+	{
+		Con_Printf(" windowed");
+	}
+	if (glconfig.displayFrequency)
+	{
+		Con_Printf(" hz:%i\n",glconfig.displayFrequency);
+	}
+	else
+	{
+		Con_Printf(" hz:N/A\n");
+	}
 
-	MakeGLConfig();
+	Con_Printf("CPU: TODO !!!\n");
+	Con_Printf("rendering primitives: single glDrawElements\n"); // TODO !!!
+	Con_Printf("texturemode: %s\n",r_textureMode->string);
+	Con_Printf("picmip:%i\n",r_picmip->integer);
+	Con_Printf("texture bits:%i\n",r_texturebits->integer);
 
-	if (!LoadExtensions ())
-		return 0;
 
 
 	// Reset the States :

@@ -99,10 +99,7 @@ int CL_Init (void )
 	Con_Printf (" ------ Client Initialization -------  \n");
 
 
-	
-	
-	// allocate a small vertex array for 2D rendering :
-	R_Init(0);
+	R_Init();
 
 	// TODO :  SOUND 
 

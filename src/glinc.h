@@ -1725,6 +1725,12 @@ typedef const char * (APIENTRY * WGLGETEXTENSIONSSTRING_ARB_PROC ) ( HDC hdc );
 extern WGLGETEXTENSIONSSTRING_ARB_PROC wglGetExtensionsStringARB;
 
 
+// Polygon-Offset 
+
+#define GL_POLYGON_OFFSET               0x8037
+#define GL_POLYGON_OFFSET_FACTOR        0x8038
+#define GL_POLYGON_OFFSET_BIAS          0x8039
+
 
 
 

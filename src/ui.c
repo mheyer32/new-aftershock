@@ -45,7 +45,7 @@ static int uiLoaded=0;
 int LoadUI (void )
 {
 
-	if (uiLoaded) return 0;
+	if (uiLoaded) return 1;
 
 		UI_inst= LoadLibrary(UI_name );
 	if (!UI_inst) return 0;

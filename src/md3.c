@@ -184,10 +184,9 @@ int  LoadMD3(md3model2_t * md3, const char *filename)
 	vec3_t				**ppf;
 	vec2_t				**ppnorms;
 	vec3_t				**ppnormals;
-	vec3_t  v1 ,v2,normal ;
 	md3mesh_t			*mesh;
 					
-
+	int file ;
 	int					size;
 
 
@@ -196,15 +195,16 @@ int  LoadMD3(md3model2_t * md3, const char *filename)
 		return(0);
 	}
 
-	pak_open(filename);
 
-	size = pak_getlen();
-	if (!size)
-		return (0);
+	size=FS_OpenFile(filename,&file,FS_READ);
+
+
+	if (!size || !file)
+		return 0;
+
 
 	data = fdata = malloc(size);
-	pak_read(fdata,size,1);
-
+	FS_Read(fdata,size,file);
 
 
 	header = (md3header_t *) data;
@@ -384,7 +384,7 @@ int  LoadMD3(md3model2_t * md3, const char *filename)
 						//memcpy(texName, data, 68);
 						COM_StripExtension(data,texName);
 						data += 68;
-						mesh->skins[j] =shader_read_extern(texName,SHADER_MD3);
+						mesh->skins[j] =R_LoadShader(texName,SHADER_MD3);
 	
 					}
 
@@ -486,6 +486,8 @@ int  LoadMD3(md3model2_t * md3, const char *filename)
 	strcpy(md3->name, filename);
 
 	free(fdata);
+	FS_FCloseFile(file);
+
 	return ( 1 );
 }
 
@@ -568,10 +570,10 @@ static int  R_LoadSkin(skin_t *skin, const char *name )
 	char * buf, * tmp,* comma ;
 
 
-	len=FOpenFile (name,&file,FS_READ);
+	len=FS_OpenFile (name,&file,FS_READ);
 
 
-	if (!len ) return 0;
+	if (!len || !file) return 0;
 
 	buf =malloc (len+1);
 	*(buf + len) =0;
@@ -617,7 +619,7 @@ static int  R_LoadSkin(skin_t *skin, const char *name )
 			}
 
 			strcpy (skin->skins[meshcount].mesh_name,token);
-			skin->skins[meshcount].shaderref=shader_read_extern (comma,SHADER_MD3); 
+			skin->skins[meshcount].shaderref=R_LoadShader (comma,SHADER_MD3); 
 			
 			meshcount++;
 
@@ -636,6 +638,7 @@ static int  R_LoadSkin(skin_t *skin, const char *name )
 
 	skin->num_mesh_skins=meshcount;
 
+	FS_FCloseFile(file); 
 
 	return 1;
 

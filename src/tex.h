@@ -29,9 +29,8 @@ extern int num_dynamic_tex;
 
 
 
-void tex_init(void );
-void tex_shutdown(void );
-void texture_free (int id );
-int complete_texture_load (const char * name ,const int flags);
+int R_Load_Texture (const char * name,int flags);
+int Tex_Init (void );
+int Tex_Shutdown (void );
 
 #endif /*__TEX_H__*/

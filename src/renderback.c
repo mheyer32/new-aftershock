@@ -86,10 +86,7 @@ arrays_t arrays;
 
 
 
-extern vec3_t reference_point ;
-extern vec3_t reference_matrix [3];
-extern aboolean ref_point_origin ; 
-extern aboolean ref_matrix_origin ;
+extern reference_t transform_ref;
 
 
 // Added by Martin Kraus :
@@ -289,6 +286,7 @@ static void flushmultitex(int shadernum,int lmtex)
 	else 
 		GL_Enable (GL_CULL_FACE);
 
+		//glPolygonOffset
 
 	R_Make_Vertices (s );
     glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
@@ -373,10 +371,6 @@ static void flushmultitex(int shadernum,int lmtex)
     arrays.numverts = arrays.numelems = 0; 
 
 }
-// HACK to avoid crashes
-#define XTRASIZE 1000
-
-
 
 void
 R_backend_init(void)
@@ -436,7 +430,7 @@ R_backend_init(void)
 
 	}
 
-	//R_backend_flush = render_flush ;
+	R_backend_flush = render_flush ;
 
 
 }
@@ -556,28 +550,48 @@ float * R_Make_TexCoords (shaderpass_t * pass,int stage )
 		{
 
 			// TODO !!!
-		vec3_t pos ;
+		vec3_t pos ,v,n;
 		vec3_t dir;
 		int j;
+		in= arrays.stage_tex_st[stage];
 
-	
+		
+		// FIXME !!!
+		VectorCopy (r_eyepos ,pos );
 
-		if (ref_point_origin)
-			VectorCopy(r_eyepos,pos);
-		else 
-			VectorSubtract(r_eyepos,reference_point,pos);
+		if (!transform_ref.pos_identity)
+		{
+			VectorSubtract (pos,transform_ref.pos,pos);
+		}
+		
+		if (!transform_ref.matrix_identity)
+		{
+			if (!transform_ref.inv_matrix_calculated)	
+			{
+				Matrix3_Transponse (transform_ref.matrix,transform_ref.inv_matrix);
+				transform_ref.inv_matrix_calculated=atrue;	
+			}
+			Matrix3_Multiply_Vec3(transform_ref.inv_matrix,pos,pos);
+		}
+
 		for(j=0; j<arrays.numverts; j++)
 			{
-			VectorSubtract(arrays.verts[j], pos, dir);
+			
+			VectorCopy (arrays.verts[j],v);
+			
+			VectorSubtract(v, pos, dir);
 			VectorNormalize(dir);
 
-			dir[0]+=arrays.norms[j][0];
-			dir[1]+=arrays.norms[j][1];
+			VectorCopy (arrays.norms[j],n);
 
-			arrays.tex_st[j][0]=dir[0];
-			arrays.tex_st[j][1]=dir[1];
+			dir[0]+=n[0];
+			dir[1]+=n[1];
+
+			in[j][0]=dir[0];
+			in[j][1]=dir[1];
 			}
-
+			
+			
 		}
 
 		break;
@@ -708,8 +722,9 @@ float * R_Make_TexCoords (shaderpass_t * pass,int stage )
 	
 	else 
 	{
-		out=in;
-		//memcpy (out,in,num * sizeof ( vec2_t ));
+		//out=in;
+		out=arrays.stage_tex_st[stage];
+		memcpy (out,in,arrays.numverts * sizeof ( vec2_t ));
 	}
 
 	return *(float**)&out;
@@ -782,12 +797,9 @@ colour_t * R_Make_Rgba (shaderpass_t * pass )
 	}
 
 
-
+		// TODO !!!!
 	switch (pass->alpha_gen)
 	{
-	case 	ALPHA_GEN_DEFAULT :
-	
-		break;
 
 	case  ALPHA_GEN_PORTAL :
 		
@@ -801,9 +813,17 @@ colour_t * R_Make_Rgba (shaderpass_t * pass )
 				alpha = 255;
 
 			col[i][3] = alpha;
-
-
 		}
+		// TODO
+	case ALPHA_GEN_DEFAULT :
+	case ALPHA_GEN_VERTEX :
+	case ALPHA_GEN_ENTITY:
+	case ALPHA_GEN_LIGHTINGSPECULAR:
+	default :
+		for (i=0;i<arrays.numverts;i++)
+			col[i][3]=arrays.colour[i][3];
+		
+	break;
 
 	}
 
@@ -1219,6 +1239,12 @@ render_flush(int shadernum, int lmtex)
 	GL_Disable(GL_CULL_FACE);
     else
 	GL_Enable(GL_CULL_FACE);
+
+
+	if (shader->flags & SHADER_POLYGONOFFSET)
+		GL_Enable (GL_POLYGON_OFFSET);
+	else
+		GL_Disable (GL_POLYGON_OFFSET);
 
 	R_Make_Vertices (shader );
     /* FIXME: if compiled vertex arrays supported, lock vertex array here */
