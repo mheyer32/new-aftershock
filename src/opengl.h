@@ -110,8 +110,6 @@ typedef struct {
 	int height;
 } vid_mode_t;
 
-
-
 extern ext_info_t gl_ext_info;
 
 extern int winX;
@@ -128,14 +126,9 @@ extern HWND hWnd;
 extern HGLRC hRC;
 extern int nCmdShow;
 
-
-
-
 void  GetGlConfig(glconfig_t * config);
 int Init_OpenGL ( void );
 int Shutdown_OpenGL (void );
-
-
 
 void GL_Enable (int param );
 void GL_Disable (int param );
@@ -157,7 +150,7 @@ void GL_TexEnvf (int target ,int pname ,float param );
 
 
 
-// GLU - Replacement :
+// GLU - Replacement
 GLint APIENTRY GL_ScaleImage( GLenum format,
                               GLsizei widthin, GLsizei heightin,
                               GLenum typein, const void *datain,
@@ -175,20 +168,11 @@ void APIENTRY GL_Perspective( GLdouble fovy, GLdouble aspect,
 
 enum
 {
- CPU_AMD = 1,
-CPU_INTEL =2,
-CPU_CYRIX =3,
-CPU_CENTAUR =4, 
-CPU_UNKNOWN =5
+	CPU_AMD,
+	CPU_INTEL,
+	CPU_CYRIX,
+	CPU_CENTAUR, 
+	CPU_UNKNOWN
 };
-
-
-
-
-
-
-
-
-
 
 #endif 

@@ -18,7 +18,6 @@
 #include "a_shared.h"
 #include "matrix.h"
 
-
 // Stolen from Mesa:matrix.c
 #define A(row,col)  a[(col<<2)+row]
 #define B(row,col)  b[(col<<2)+row]
@@ -221,7 +220,3 @@ aboolean Matrix4_Inverse( mat4_t mr, mat4_t ma )
 		
 	return 1;
 }
-
-
-
-

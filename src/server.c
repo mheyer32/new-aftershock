@@ -18,7 +18,6 @@
 
 #include "a_shared.h"
 #include "io.h."
-#include "util.h"
 #include "network.h"
 #include "game.h"
 #include "c_var.h"

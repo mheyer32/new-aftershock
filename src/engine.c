@@ -17,7 +17,6 @@
  */
 
 #include <windows.h>
-#include "util.h"
 #include "a_shared.h"
 #include "sys_main.h"
 #include "console.h"
@@ -61,6 +60,21 @@ void Engine_GetCvars( void )
 	for ( i = 0, cv = cvarTable ; i < cvarTableSize ; i++, cv++ ) {
 		*cv->cvar = Cvar_Get( cv->name, cv->resetString, cv->flags );
 	}
+}
+
+// TODO !!!
+void Error(const char *fmt, ...)
+{
+	char buf[1024];
+    va_list ap;
+
+    va_start(ap, fmt);    
+    sprintf(buf, fmt, ap);
+    va_end(ap);
+
+	MessageBox(NULL, buf, "ERROR", MB_OK);
+ 
+    exit(1);
 }
 
 void Engine_Shutdown (void)

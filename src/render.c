@@ -15,14 +15,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
-#include "util.h"
+#include <math.h>
 #include "a_shared.h"
 #include "cmap.h"
 #include "shader.h"
 #include "mapent.h"
 #include "render.h"
 #include "renderback.h"
-#include <math.h>
 #include "opengl.h"
 #include "md3.h"
 #include "c_var.h"
@@ -223,7 +222,7 @@ static int *skylist;          /* Sky faces hit by walk */
 static int numsky;            /* Number of sky faces in list */
 static float cos_fov;         /* Cosine of the field of view angle */
 
-int *r_lightmaps = NULL;
+uint_t *r_lightmaps = NULL;
 int  r_numLightmaps = 0;
 
 #define  MAX_REF_ENTITIES 256 
@@ -370,7 +369,7 @@ void R_RenderPolys (void )
 			VectorCopy(p->verts[j].xyz, arrays.verts[arrays.numverts]);
 			arrays.tex_st[arrays.numverts][0] = p->verts[j].st[0];
 			arrays.tex_st[arrays.numverts][1] = p->verts[j].st[1];
-			colour_copy (p->verts[j].modulate, arrays.colour[j]);
+			Vector4Copy (p->verts[j].modulate, arrays.colour[j]);
 			arrays.elems[arrays.numverts] = arrays.numverts+j; // FIXME ?
 			arrays.numverts++;
 		}
@@ -667,7 +666,7 @@ void R_render_model (refEntity_t *re)
 
 			for (i = 0; i < skin->num_mesh_skins; i++)
 			{
-				if (!stricmp(skin->skins[i].mesh_name, mesh->name))
+				if (!A_stricmp(skin->skins[i].mesh_name, mesh->name))
 				{
 					shaderref = skin->skins[i].shaderref;
 					break;
@@ -705,10 +704,10 @@ void R_render_model (refEntity_t *re)
 			for (k = 0; k < mesh->numverts; k++)
 			{
 				VectorCopy(mesh->points[re->frame][k], arrays.verts[arrays.numverts]);
-				vec2_copy(mesh->tex_st[k], arrays.tex_st[arrays.numverts]);
+				Vector2Copy(mesh->tex_st[k], arrays.tex_st[arrays.numverts]);
 
 				// Push the entity colour (TEST)
-				colour_copy (re->shaderRGBA, arrays.entity_colour [arrays.numverts]);
+				Vector4Copy (re->shaderRGBA, arrays.entity_colour [arrays.numverts]);
 				memset (arrays.colour[arrays.numverts], 255, 4);
 
 				arrays.norms[arrays.numverts][0] = mesh->norms[re->frame][k][0];
@@ -737,10 +736,10 @@ void R_render_model (refEntity_t *re)
 				memset (arrays.colour[arrays.numverts], 255, 4);
 
 				// Push the entity colour (TEST)
-				colour_copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
+				Vector4Copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
 				interpolate_normal(mesh->points[backframe][k], mesh->points[re->frame][k], frac, arrays.verts[arrays.numverts]);
 
-				vec2_copy(mesh->tex_st[k], arrays.tex_st[arrays.numverts]);
+				Vector2Copy(mesh->tex_st[k], arrays.tex_st[arrays.numverts]);
 				arrays.numverts++;
 			}
 		}
@@ -953,7 +952,7 @@ static void R_Upload_Lightmaps (void )
 	
 	r_numLightmaps = cm.lightmapdata_size / texsize;
 
-	r_lightmaps = malloc (r_numLightmaps * sizeof (int ));
+	r_lightmaps = malloc (r_numLightmaps * sizeof (uint_t));
 
 	glGenTextures (r_numLightmaps, r_lightmaps);
 
@@ -1011,7 +1010,7 @@ void R_LoadWorldMap (const char *mapname)
 
 	r_WorldMap_loaded = atrue;
 
-    skybox_create();
+    SkyboxCreate();
 }
 
 
@@ -1022,7 +1021,7 @@ void R_FreeWorldMap (void)
 
 	R_Free_Lightmaps ();
 	
-	skybox_free();
+	SkyboxFree();
 
 	free(facelist.faces);
     free(translist.faces);
@@ -1037,7 +1036,7 @@ void R_StartFrame (void )
 	GL_DepthMask(GL_TRUE);
 
 	// TODO !!!
-	if (!stricmp (r_drawBuffer->string, "GL_BACK"))
+	if (!A_stricmp (r_drawBuffer->string, "GL_BACK"))
 		glDrawBuffer (GL_BACK);
 	else
 		glDrawBuffer (GL_FRONT);

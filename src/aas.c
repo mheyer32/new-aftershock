@@ -36,7 +36,7 @@ aboolean AAS_Load_Map (char *mapname)
 	char fname[MAX_APATH];
 
 	COM_StripExtension(mapname, fname);
-	strcat(fname, ".aas");
+	A_strcat(fname, MAX_APATH, ".aas");
 
 	len = FS_OpenFile (fname, &file, FS_READ);
 

@@ -19,9 +19,6 @@
 #define __VEC_H__
 
 #include "a_shared.h"
-#define DEG2RAD 0.0174532925199
-#define RAD2DEG 1/DEG2RAD
-
 
 #define vec_copy(s,d) {d[0]=s[0];d[1]=s[1];d[2]=s[2];}
 #define vec4_copy(s,d) {d[0]=s[0];d[1]=s[1];d[2]=s[2];d[3]=s[3];};

@@ -20,7 +20,6 @@
 #include "command.h"	// Cbuf_InsertText
 #include "c_var.h"
 #include "io.h"			// FS_Write
-#include "util.h"
 
 
 // From GOLK :www.digital-phenomenon.de
@@ -33,8 +32,6 @@ static cvar_t	cvars[MAX_CVARS];
 cvar_t			*cvarlist = 0;
 static int		num_cvars = 0;
 static aboolean	cvar_dirty = afalse;
-
-char *copystring(const char *s);
 
 /*
 =================
@@ -391,15 +388,15 @@ cvar_t *Cvar_Get( const char *var_name, const char *resetString, int flags )
 		}
 
 		cvar					= &cvars[num_cvars++];
-		cvar->name				= copystring( var_name );
-		cvar->string			= copystring( resetString );
+		cvar->name				= A_CopyStr( var_name );
+		cvar->string			= A_CopyStr( resetString );
 		// ?? MAX: if were creating, isn't it unmodified?
 		// ?? IS: This is needed, if some initialization routine checks if modified is set
 		cvar->modified			= atrue;
 		cvar->modificationCount = 0;
 		cvar->value				= (float)atof( resetString );
 		cvar->integer			= atoi( resetString );
-		cvar->resetString		= copystring( resetString );
+		cvar->resetString		= A_CopyStr( resetString );
 		cvar->latchedString		= NULL;
 		cvar->flags				= flags;
 		cvar->next				= cvarlist;
@@ -410,13 +407,13 @@ cvar_t *Cvar_Get( const char *var_name, const char *resetString, int flags )
 	if( (cvar->flags & CVAR_USER_CREATED) && !(flags & CVAR_USER_CREATED) && resetString[0] ) {
 		cvar->flags &= ~CVAR_USER_CREATED;
 		free( cvar->resetString );
-		cvar->resetString = copystring( resetString );
+		cvar->resetString = A_CopyStr( resetString );
 	}
 
 	cvar->flags |= flags;
 	if( !cvar->resetString[0] ) {
 		free( cvar->resetString );
-		cvar->resetString = copystring( resetString );
+		cvar->resetString = A_CopyStr( resetString );
 	} else {
 		if( resetString[0] && strcmp( cvar->resetString, resetString ) ) {
 			Con_Printf( "Warning: cvar %s given initial values \"%s\" and \"%s\"\n", cvar->name, cvar->resetString, resetString );
@@ -489,7 +486,7 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, aboolean usercreated
 				}
 			}
 			Con_Printf( "%s will be changed upon restarting.\n", cvar->name );
-			cvar->latchedString = copystring( value );
+			cvar->latchedString = A_CopyStr( value );
 			cvar->modificationCount++;
 			cvar->modified = atrue;
 			return( cvar );
@@ -513,7 +510,7 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, aboolean usercreated
 	cvar->modificationCount++;
 	cvar->modified = atrue;
 	free( cvar->string );
-	cvar->string = copystring( value );
+	cvar->string = A_CopyStr( value );
 	cvar->value = (float)atof( cvar->string );
 	cvar->integer = atoi( cvar->string );
 

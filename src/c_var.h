@@ -16,14 +16,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-
 #ifndef C_VAR_H 
 #define C_VAR_H
 
-
-
 #define MAX_CVARS 1024
-
 
 extern int cvar_count;
 extern cvar_t			*cvarlist ;
@@ -47,11 +43,5 @@ void Cvar_Shutdown( void );
 void Cvar_Register( vmCvar_t *cvar, const char *var_name, const char *resetString, unsigned int flags );
 void Cvar_Update( vmCvar_t *cvar );
 aboolean Cvar_Print( const char *var_name );
-
-
-
-
-
-
 
 #endif

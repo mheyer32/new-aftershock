@@ -1,5 +1,4 @@
 #include <windows.h>
-#include "util.h"
 #include "engine.h"
 #include "sys_win.h"
 

@@ -16,7 +16,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 #include "a_shared.h"
-#include "util.h"
 #include "cmap.h"
 #include "shader.h"
 #include "opengl.h"
@@ -26,7 +25,6 @@
 #include "render.h"
 
 #define MAXSHADERS 1024
-
 
 
 #define DEFAULT_TEXT_SHADER_NAME "gfx/2d/bigchars"
@@ -68,14 +66,14 @@ char *shaderbuf, *curpos, *endpos;
 
 static void shader_cull(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
-	if (!stricmp(args[0], "disable") || !stricmp(args[0], "none")) {
+	if (!A_stricmp(args[0], "disable") || !A_stricmp(args[0], "none")) {
 		shader->cull = SHADER_CULL_DISABLE;
 	}
 	else if (numargs > 1)
 	{
-		if (!stricmp (args[1], "front"))
+		if (!A_stricmp (args[1], "front"))
 			shader->cull = SHADER_CULL_FRONT;
-		else if (!stricmp (args[1], "back"))
+		else if (!A_stricmp (args[1], "back"))
 			shader->cull = SHADER_CULL_BACK;
 	}
 	else
@@ -168,7 +166,7 @@ static void
 shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numargs,
 		      char **args)
 {
-	if (!stricmp(args[0], "wave"))
+	if (!A_stricmp(args[0], "wave"))
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
 		shader->deform_params[0] = atof (args[1]);
@@ -176,14 +174,14 @@ shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numargs,
 		
 		shader->deform_vertices = DEFORMV_WAVE;
 	}
-	else if (!stricmp(args[0], "normal"))
+	else if (!A_stricmp(args[0], "normal"))
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
 		shader->deform_vertices = DEFORMV_NORMAL;
 		shader->deform_params[0] = atof (args[1]); // Div
 		shader_parsefunc(&args[2], &shader->deformv_wavefunc);
 	}
-	else if (!stricmp(args[0], "bulge"))
+	else if (!A_stricmp(args[0], "bulge"))
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
 		shader->deform_vertices = DEFORMV_BULGE;
@@ -192,7 +190,7 @@ shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numargs,
 		shader->deform_params[1] = atof (args[2]); // Height
 		shader->deform_params[2] = atof (args[3]); // Speed 
 	}
-	else if (!stricmp (args[0], "move"))
+	else if (!A_stricmp(args[0], "move"))
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
 		shader->deform_vertices = DEFORMV_MOVE;
@@ -203,12 +201,12 @@ shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numargs,
 		
 		shader_parsefunc(&args[4], &shader->deformv_wavefunc);
 	}
-	else if (!stricmp (args[0], "autosprite"))
+	else if (!A_stricmp (args[0], "autosprite"))
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
 		shader->deform_vertices = DEFORMV_AUTOSPRITE;
 	}
-	else if (!stricmp (args[0], "autosprite2"))
+	else if (!A_stricmp (args[0], "autosprite2"))
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
 		shader->deform_vertices = DEFORMV_AUTOSPRITE2;
@@ -235,19 +233,19 @@ static void shader_fogparams (shader_t *shader, shaderpass_t *pass, int numargs,
 static void shader_sort (shader_t *shader, shaderpass_t *pass, int numargs,
 		      char **args)
 {
-	if(!stricmp( args[0], "portal" ) ) {
+	if (!A_stricmp( args[0], "portal" ) ) {
 			shader->sort = SHADER_SORT_PORTAL;
-	} else if( !stricmp( args[0], "sky" ) ) {
+	} else if( !A_stricmp( args[0], "sky" ) ) {
 		shader->sort = SHADER_SORT_SKY;
-	} else if( !stricmp( args[0], "opaque" ) ) {
+	} else if( !A_stricmp( args[0], "opaque" ) ) {
 		shader->sort = SHADER_SORT_OPAQUE;
-	} else if( !stricmp( args[0], "banner" ) ) {
+	} else if( !A_stricmp( args[0], "banner" ) ) {
 		shader->sort = SHADER_SORT_BANNER;
-	} else if( !stricmp( args[0], "underwater" ) ) {
+	} else if( !A_stricmp( args[0], "underwater" ) ) {
 		shader->sort = SHADER_SORT_UNDERWATER;
-	} else if( !stricmp( args[0], "additive" ) ) {
+	} else if( !A_stricmp( args[0], "additive" ) ) {
 		shader->sort = SHADER_SORT_ADDITIVE;
-	} else if( !stricmp( args[0], "nearest" ) ) {
+	} else if( !A_stricmp( args[0], "nearest" ) ) {
 		shader->sort = SHADER_SORT_NEAREST;
 	} else {
 		shader->sort = atoi(args[0]);
@@ -312,12 +310,12 @@ static shaderkey_t shaderkeys[] =
 static void
 shaderpass_map(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
-	if (!stricmp(args[0], "$lightmap"))
+	if (!A_stricmp(args[0], "$lightmap"))
 	{
 		pass->tc_gen = TC_GEN_LIGHTMAP;
 		pass->flags |= SHADER_LIGHTMAP;
 	}
-	else if (!stricmp (args[0], "$whiteimage"))
+	else if (!A_stricmp (args[0], "$whiteimage"))
 	{
 		pass->tc_gen = TC_GEN_BASE;
 		pass->texref = R_Load_Texture("white", shader->flags);
@@ -358,44 +356,46 @@ static void
 shaderpass_rgbgen(shader_t *shader, shaderpass_t *pass, int numargs,
 		  char **args)
 {
-	if (!stricmp(args[0], "identitylighting"))
+	if (!A_stricmp(args[0], "identitylighting"))
 	{
 		pass->rgbgen = RGB_GEN_IDENTITY_LIGHTING;
 	}
-	else if (!stricmp(args[0], "identity"))
+	else if (!A_stricmp(args[0], "identity"))
 	{
 		pass->rgbgen = RGB_GEN_IDENTITY;
 	}
-	else if (!stricmp (args[0], "wave"))
+	else if (!A_stricmp (args[0], "wave"))
 	{
-		if (numargs != 6)
+		if (numargs != 6) {
 			Syntax();
+			return;
+		}
 
 		shader_parsefunc(&args[1], &pass->rgbgen_func);
 		pass->rgbgen = RGB_GEN_WAVE;
 	}
-	else if (!stricmp(args[0], "entity"))
+	else if (!A_stricmp(args[0], "entity"))
 	{
 		pass->rgbgen = RGB_GEN_ENTITY;
 	}
-	else if (!stricmp(args[0], "oneMinusEntity"))
+	else if (!A_stricmp(args[0], "oneMinusEntity"))
 	{
 		pass->rgbgen = RGB_GEN_ONE_MINUS_ENTITY;
 	}
-	else if (!stricmp(args[0], "Vertex"))
+	else if (!A_stricmp(args[0], "Vertex"))
 	{
 		pass->rgbgen = RGB_GEN_VERTEX;
 		pass->alpha_gen = ALPHA_GEN_VERTEX;
 	}
-	else if (!stricmp(args[0], "oneMinusVertex"))
+	else if (!A_stricmp(args[0], "oneMinusVertex"))
 	{
 		pass->rgbgen = RGB_GEN_ONE_MINUS_VERTEX;
 	}
-	else if (!stricmp(args[0], "lightingDiffuse"))
+	else if (!A_stricmp(args[0], "lightingDiffuse"))
 	{
 		pass->rgbgen = RGB_GEN_LIGHTING_DIFFUSE;
 	}
-	else if (!stricmp (args[0], "exactvertex"))
+	else if (!A_stricmp (args[0], "exactvertex"))
 	{
 		pass->rgbgen = RGB_GEN_EXACT_VERTEX;
 	}
@@ -487,17 +487,17 @@ static void
 shaderpass_alphafunc(shader_t *shader, shaderpass_t *pass, int numargs,
 		     char **args)
 {
-    if (!stricmp(args[0], "gt0"))
+    if (!A_stricmp(args[0], "gt0"))
     {
 		pass->alphafunc = GL_GREATER;
 		pass->alphafuncref = 0.0f;
     }
-	else if (!stricmp (args[0],"lt128"))
+	else if (!A_stricmp (args[0],"lt128"))
 	{
 		pass->alphafunc = GL_LESS;
 		pass->alphafuncref = 0.5f;
 	}
-    else if (!stricmp(args[0], "ge128"))
+    else if (!A_stricmp(args[0], "ge128"))
     {
 		pass->alphafunc = GL_GEQUAL;
 		pass->alphafuncref = 0.5f;
@@ -515,17 +515,17 @@ static void
 shaderpass_tcmod(shader_t *shader, shaderpass_t *pass, int numargs,
 		 char **args)
 {
-	if (pass->num_tc_mod == MAX_TC_MOD) {
+	if (pass->num_tc_mod >= MAX_TC_MOD) {
 		Con_Printf ("MAX_TC_MOD exceeded!");
 		return;
 	}
 
-	if (!stricmp(args[0],"rotate"))
+	if (!A_stricmp(args[0], "rotate"))
 	{
 		pass->tc_mod[pass->num_tc_mod].type = SHADER_TCMOD_ROTATE;
 		pass->tc_mod[pass->num_tc_mod].args[0] = atof(args[1]);
 	}
-	else if (!stricmp (args[0], "scale"))
+	else if (!A_stricmp (args[0], "scale"))
 	{
 		if (numargs != 3) {
 			Syntax();
@@ -538,7 +538,7 @@ shaderpass_tcmod(shader_t *shader, shaderpass_t *pass, int numargs,
 		pass->tc_mod[pass->num_tc_mod].args[1] = atof(args[2]);
 	
 	}
-	else if (!stricmp(args[0], "scroll"))
+	else if (!A_stricmp(args[0], "scroll"))
 	{
 		if (numargs != 3) {
 			Syntax();
@@ -551,7 +551,7 @@ shaderpass_tcmod(shader_t *shader, shaderpass_t *pass, int numargs,
 		pass->tc_mod[pass->num_tc_mod].args[1] = atof (args[2]);
 
 	}
-	else if (!stricmp (args[0], "stretch"))
+	else if (!A_stricmp (args[0], "stretch"))
 	{
 		if (numargs != 6) {
 			Syntax();
@@ -562,7 +562,7 @@ shaderpass_tcmod(shader_t *shader, shaderpass_t *pass, int numargs,
 		pass->tc_mod[pass->num_tc_mod].type = SHADER_TCMOD_STRETCH;
 		shader_parsefunc(&args[1], &pass->tc_mod_stretch);
 	}
-	else if (!stricmp (args[0], "transform"))
+	else if (!A_stricmp (args[0], "transform"))
 	{
 		int i;
 
@@ -577,7 +577,7 @@ shaderpass_tcmod(shader_t *shader, shaderpass_t *pass, int numargs,
 		for (i = 0; i < 6; ++i)
 			pass->tc_mod[pass->num_tc_mod].args[i] = atof(args[i + 1]);
 	}
-	else if (!stricmp (args[0], "turb"))
+	else if (!A_stricmp (args[0], "turb"))
 	{
 		int i, a1 = 0;
 
@@ -600,6 +600,7 @@ shaderpass_tcmod(shader_t *shader, shaderpass_t *pass, int numargs,
 	{
 		Con_Printf ("WARNING: Unknown tc_mod: %s\n", args[0]);
 		pass->tc_mod[pass->num_tc_mod].type = -1;
+		return;
 	}
 
     pass->flags |= SHADER_TCMOD;
@@ -611,20 +612,16 @@ static void
 shaderpass_tcgen(shader_t *shader, shaderpass_t *pass, int numargs,
 		 char **args)
 {
-	if (!stricmp(args[0], "base"))
-	{
+	if (!A_stricmp(args[0], "base")) {
 		pass->tc_gen = TC_GEN_BASE;
 	}
-	else if (!stricmp(args[0], "lightmap"))
-	{
+	else if (!A_stricmp(args[0], "lightmap")) {
 		pass->tc_gen = TC_GEN_LIGHTMAP;
 	}
-	else if (!stricmp(args[0], "environment"))
-	{
+	else if (!A_stricmp(args[0], "environment")) {
 		pass->tc_gen = TC_GEN_ENVIRONMENT;
 	}
-	else if (!stricmp(args[0], "vector"))
-	{
+	else if (!A_stricmp(args[0], "vector")) {
 		pass->tc_gen = TC_GEN_VECTOR;
 
 		pass->tc_gen_s[0] = atof(args[1]);
@@ -634,8 +631,7 @@ shaderpass_tcgen(shader_t *shader, shaderpass_t *pass, int numargs,
 		pass->tc_gen_t[1] = atof(args[5]);
 		pass->tc_gen_t[2] = atof(args[6]);
 	}
-	else
-	{
+	else {
 		Con_Printf ("Unknown tcgenparam: %s\n", args[0]);
 	}
 }
@@ -643,33 +639,29 @@ shaderpass_tcgen(shader_t *shader, shaderpass_t *pass, int numargs,
 static void shaderpass_alphagen (shader_t *shader, shaderpass_t *pass, int numargs,
 		 char **args)
 {
-	if (!stricmp (args[0], "portal"))
-	{
+	if (!A_stricmp (args[0], "portal")) {
 		pass->alpha_gen = ALPHA_GEN_PORTAL;
 	}
-	else if (!stricmp (args[0], "vertex"))
-	{
+	else if (!A_stricmp (args[0], "vertex")) {
 		pass->alpha_gen = ALPHA_GEN_VERTEX;
 	}
-	else if (!stricmp (args[0], "entity"))
-	{
+	else if (!A_stricmp (args[0], "entity")) {
 		pass->alpha_gen = ALPHA_GEN_ENTITY;
 	}
-	else if (!stricmp (args[0], "wave"))
-	{
-		if (numargs != 6)
+	else if (!A_stricmp (args[0], "wave")) {
+
+		if (numargs != 6) {
 			Syntax();
+			return;
+		}
 
 		shader_parsefunc(&args[1], &pass->alphagen_func);
-
 		pass->alpha_gen = ALPHA_GEN_WAVE;
 	}
-	else if (!stricmp (args[0], "lightingspecular"))
-	{
+	else if (!A_stricmp (args[0], "lightingspecular")) {
 		pass->alpha_gen = ALPHA_GEN_LIGHTINGSPECULAR;
 	}
-	else
-	{
+	else {
 		pass->alpha_gen = ALPHA_GEN_DEFAULT;
 		Con_Printf ("Unknown alphagen param: %s\n", args[0]);
 	}
@@ -860,7 +852,7 @@ int Shader_GetOffset (const char *name)
 	// HASHTABLE !!!
 	for (i = 0; i < numshaders; i++)
 	{
-		if (!stricmp (shadercache[i].name, name))
+		if (!A_stricmp (shadercache[i].name, name))
 			return shadercache[i].offset;
 	}
 
@@ -930,7 +922,7 @@ void Shader_Parsetok(shader_t *shader, shaderpass_t *pass, shaderkey_t *keys, ch
 
 	for (key = keys; key->keyword != NULL; key++)
 	{
-		if (!stricmp (token, key->keyword))
+		if (!A_stricmp (token, key->keyword))
 		{
 			numargs = 0;
 
@@ -941,7 +933,7 @@ void Shader_Parsetok(shader_t *shader, shaderpass_t *pass, shaderkey_t *keys, ch
 				if (!c[0]) // NEW LINE 
 					break;
 
-				c = strlwr(c); // Lowercase ( FIXME !)
+				c = A_strlwr(c); // Lowercase ( FIXME !)
 				
 				strcpy(buf[numargs], c);
 				args[numargs] = buf[numargs++];
@@ -1024,7 +1016,7 @@ int R_LoadShader (const char *name, int type)
 	// Test if already loaded
 	for (i = 0; i < shadercount; i++)
 	{
-		if (!stricmp (name, r_shaders[i].name))
+		if (!A_stricmp (name, r_shaders[i].name))
 			return i;
 	}
 

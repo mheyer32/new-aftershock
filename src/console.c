@@ -17,10 +17,8 @@
  */
 
 
-#include "util.h"
 #include "a_shared.h"	
 #include "sys_main.h"
-
 #include "render.h"		/* R_DrawString */
 #include "console.h"	/* console_t */
 #include "c_var.h"		/* Cvar_Get, Cvar_Print */
@@ -263,7 +261,7 @@ static void Con_ProcessCmd(void)
 	char *cmd;
 
 	if(strlen(console.minibuffer)) {
-		cmd = copystring(console.minibuffer);
+		cmd = A_CopyStr(console.minibuffer);
 
 		/* clear the minibuffer */
 		console.cursorPos = 0;
@@ -327,13 +325,13 @@ static void Con_Complete(void)
 		num = 0;
 		for (cvar = cvarlist; cvar; cvar=cvar->next) {
 			if( !A_stricmpn( minibuf, cvar->name, len ) ) {
-				list[num++] = copystring(cvar->name);
+				list[num++] = A_CopyStr(cvar->name);
 			}
 		}
 
 		for(cmd = cmdlist; cmd; cmd=cmd->next) {
 			if( !A_stricmpn( minibuf, cmd->name, len ) ) {
-				list[num++] = copystring(cmd->name);
+				list[num++] = A_CopyStr(cmd->name);
 			}
 		}
 
@@ -353,7 +351,7 @@ static void Con_Complete(void)
 						if (!next) {
 							next = list[i][len];
 						} else if (list[i][len] != next) {
-							buf = copystring(minibuf);
+							buf = A_CopyStr(minibuf);
 							Con_Printf("%s%s\n", console.prompt, buf);
 							free(buf);
 							for (j=0; j<num; j++) {
@@ -397,13 +395,14 @@ void Con_Init(void)
 	console.hScrollPos = 0;
 	console.cursorPos = 0;
 	console.shader = &shader_console;
-	console.prompt = "]";
 	console.newline = 0;
 
-	memset(console.minibuffer,0, CON_MINIBUFFER_SIZE);
+	A_strncpyz (console.prompt, "]", CON_PROMT_SIZE);
+
+	memset(console.minibuffer, 0, CON_MINIBUFFER_SIZE);
 
 	for(i=0; i<CON_BUFFER_SIZE; i++)
-		memset(console.chars[i],0, CON_LINE_WIDTH);
+		memset(console.chars[i], 0, CON_LINE_WIDTH);
 
 	developer = Cvar_Get( "developer", "0", 0 );
 	logfile = Cvar_Get( "logfile", "0", 0 );

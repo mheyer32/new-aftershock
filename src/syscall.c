@@ -19,8 +19,6 @@
 #include <time.h>
 #include "a_shared.h"
 #include "sys_main.h"
-#include "util.h"
-#include "vec.h"
 #include "cmap.h"
 #include "c_var.h"
 #include "command.h"

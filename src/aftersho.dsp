@@ -272,10 +272,6 @@ SOURCE=.\ui.c
 
 SOURCE=.\unzip.c
 # End Source File
-# Begin Source File
-
-SOURCE=.\util.c
-# End Source File
 # End Group
 # Begin Group "Header-Dateien"
 
@@ -339,10 +335,6 @@ SOURCE=.\glinc.h
 # Begin Source File
 
 SOURCE=.\io.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\Jconfig.h
 # End Source File
 # Begin Source File
 
@@ -459,10 +451,6 @@ SOURCE=.\ui.h
 # Begin Source File
 
 SOURCE=.\unzip.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\util.h
 # End Source File
 # Begin Source File
 

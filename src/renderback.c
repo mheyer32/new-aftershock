@@ -16,7 +16,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 #include "a_shared.h"
-#include "util.h"
 #include "cmap.h"
 #include "shader.h"
 #include "render.h"
@@ -129,9 +128,9 @@ void R_Push_Quad (quad_t *q)
 
 	for (i = 0; i < 4; i++)
 	{
-		vec_copy(q->verts[i], arrays.verts[arrays.numverts]);
-		vec2_copy(q->tc[i], arrays.tex_st[arrays.numverts]);
-		colour_copy(q->color[i], arrays.colour[arrays.numverts]);
+		VectorCopy(q->verts[i], arrays.verts[arrays.numverts]);
+		Vector2Copy(q->tc[i], arrays.tex_st[arrays.numverts]);
+		Vector4Copy(q->color[i], arrays.colour[arrays.numverts]);
 		arrays.numverts++;
 	}
 }
@@ -231,8 +230,8 @@ void render_backend_sky(int numsky, int *skylist)
 
 		for (i=0; i < r_skybox->numpoints; i++)
 		{
-			vec_copy(r_skybox->points[s][i], arrays.verts[arrays.numverts]);
-			vec2_copy(r_skybox->tex_st[s][i], arrays.tex_st[arrays.numverts]);
+			VectorCopy(r_skybox->points[s][i], arrays.verts[arrays.numverts]);
+			Vector2Copy(r_skybox->tex_st[s][i], arrays.tex_st[arrays.numverts]);
 			arrays.numverts++;
 		}
     }
@@ -257,11 +256,11 @@ static void render_pushface(cface_t *face)
     
     for (i = 0; i < face->numverts; i++)
 	{
-		vec_copy(vert->v_point, arrays.verts[arrays.numverts]);
-		VectorCopy (vert->v_norm ,arrays.norms [arrays.numverts]);
-		vec2_copy(vert->tex_st, arrays.tex_st[arrays.numverts]);
-		vec2_copy(vert->lm_st, arrays.lm_st[arrays.numverts]);
-		colour_copy(vert->colour, arrays.colour[arrays.numverts]);
+		VectorCopy(vert->v_point, arrays.verts[arrays.numverts]);
+		VectorCopy(vert->v_norm, arrays.norms [arrays.numverts]);
+		Vector2Copy(vert->tex_st, arrays.tex_st[arrays.numverts]);
+		Vector2Copy(vert->lm_st, arrays.lm_st[arrays.numverts]);
+		Vector4Copy(vert->colour, arrays.colour[arrays.numverts]);
 		vert++;
 		arrays.numverts++;
     }	    
@@ -278,10 +277,9 @@ void R_Push_raw (vec3_t *v,vec2_t *tc, colour_t *c, int *elems, int numverts, in
 
 	for (i = 0;i < numverts; i++)
 	{
-		vec_copy(v[i], arrays.verts[arrays.numverts]);
-		vec2_copy(tc[i], arrays.tex_st[arrays.numverts]);
-		colour_copy(c[i], arrays.colour[arrays.numverts]);
-
+		VectorCopy(v[i], arrays.verts[arrays.numverts]);
+		Vector2Copy(tc[i], arrays.tex_st[arrays.numverts]);
+		Vector4Copy(c[i], arrays.colour[arrays.numverts]);
 		arrays.numverts++;
 	}
 }
@@ -301,9 +299,9 @@ static void render_pushmesh(mesh_t *mesh)
 	
 	for (i = 0;i < mesh->size[1] * mesh->size[0]; i++)
 	{
-	    vec_copy(mesh->points[i], arrays.verts[arrays.numverts]);
-	    vec2_copy(mesh->tex_st[i], arrays.tex_st[arrays.numverts]);
-	    vec2_copy(mesh->lm_st[i], arrays.lm_st[arrays.numverts]);
+	    VectorCopy(mesh->points[i], arrays.verts[arrays.numverts]);
+	    Vector2Copy(mesh->tex_st[i], arrays.tex_st[arrays.numverts]);
+	    Vector2Copy(mesh->lm_st[i], arrays.lm_st[arrays.numverts]);
 	    arrays.numverts++;
 	}
 }
@@ -825,28 +823,28 @@ void R_DrawStretchPic (float x, float y, float w, float h, float s1, float t1, f
 	q.verts[0][2] = 0;
 	q.tc[0][0] = s1;
 	q.tc[0][1] = t1;
-	colour_copy (r_actcolor, q.color[0]);
+	Vector4Copy (r_actcolor, q.color[0]);
 	
 	q.verts[1][0] = x + w;
 	q.verts[1][1] = y;
 	q.verts[1][2] = 0;
 	q.tc[1][0] = s2;
 	q.tc[1][1] = t1;
-	colour_copy (r_actcolor, q.color[1]);
+	Vector4Copy (r_actcolor, q.color[1]);
 	
 	q.verts[2][0] = x + w;
 	q.verts[2][1] = y + h;
 	q.verts[2][2] = 0;
 	q.tc[2][0] = s2;
 	q.tc[2][1] = t2;
-	colour_copy (r_actcolor, q.color[2]);
+	Vector4Copy (r_actcolor, q.color[2]);
 	
 	q.verts[3][0] = x;
 	q.verts[3][1] = y + h;
 	q.verts[3][2] = 0;
 	q.tc[3][0] = s1;
 	q.tc[3][1] = t2;
-	colour_copy (r_actcolor, q.color[3]);
+	Vector4Copy (r_actcolor, q.color[3]);
 	
 	q.elems[0] = 0;
 	q.elems[1] = 1;

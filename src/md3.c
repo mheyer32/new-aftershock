@@ -16,7 +16,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 #include "a_shared.h"
-#include "util.h"
 #include "pak.h"
 #include "cmap.h"
 #include "md3.h"
@@ -487,7 +486,7 @@ static aboolean R_LoadSkin(skin_t *skin, const char *name)
 		if (!token[0])
 			continue;
 
-		comma = strchr(token, ',');
+		comma = A_strrchr(token, ',');
 
 		if (A_strncmp(token, "tag_", 4))
 		{

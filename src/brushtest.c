@@ -17,11 +17,9 @@
  */
 
 #include "a_shared.h"
-#include "util.h"
 #include "pak.h"
 #include "cmap.h"
 #include "entity.h"
-#include "vec.h"
 #include "brushtest.h"
 
 static unsigned char brushflag[ 1025 ];

@@ -39,7 +39,7 @@ typedef struct
 
 extern skybox_t *r_skybox;
 
-void skybox_create(void);
-void skybox_free(void);
+void SkyboxCreate(void);
+void SkyboxFree(void);
 
 #endif /*_SKYBOX_H__*/

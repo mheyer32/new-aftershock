@@ -40,7 +40,7 @@ extern int r_nummeshes;
 extern mesh_t *r_meshes;
 extern int *r_facemeshes;
 
-void mesh_create_all(void);
-void mesh_free_all(void);
+void Mesh_CreateAll(void);
+void Mesh_FreeAll(void);
 
 #endif /*_MESH_H__*/

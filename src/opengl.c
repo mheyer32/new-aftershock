@@ -17,7 +17,6 @@
  */
 
 #include "a_shared.h"
-#include "util.h"
 #include "opengl.h"
 #include "glinc.h"
 #include <windows.h>

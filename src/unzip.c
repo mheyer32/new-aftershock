@@ -461,8 +461,6 @@ int  Unz_GenCache(unz_s *s)
 				strcpy(s->cache[i][s->counts[i]].name,filecache[j].name);
 
 				s->counts[i]++;
-
-
 			}
 
 		}
@@ -470,13 +468,8 @@ int  Unz_GenCache(unz_s *s)
 	}
 
 
-
-
 	free(filecache);
 	return numfilescached;
-
-
-
 }
 
 
@@ -943,23 +936,17 @@ int Unz_GetStringForDir (unzFile *pak,const char * dir,const char *extension,cha
 
 int Unz_FileExists (unzFile * pak, const char * file )
 {
-	int i,j;
-	unz_s *s=(unz_s*) pak;
+	int i, j;
+	unz_s *s = (unz_s* )pak;
 
-	for (i=0;i<HASHSIZE ;i++ )
+	for (i = 0; i < HASHSIZE; i++)
 	{
-		for (j=0;j<s->counts[i];j++)
+		for (j = 0; j < s->counts[i]; j++)
 		{
-			if (!stricmp (file,s->cache[i][j].name))
+			if (!A_stricmp (file, s->cache[i][j].name))
 				return 1;
-
 		}
-
-
-
-
 	}
-
 
 	return 0;
 }
@@ -979,11 +966,9 @@ extern int ZEXPORT unzLocateFile (unzFile file,const char * szFileName, int iCas
 {
 	unz_s* s;	
 	int err,i,key=0;
-
 	
 	uLong num_fileSaved;
 	uLong pos_in_central_dirSaved;
-
 
 	if (file==NULL)
 		return UNZ_PARAMERROR;
@@ -1005,20 +990,17 @@ extern int ZEXPORT unzLocateFile (unzFile file,const char * szFileName, int iCas
 
 	for (i=0;i<s->counts[key];i++)
 	{
-		if (!stricmp(szFileName,s->cache[key][i].name))
+		if (!A_stricmp(szFileName,s->cache[key][i].name))
 		{
-
 			//	s->num_file = s->cache[key][i].name;
-				s->pos_in_central_dir = s->cache[key][i].pos_in_central_dir;
-				err = unzlocal_GetCurrentFileInfoInternal(file,&s->cur_file_info,
-											   &s->cur_file_info_internal,
-											   NULL,0,NULL,0,NULL,0);
-
-
-				s->current_file_ok = (err == UNZ_OK);
-
-
-				if( !s->current_file_ok )
+			s->pos_in_central_dir = s->cache[key][i].pos_in_central_dir;
+			err = unzlocal_GetCurrentFileInfoInternal(file,&s->cur_file_info,
+				&s->cur_file_info_internal,
+				NULL,0,NULL,0,NULL,0);
+			
+			s->current_file_ok = (err == UNZ_OK);
+			
+			if( !s->current_file_ok )
 			{
 				s->current_file_name[0] = 0;
 				break;
@@ -1028,25 +1010,18 @@ extern int ZEXPORT unzLocateFile (unzFile file,const char * szFileName, int iCas
 				// current file name remembering
 				if( s->current_file_ok )
 				{
-					
 					unzGetCurrentFileInfo(file,NULL,
-								s->current_file_name,sizeof(s->current_file_name)-1,
-								NULL,0,NULL,0);
+						s->current_file_name,sizeof(s->current_file_name)-1,
+						NULL,0,NULL,0);
 				}
 				return UNZ_OK;
 			}
 		}
-
-
 	}
-
-
+	
 	s->num_file = num_fileSaved ;
 	s->pos_in_central_dir = pos_in_central_dirSaved ;
 	return UNZ_END_OF_LIST_OF_FILE;
-
-
-
 }
 
 //#endif

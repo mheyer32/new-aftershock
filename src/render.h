@@ -30,7 +30,7 @@ extern double cl_frametime;   /* Current time */
 extern double sv_frametime;   /* Current time */
 
 #include "c_var.h"
-
+#include "lightmap.h"
 
 /* cvars */
 extern cvar_t *con_notifytime;
@@ -215,14 +215,12 @@ typedef struct {
 } polyVert_t;
 
 typedef struct poly_s {
-	int     			hShader;
-	int					numVerts;
-	polyVert_t			*verts;
+	int     	hShader;
+	int			numVerts;
+	polyVert_t	*verts;
 } poly_t;
 
-
-
-// used for overlay :
+// used for overlay
 typedef struct 
 {
 
@@ -231,15 +229,14 @@ typedef struct
 	vec3_t verts [4];
 	float tc [4][2];
 	colour_t color [4];
-
-}quad_t;
+} quad_t;
 
 
 typedef struct {
-	vec3_t origin ;
+	vec3_t origin;
 	float intensity;
-	float r,g,b;
-}dlight_t;
+	float r, g, b;
+} dlight_t;
 
 
 // used for everything which has its own coordinate system :
@@ -250,8 +247,7 @@ typedef struct
 	
 	aboolean matrix_identity;
 	aboolean inv_matrix_calculated;
-}reference_t;
-
+} reference_t;
 
 /*
 #include <windows.h>
@@ -269,27 +265,22 @@ void R_EndFrame (void );
 
 void R_DrawStretchPic( float x,float y,float w,float h,float s1,float t1,float s2,float t2,int hShader);
 void R_SetColor( const float *rgba );
-void R_Init(void );
-void R_Shutdown(void );
+void R_Init(void);
+void R_Shutdown(void);
 void R_DrawString( int x, int y, const char *str, vec4_t color );
-void R_AddPolyToScene(  const polyVert_t *verts , int numVerts, int Shader ) ;
+void R_AddPolyToScene( const polyVert_t *verts , int numVerts, int Shader ) ;
 void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
-void R_Update_Screen(void );
-void R_ClearScene (void );
+void R_Update_Screen(void);
+void R_ClearScene (void);
 void R_RenderScene (const refdef_t * fd );
-void R_AddRefEntityToScene( const refEntity_t *re ) ;
+void R_AddRefEntityToScene( const refEntity_t *re );
 int R_TestVis ( const vec3_t p1, const vec3_t p2 );
 void R_LerpTag( orientation_t *tag, int model, int startFrame, int endFrame, float frac, const char *tagName ) ;
 
-int R_RegisterModel( const char *name ) ;
-int  R_RegisterSkin( const char *name );
+int R_RegisterModel( const char *name );
+int R_RegisterSkin( const char *name );
 
 void R_LoadWorldMap( const char *mapname );
 void R_FreeWorldMap (void );
-
-
-extern int * r_lightmaps; 
-extern int r_numLightmaps ;
-
 
 #endif /*__RENDER_H__*/

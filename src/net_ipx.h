@@ -28,10 +28,4 @@ aboolean IPX_Broadcast(char *buf, int size, unsigned short port);
 int IPX_CompareAddr( const net_address_t *addr1, const net_address_t *addr2 );
 int IPX_CompareBaseAddr( const net_address_t *addr1, const net_address_t *addr2 );
 
-
-
-
-
-
-
 #endif

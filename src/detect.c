@@ -753,7 +753,7 @@ void CPU_detect( processors_info_t *p_info )
 	int			num;
 	processor_t	*p;
 
-	if( !stricmp( arch->string, "winnt" ) || !stricmp( arch->string, "win2000" ) ) {
+	if( !A_stricmp( arch->string, "winnt" ) || !A_stricmp( arch->string, "win2000" ) ) {
 		num = atoi( getenv( "NUMBER_OF_PROCESSORS" ) );
 	} else {
 		num = 1;

@@ -19,9 +19,7 @@
 #ifndef CLIENT_H__
 #define CLIENT_H__
 
-
 #include "c_var.h"
-
 
 extern cvar_t *cl_running;
 extern cvar_t *cl_cdkey;
@@ -37,23 +35,5 @@ void CL_Startup (void);
 aboolean CL_Init (void);
 aboolean CL_Shutdown (void);
 void CL_KeyEvent (int Key);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #endif 

@@ -17,7 +17,6 @@
  */
 
 #include "a_shared.h"
-#include "util.h"
 #include "command.h"
 #include "console.h"
 #include "io.h"
@@ -468,7 +467,7 @@ void Cbuf_ExecuteText( cbufExec_t exec_when, const char *text )
 
 	switch( exec_when ) {
 		case EXEC_NOW:
-			tmp = copystring(text);
+			tmp = A_CopyStr(text);
 			Cmd_ExecuteString(tmp);
 			free(tmp);
 		case EXEC_APPEND:

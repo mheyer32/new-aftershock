@@ -19,7 +19,6 @@
 // REMOVE THIS !!!!
 
 #include "a_shared.h"
-#include "util.h"
 #include "cmap.h"
 #include "render.h"
 #include "tex.h"

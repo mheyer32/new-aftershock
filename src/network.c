@@ -22,7 +22,6 @@
 #include "console.h"	/* Con_Printf */
 #include "c_var.h"		/* Cvar_Get */
 #include "command.h"	/* Cmd_AddCommand */
-#include "util.h"
 #include "sys_network.h"
 #include "network.h"
 #include "net_msg.h"
@@ -87,7 +86,7 @@ aboolean Net_Resolve( const char *hostname, net_address_t *addr )
 	struct sockaddr_in	*udp_addr;
 
 	port = net_port->integer;
-	name = copystring( hostname );
+	name = A_CopyStr( hostname );
 
 	colon = A_strrchr( name, ':' );
 

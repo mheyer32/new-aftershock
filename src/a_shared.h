@@ -11,9 +11,12 @@
 
 #ifdef _WIN32
 
-#pragma warning(disable : 4018)	/* signed/unsigned mismatch */
-#pragma warning(disable : 4244)	/* int/float conversion */
-#pragma warning(disable : 4305)	/* truncation from const double to float */
+// unknown pragmas are SUPPOSED to be ignored, but....
+#pragma warning(disable : 4018)     // signed/unsigned mismatch
+#pragma warning(disable : 4051)     // ALPHA
+#pragma warning(disable : 4136)     // X86
+#pragma warning(disable : 4244)     // MIPS
+#pragma warning(disable : 4305)		// truncation from const double to float
 
 #endif
 
@@ -141,9 +144,6 @@ typedef int		clipHandle_t;
 #define	ANGLE_UP			-1
 #define	ANGLE_DOWN			-2
 
-#define	LIGHTMAP_WIDTH		128
-#define	LIGHTMAP_HEIGHT		128
-
 #define MIN_WORLD_COORD ( -65536 )
 #define	MAX_WORLD_COORD	( 65536 )
 #define WORLD_SIZE		( MAX_WORLD_COORD - MIN_WORLD_COORD )
@@ -245,8 +245,26 @@ typedef	int	fixed4_t;
 typedef	int	fixed8_t;
 typedef	int	fixed16_t;
 
+/* AIX defines the following in sys/types.h */
+#ifndef _AIX
+typedef unsigned int uint_t;
+typedef unsigned short ushort_t;
+#endif
+
 #ifndef M_PI
 #define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
+#endif
+
+#ifndef TWOPI
+#define TWOPI		6.28318530717958647692
+#endif
+
+#ifndef DEG2RAD
+#define DEG2RAD		0.01745329251994329576
+#endif
+
+#ifndef RAD2DEG
+#define RAD2DEG		57.2957795130823208768
 #endif
 
 typedef byte colour_t [4];
@@ -335,9 +353,6 @@ extern vec4_t	a_color_table[8];
 #define	MAKERGB( v, r, g, b ) v[0]=r;v[1]=g;v[2]=b
 #define	MAKERGBA( v, r, g, b, a ) v[0]=r;v[1]=g;v[2]=b;v[3]=a
 
-#define DEG2RAD 0.0174532925199
-#define RAD2DEG 1/DEG2RAD
-
 #define	nanmask (255<<23)
 
 #define	IS_NAN(x) (((*(int *)&x)&nanmask)==nanmask)
@@ -349,12 +364,46 @@ void ByteToDir( int b, vec3_t dir );
 
 #if	1
 
+#if 0 
+
 #define DotProduct(x,y)			((x)[0]*(y)[0]+(x)[1]*(y)[1]+(x)[2]*(y)[2])
+
+#else
+
+// Fast 15 cycle asm dot product, credits to Golgotha
+__forceinline float __cdecl DotProduct(const float v1[3], const float v2[3]) 
+{
+	float dotret;
+
+	__asm 
+	{
+		mov ecx, v1
+		mov eax, v2
+
+		;optimized dot product		;15 cycles
+		fld dword ptr   [eax+0]     ;starts & ends on cycle 0
+		fmul dword ptr  [ecx+0]     ;starts on cycle 1
+		fld dword ptr   [eax+4]     ;starts & ends on cycle 2
+		fmul dword ptr  [ecx+4]     ;starts on cycle 3
+		fld dword ptr   [eax+8]     ;starts & ends on cycle 4
+		fmul dword ptr  [ecx+8]     ;starts on cycle 5
+		fxch            st(1)       ;no cost
+		faddp           st(2),st(0) ;starts on cycle 6, stalls for cycles 7-8
+		faddp           st(1),st(0) ;starts on cycle 9, stalls for cycles 10-12
+		fstp dword ptr  [dotret]    ;starts on cycle 13, ends on cycle 14
+	}
+
+	return dotret;
+}
+
+#endif
+
 #define VectorSubtract(a,b,c)	((c)[0]=(a)[0]-(b)[0],(c)[1]=(a)[1]-(b)[1],(c)[2]=(a)[2]-(b)[2])
 #define VectorAdd(a,b,c)		((c)[0]=(a)[0]+(b)[0],(c)[1]=(a)[1]+(b)[1],(c)[2]=(a)[2]+(b)[2])
 #define VectorCopy(a,b)			((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2])
-#define	VectorScale(v, s, o)	((o)[0]=(v)[0]*(s),(o)[1]=(v)[1]*(s),(o)[2]=(v)[2]*(s))
-#define	VectorMA(v, s, b, o)	((o)[0]=(v)[0]+(b)[0]*(s),(o)[1]=(v)[1]+(b)[1]*(s),(o)[2]=(v)[2]+(b)[2]*(s))
+#define	VectorScale(v,s,o)		((o)[0]=(v)[0]*(s),(o)[1]=(v)[1]*(s),(o)[2]=(v)[2]*(s))
+#define	VectorMA(v,s,b,o)		((o)[0]=(v)[0]+(b)[0]*(s),(o)[1]=(v)[1]+(b)[1]*(s),(o)[2]=(v)[2]+(b)[2]*(s))
+#define VectorAvg(a,b,c)		((c)[0]=(((a[0])+(b[0]))*0.5f),(c)[1]=(((a[1])+(b[1]))*0.5f),(c)[2]=(((a[2])+(b[2]))*0.5f)) 
 
 #else
 
@@ -381,9 +430,19 @@ typedef struct {
 #define VectorClear(a)			((a)[0]=(a)[1]=(a)[2]=0)
 #define VectorNegate(a,b)		((b)[0]=-(a)[0],(b)[1]=-(a)[1],(b)[2]=-(a)[2])
 #define VectorSet(v, x, y, z)	((v)[0]=(x), (v)[1]=(y), (v)[2]=(z))
+
 #define Vector4Copy(a,b)		((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2],(b)[3]=(a)[3])
+#define Vector4Avg(a,b,c)		((c)[0]=(((a[0])+(b[0]))*0.5f),(c)[1]=(((a[1])+(b[1]))*0.5f),(c)[2]=(((a[2])+(b[2]))*0.5f),(c)[3]=(((a[3])+(b[3]))*0.5f)) 
+
+#define Vector2Copy(a,b)		((b)[0]=(a)[0],(b)[1]=(a)[1])
+#define Vector2Avg(a,b,c)		((c)[0]=(((a[0])+(b[0]))*0.5f),(c)[1]=(((a[1])+(b[1]))*0.5f)) 
 
 #define	SnapVector(v) {v[0]=(int)v[0];v[1]=(int)v[1];v[2]=(int)v[2];}
+
+#define CrossProduct(v1,v2,cross) (cross[0]=v1[1]*v2[2]-v1[2]*v2[1],cross[1]=v1[2]*v2[0]-v1[0]*v2[2],cross[2]=v1[0]*v2[1]-v1[1]*v2[0])
+
+#define VectorInverse(v)		((c[0]=-c[0]),(c[1]=-c[1]),(c[2]=-c[2]))
+#define VectorCompare(v1,v2)	((v1[0] == v2[0]) && (v1[1] == v2[1]) && (v1[2] == v2[2]))
 
 // just in case you do't want to use the macros
 vec_t _DotProduct( const vec3_t v1, const vec3_t v2 );
@@ -401,15 +460,15 @@ float NormalizeColor( const vec3_t in, vec3_t out );
 float RadiusFromBounds( const vec3_t mins, const vec3_t maxs );
 void ClearBounds( vec3_t mins, vec3_t maxs );
 void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs );
-int VectorCompare( const vec3_t v1, const vec3_t v2 );
+int _VectorCompare( const vec3_t v1, const vec3_t v2 );
 vec_t VectorLength( const vec3_t v );
 vec_t Distance( const vec3_t p1, const vec3_t p2 );
 vec_t DistanceSquared( const vec3_t p1, const vec3_t p2 );
-void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross );
+void _CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross );
 vec_t VectorNormalize (vec3_t v);		// returns vector length
 void VectorNormalizeFast(vec3_t v);		// does NOT return vector length, uses rsqrt approximation
 vec_t VectorNormalize2( const vec3_t v, vec3_t out );
-void VectorInverse (vec3_t v);
+void _VectorInverse (vec3_t v);
 void Vector4Scale( const vec4_t in, vec_t scale, vec4_t out );
 void VectorRotate( vec3_t in, vec3_t matrix[3], vec3_t out );
 int A_log2(int val);
@@ -551,6 +610,8 @@ void	A_strcat( char *dest, int size, const char *src );
 int		A_PrintStrlen( const char *string );
 // removes color sequences from string
 char	*A_CleanStr( char *string );
+char	*A_CopyStr ( const char *s );
+
 
 //=============================================
 
@@ -992,5 +1053,7 @@ typedef struct entityState_s {
 
 void *_cdecl malloc (unsigned int size);
 void *memcpy(void *, const void *, size_t);
+
+void Error(const char *fmt, ...);
 
 #endif

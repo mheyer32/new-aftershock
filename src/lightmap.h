@@ -18,8 +18,11 @@
 #ifndef __LIGHTMAP_H__
 #define __LIGHTMAP_H__
 
-extern int r_numlightmaptex;
-extern uint_t *r_lightmaptex;
+#define	LIGHTMAP_WIDTH		128
+#define	LIGHTMAP_HEIGHT		128
+
+extern int r_numLightmaps;
+extern uint_t *r_lightmaps;
 
 void lightmap_loadobjs(void);
 void lightmap_freeobjs(void);

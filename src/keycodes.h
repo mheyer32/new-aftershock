@@ -153,11 +153,4 @@ typedef enum {
 // distinguished by or'ing in K_CHAR_FLAG (ugly)
 #define	K_CHAR_FLAG		1024
 
-
-
-
-
-
-
-
 #endif 

@@ -16,9 +16,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-
-
-
 #ifndef COMMAND_H_INCLUDED
 #define COMMAND_H_INCLUDED
 
@@ -68,8 +65,5 @@ int     	Cmd_ExecuteCommand(const char *);
 void		Cmd_TokenizeString (char *);
 void		Cmd_Init(void);
 void		Cmd_Shutdown(void);
-
-
-
 
 #endif /* COMMAND_H_INCLUDED */

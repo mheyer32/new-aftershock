@@ -20,26 +20,4 @@
 #define SYSCALL_H
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #endif 

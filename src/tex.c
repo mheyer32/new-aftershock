@@ -16,7 +16,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 #include "a_shared.h"
-#include "util.h"
 #include "shader.h"
 #include "tex.h"
 #include "opengl.h"
@@ -579,7 +578,7 @@ int R_Load_Texture (const char *name, int flags)
 	// Check if already loaded 
 	for (i = 0; i < r_num_textures; i++)
 	{
-		if (!stricmp(textures[i].name, fname))
+		if (!A_stricmp(textures[i].name, fname))
 			return r_textures_id[i];
 	}
 
@@ -589,7 +588,7 @@ int R_Load_Texture (const char *name, int flags)
 		return -1;
 	}
 
-	if (!stricmp(fname, "*white") || !stricmp (fname, "white"))
+	if (!A_stricmp(fname, "*white") || !A_stricmp (fname, "white"))
 	{
 		// wasn't uploaded yet
 		if (r_textures_id[TEX_PREGEN_WHITE] == -1)
@@ -616,7 +615,7 @@ int R_Load_Texture (const char *name, int flags)
 			return r_textures_id[TEX_PREGEN_WHITE];
 		}
 	}
-	else if (!stricmp(fname, "*identityLight")) 
+	else if (!A_stricmp(fname, "*identityLight")) 
 	{
 		// wasn't uploaded yet
 		if (r_textures_id[TEX_PREGEN_IDENTITYLIGHT] == -1)
@@ -645,11 +644,11 @@ int R_Load_Texture (const char *name, int flags)
 			return r_textures_id[TEX_PREGEN_IDENTITYLIGHT];
 		}
 	}
-	else if (!stricmp(fname, "*scratch"))
+	else if (!A_stricmp(fname, "*scratch"))
 	{
 		return -1;
 	}
-	else if (!stricmp (fname, "$lightmap"))
+	else if (!A_stricmp (fname, "$lightmap"))
 	{
 		return -1;
 	}
@@ -671,11 +670,11 @@ int R_Load_Texture (const char *name, int flags)
 			Con_Printf ("%s\n", fname);
 
 			// .tga by default
-			strcpy (ext, "tga");
-			strcat (fname, ".tga");
+			A_strncpyz (ext, "tga", 3);
+			A_strcat (fname, MAX_APATH, ".tga");
 		}
 		
-		if (!stricmp (ext, "tga"))
+		if (!A_stricmp (ext, "tga"))
 		{
 			data = Tex_Load_TGA (tex_name, &img_width, &img_height, &format);
 			
@@ -697,7 +696,7 @@ int R_Load_Texture (const char *name, int flags)
 				}
 			}
 		}
-		else if (!stricmp (ext, "jpg"))
+		else if (!A_stricmp (ext, "jpg"))
 		{
 			data = Tex_Load_JPG (tex_name, &img_width, &img_height, &format);
 			

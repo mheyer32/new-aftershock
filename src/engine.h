@@ -19,6 +19,8 @@
 #ifndef ENGINE_H__
 #define ENGINE_H__
 
+#include "a_shared.h"
+
 aboolean Engine_Init (void);
 void Engine_Render_Next_Frame (void);
 void Engine_Shutdown(void);

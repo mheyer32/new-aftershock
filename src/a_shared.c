@@ -20,7 +20,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include "console.h"
-#include "util.h"
 
 float Com_Clamp( float min, float max, float value )
 {
@@ -739,6 +738,20 @@ char *A_CleanStr( char *string )
 	return(string);
 }
 
+
+char *A_CopyStr(const char *s)
+{
+	char *b;
+
+	if (!s)
+		return 0;
+
+	b = (char *)malloc(strlen(s) + 1);
+	strcpy(b, s);
+
+	return b;
+}
+
 void Com_sprintf( char *dest, int size, const char *fmt, ...)
 {
 	int			len;
@@ -999,7 +1012,7 @@ void Info_SetValueForKey( char *s, const char *key, const char *value )
 		return;
 	}
 
-	strcat (s, newi);
+	A_strcat (s, 0, newi);
 }
 
 //====================================================================

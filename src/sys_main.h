@@ -19,10 +19,6 @@
 #ifndef SYS_MAIN_H__
 #define SYS_MAIN_H__
 
-
-
-
-
 #ifdef _WIN32 
 
 #include "sys_win.h" 
@@ -38,22 +34,6 @@
 #error "NOT RUNNING UNDER WIN32 : NO OTHER PLATFORMS SUPPORTED !"
 
 #endif 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #endif 

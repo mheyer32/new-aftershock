@@ -19,21 +19,9 @@
 #ifndef BRUSHTEST_H
 #define BRUSHTEST_H
 
+int Point_Contents (const vec3_t pos, int passEntityNum);
 
-
-int Point_Contents (const vec3_t pos ,int passEntityNum);
-
-void Trace( trace_t *results, const vec3_t start, const vec3_t mins,
-		   const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask );
-
-
-
-
-
-
-
-
-
-
+void Trace(trace_t *results, const vec3_t start, const vec3_t mins,
+		   const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask);
 
 #endif

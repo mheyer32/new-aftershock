@@ -17,37 +17,33 @@
  */
 
 
-
 #ifndef SOUND_H__
 #define SOUND_H__
 
-
 #include "c_var.h"
 
-
-extern cvar_t * s_volume ;
-extern cvar_t * s_musicvolume ;
-extern cvar_t * s_separation ;
-extern cvar_t * s_khz;
-extern cvar_t * s_loadas8bit;
-extern cvar_t * s_mixahead;
-extern cvar_t * s_mixPrestep;
-extern cvar_t * s_rolloff;
-extern cvar_t * s_doppler;
-extern cvar_t * s_distance;
-extern cvar_t * s_mindistance;
-extern cvar_t * s_maxdistance;
-extern cvar_t * s_leafnum;
-extern cvar_t * s_refgain;
-extern cvar_t * s_refdelay;
-extern cvar_t * s_polykeep;
-extern cvar_t * s_polysize;
-extern cvar_t * s_polyreflectsize;
-extern cvar_t * s_numpolys;
-extern cvar_t * s_bloat ;
-extern cvar_t * s_occfactor;
-extern cvar_t * s_occ_eq;
-
+extern cvar_t *s_volume;
+extern cvar_t *s_musicvolume;
+extern cvar_t *s_separation;
+extern cvar_t *s_khz;
+extern cvar_t *s_loadas8bit;
+extern cvar_t *s_mixahead;
+extern cvar_t *s_mixPrestep;
+extern cvar_t *s_rolloff;
+extern cvar_t *s_doppler;
+extern cvar_t *s_distance;
+extern cvar_t *s_mindistance;
+extern cvar_t *s_maxdistance;
+extern cvar_t *s_leafnum;
+extern cvar_t *s_refgain;
+extern cvar_t *s_refdelay;
+extern cvar_t *s_polykeep;
+extern cvar_t *s_polysize;
+extern cvar_t *s_polyreflectsize;
+extern cvar_t *s_numpolys;
+extern cvar_t *s_bloat;
+extern cvar_t *s_occfactor;
+extern cvar_t *s_occ_eq;
 
 
 int         S_Init ( void );
@@ -63,9 +59,5 @@ void		S_UpdateEntityPosition( int entityNum, const vec3_t origin );
 void		S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater );
 sfxHandle_t	S_RegisterSound( const char *sample );		
 void		S_StartBackgroundTrack( const char *intro, const char *loop );	
-
-
-
-
 
 #endif 

@@ -17,15 +17,12 @@
  */
 
 
-
 #include "a_shared.h"
 #include "sys_file.h"
-#include "util.h"
 #include "pak.h"
 #include "io.h"
 #include "unzip.h"
 #include "console.h"
-
 
 static file_t files [MAX_FILES];
 static int files_used [MAX_FILES];

@@ -18,51 +18,7 @@
 #include "a_shared.h"
 #include "util.h"
 #include <windows.h>
-#include "vec.h"
 
 extern HWND hWnd;
 extern HGLRC hRC;
 
-// TODO !!!
-void Error(const char *fmt, ...)
-{
-	char buf[1024];
-    va_list ap;
-
-    va_start(ap, fmt);    
-    sprintf(buf, fmt, ap);
-    va_end(ap);
-
-	MessageBox(NULL, buf, "ERROR", MB_OK);
- 
-    exit(1);
-}
-
-int strcmpEXT (char *str, char *str2, int len)
-{
-	int i;
-
-	for (i = 0; i < len; i++)
-	{
-		if (*(str + i) > *(str2 + i))
-			return 1;
-
-		if (*(str + i) < *(str2 + i))
-			return -1;
-	}
-
-	return 0;
-}
-
-char *copystring(const char *s)
-{
-	char *b;
-
-	if (!s)
-		return 0;
-
-	b = (char *)malloc(strlen(s) + 1);
-	strcpy(b, s);
-
-	return b;
-}

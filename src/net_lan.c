@@ -145,7 +145,7 @@ void LAN_FindGlobalServers( void )
 	Cmd_Argv( 4, arg4, sizeof(arg4) );
 	Cmd_Argv( 5, arg5, sizeof(arg5) );
 
-	if( !stricmp( arg1, "0" ) )
+	if( !A_stricmp( arg1, "0" ) )
 		ret = Net_Resolve( "master.quake3arena.com", &addr );
 	else
 		ret = Net_Resolve( "master.quake3world.com", &addr );

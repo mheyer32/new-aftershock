@@ -53,15 +53,4 @@ void FS_Restart(void);
 
 char *FS_Add_Basedir (const char * s);
 
-
-
-
-
-
-
-
-
-
-
-
 #endif 

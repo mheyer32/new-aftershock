@@ -20,7 +20,6 @@
 #ifndef KEYS_H__
 #define KEYS_H__
 
-
 int Key_Init ( void );
 void Key_Shutdown (void );
 
@@ -49,7 +48,6 @@ void Key_Update_Mousestate ( int wParam, int state);
 
 void Key_MouseUp (int wParam);
 void Key_MouseDown (int wParam);
-
 
 
 #endif 

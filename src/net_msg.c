@@ -23,7 +23,6 @@
 
 #include "a_shared.h"
 #include "console.h"		/* Con_Printf */
-#include "util.h"
 #include "net_msg.h"
 
 sizebuf_t		net_message;

@@ -16,17 +16,15 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 #include "a_shared.h"
-#include "util.h"
 #include "cmap.h"
 #include "render.h"
 #include "mesh.h"
 
 #define LEVEL_WIDTH(lvl) ((1 << (lvl+1)) + 1)
 
-static void mesh_create(cface_t *face, mesh_t *mesh);
+static void Mesh_Create(cface_t *face, mesh_t *mesh);
 
-void
-mesh_create_all(void)
+void Mesh_CreateAll(void)
 {
     int i;    
     
@@ -41,13 +39,13 @@ mesh_create_all(void)
     for (i = 0, r_nummeshes = 0; i < cm.num_faces; i++)
     {
 		if (cm.faces[i].facetype == FACETYPE_MESH) {
-			mesh_create(&cm.faces[i], &r_meshes[r_nummeshes]);
+			Mesh_Create(&cm.faces[i], &r_meshes[r_nummeshes]);
 			r_facemeshes[i] = r_nummeshes++;
 		}
     }
 }
 
-void mesh_free_all(void)
+void Mesh_FreeAll(void)
 {
     int i;
 
@@ -63,93 +61,104 @@ void mesh_free_all(void)
     free(r_meshes);
 }
 
-static int mesh_find_level(vec3_t *v)
+static int Mesh_FindLevel(vec3_t *v)
 {
     int level;
     vec3_t a, b, dist;
 
-    /* Subdivide on the left until tolerance is reached */
+    // Subdivide on the left until tolerance is reached
     for (level=0; level < r_maxmeshlevel-1; level++)
     {
-	/* Subdivide on the left */
-	vec_avg(v[0], v[1], a);
-	vec_avg(v[1], v[2], b);
-	vec_avg(a, b, v[2]);
+		// Subdivide on the left
+		VectorAvg(v[0], v[1], a);
+		VectorAvg(v[1], v[2], b);
+		VectorAvg(a, b, v[2]);
 
-	/* Find distance moved */
-	vec_sub(v[2], v[1], dist);
+		// Find distance moved
+		VectorSubtract(v[2], v[1], dist);
 
-	/* Check for tolerance */
-	if (vec_dot(dist, dist) < r_subdivisiontol * r_subdivisiontol)
-	    break;
+		// Check for tolerance
+		if (DotProduct(dist, dist) < r_subdivisiontol * r_subdivisiontol)
+			break;
 
-	/* Insert new middle vertex */
-	vec_copy(a, v[1]);
+		// Insert new middle vertex
+		VectorCopy(a, v[1]);
     }
 
     return level;
 }
 
-static void
-mesh_find_size(int *numcp, vec3_t *cp, int *size)
+static void Mesh_FindSize(int *numcp, vec3_t *cp, int *size)
 {
     int u, v, found, level;
     float *a, *b;
     vec3_t test[3];
     
-    /* Find non-coincident pairs in u direction */
+    // Find non-coincident pairs in u direction
     found = 0;
     for (v=0; v < numcp[1]; v++)
     {
-	for (u=0; u < numcp[0]-1; u += 2)
-	{
-	    a = cp[v * numcp[0] + u];
-	    b = cp[v * numcp[0] + u + 2];
-	    if (!vec_cmp(a,b))
-	    {
-		found = 1;
-		break;
-	    }
-	}
-	if (found) break;
-    }
-    if (!found) Error("Bad mesh control points");
+		for (u=0; u < numcp[0]-1; u += 2)
+		{
+			a = cp[v * numcp[0] + u];
+			b = cp[v * numcp[0] + u + 2];
 
-    /* Find subdivision level in u */
-    vec_copy(a, test[0]);
-    vec_copy((a+3), test[1]);
-    vec_copy(b, test[2]);
-    level = mesh_find_level(test);
+			if (!VectorCompare(a,b))
+			{
+				found = 1;
+				break;
+			}
+		}
+
+		if (found)
+			break;
+    }
+
+    if (!found) {
+		Error("Bad mesh control points");
+		return;
+	}
+
+    // Find subdivision level in u
+    VectorCopy(a, test[0]);
+    VectorCopy((a+3), test[1]);
+    VectorCopy(b, test[2]);
+    level = Mesh_FindLevel(test);
     size[0] = (LEVEL_WIDTH(level) - 1) * ((numcp[0]-1) / 2) + 1;
     
-    /* Find non-coincident pairs in v direction */
+    // Find non-coincident pairs in v direction
     found = 0;
     for (u=0; u < numcp[0]; u++)
     {
-	for (v=0; v < numcp[1]-1; v += 2)
-	{
-	    a = cp[v * numcp[0] + u];
-	    b = cp[(v + 2) * numcp[0] + u];
-	    if (!vec_cmp(a,b))
-	    {
-		found = 1;
-		break;
-	    }
-	}
-	if (found) break;
-    }
-    if (!found) Error("Bad mesh control points");
+		for (v=0; v < numcp[1]-1; v += 2)
+		{
+			a = cp[v * numcp[0] + u];
+			b = cp[(v + 2) * numcp[0] + u];
+			if (!VectorCompare(a,b))
+			{
+				found = 1;
+				break;
+			}
+		}
 
-    /* Find subdivision level in v */
-    vec_copy(a, test[0]);
-    vec_copy((a+numcp[0]*3), test[1]);
-    vec_copy(b, test[2]);
-    level = mesh_find_level(test);
+		if (found) 
+			break;
+    }
+
+    if (!found) {
+		Error("Bad mesh control points");
+		return;
+	}
+
+    // Find subdivision level in v
+    VectorCopy(a, test[0]);
+    VectorCopy((a+numcp[0]*3), test[1]);
+    VectorCopy(b, test[2]);
+    level = Mesh_FindLevel(test);
     size[1] = (LEVEL_WIDTH(level) - 1)* ((numcp[1]-1) / 2) + 1;    
 }
 
-static void
-mesh_fill_curve_3(int numcp, int size, int stride, vec3_t *p)
+static void Mesh_FillCurve3(int numcp, int size, int stride, vec3_t *p)
 {
     int step, halfstep, i, mid;
     vec3_t a, b;
@@ -158,27 +167,27 @@ mesh_fill_curve_3(int numcp, int size, int stride, vec3_t *p)
 
     while (step > 0)
     {
-	halfstep = step / 2;
-	for (i=0; i < size-1; i += step*2)
-	{
-	    mid = (i+step)*stride;
-	    vec_avg(p[i*stride], p[mid], a);
-	    vec_avg(p[mid], p[(i+step*2)*stride], b);
-	    vec_avg(a, b, p[mid]);
+		halfstep = step >> 1;
 
-	    if (halfstep > 0)
-	    {
-		vec_copy(a, p[(i+halfstep)*stride]);
-		vec_copy(b, p[(i+3*halfstep)*stride]);
-	    }
-	}
-	
-	step /= 2;
+		for (i=0; i < size-1; i += step<<1)
+		{
+			mid = (i+step)*stride;
+			VectorAvg(p[i*stride], p[mid], a);
+			VectorAvg(p[mid], p[(i+step*2)*stride], b);
+			VectorAvg(a, b, p[mid]);
+
+			if (halfstep > 0)
+			{
+				VectorCopy(a, p[(i+halfstep)*stride]);
+				VectorCopy(b, p[(i+3*halfstep)*stride]);
+			}
+		}
+		
+		step >>= 1;
     }
 }
 
-static void
-mesh_fill_curve_2(int numcp, int size, int stride, vec2_t *p)
+static void Mesh_FillCurve2(int numcp, int size, int stride, vec2_t *p)
 {
     int step, halfstep, i, mid;
     vec2_t a, b;
@@ -187,27 +196,27 @@ mesh_fill_curve_2(int numcp, int size, int stride, vec2_t *p)
 
     while (step > 0)
     {
-	halfstep = step / 2;
-	for (i=0; i < size-1; i += step*2)
-	{
-	    mid = (i+step)*stride;
-	    vec2_avg(p[i*stride], p[mid], a);
-	    vec2_avg(p[mid], p[(i+step*2)*stride], b);
-	    vec2_avg(a, b, p[mid]);
+		halfstep = step >> 1;
 
-	    if (halfstep > 0)
-	    {
-		vec2_copy(a, p[(i+halfstep)*stride]);
-		vec2_copy(b, p[(i+3*halfstep)*stride]);
-	    }
-	}
-	
-	step /= 2;
+		for (i=0; i < size-1; i += step<<1)
+		{
+			mid = (i+step)*stride;
+			Vector2Avg(p[i*stride], p[mid], a);
+			Vector2Avg(p[mid], p[(i+step*2)*stride], b);
+			Vector2Avg(a, b, p[mid]);
+
+			if (halfstep > 0)
+			{
+				Vector2Copy(a, p[(i+halfstep)*stride]);
+				Vector2Copy(b, p[(i+3*halfstep)*stride]);
+			}
+		}
+		
+		step >>= 1;
     }
 }
 
-static void
-mesh_fill_curve_c(int numcp, int size, int stride, colour_t *p)
+static void Mesh_FillCurveC(int numcp, int size, int stride, colour_t *p)
 {
     int step, halfstep, i, mid;
     colour_t a, b;
@@ -216,150 +225,148 @@ mesh_fill_curve_c(int numcp, int size, int stride, colour_t *p)
 
     while (step > 0)
     {
-	halfstep = step / 2;
-	for (i=0; i < size-1; i += step*2)
-	{
-	    mid = (i+step)*stride;
-	    colour_avg(p[i*stride], p[mid], a);
-	    colour_avg(p[mid], p[(i+step*2)*stride], b);
-	    colour_avg(a, b, p[mid]);
+		halfstep = step >> 1;
 
-	    if (halfstep > 0)
-	    {
-		colour_copy(a, p[(i+halfstep)*stride]);
-		colour_copy(b, p[(i+3*halfstep)*stride]);
-	    }
-	}
-	
-	step /= 2;
+		for (i=0; i < size-1; i += step<<1)
+		{
+			mid = (i+step)*stride;
+			Vector4Avg(p[i*stride], p[mid], a);
+			Vector4Avg(p[mid], p[(i+step*2)*stride], b);
+			Vector4Avg(a, b, p[mid]);
+
+			if (halfstep > 0)
+			{
+				Vector4Copy(a, p[(i+halfstep)*stride]);
+				Vector4Copy(b, p[(i+3*halfstep)*stride]);
+			}
+		}
+		
+		step >>= 1;
     }
 }
 
-static void
-mesh_fill_patch_3(int *numcp, int *size, vec3_t *p)
+static void Mesh_FillPatch3(int *numcp, int *size, vec3_t *p)
 {
     int step, u, v;
 
-    /* Fill in control points in v direction */
-    step = (size[0]-1) / (numcp[0]-1);    
+    // Fill in control points in v direction
+    step = (size[0]-1) / (numcp[0]-1);
     for (u = 0; u < size[0]; u += step)
     {
-	mesh_fill_curve_3(numcp[1], size[1], size[0], p + u);
+		Mesh_FillCurve3(numcp[1], size[1], size[0], p + u);
     }
 
-    /* Fill in the rest in the u direction */
+    // Fill in the rest in the u direction
     for (v = 0; v < size[1]; v++)
     {
-	mesh_fill_curve_3(numcp[0], size[0], 1, p + v * size[0]);
+		Mesh_FillCurve3(numcp[0], size[0], 1, p + v * size[0]);
     }
 }
 
-static void
-mesh_fill_patch_2(int *numcp, int *size, vec2_t *p)
+static void Mesh_FillPatch2(int *numcp, int *size, vec2_t *p)
 {
     int step, u, v;
 
-    /* Fill in control points in v direction */
-    step = (size[0]-1) / (numcp[0]-1);    
+    // Fill in control points in v direction
+    step = (size[0]-1) / (numcp[0]-1);
     for (u = 0; u < size[0]; u += step)
     {
-	mesh_fill_curve_2(numcp[1], size[1], size[0], p + u);
+		Mesh_FillCurve2(numcp[1], size[1], size[0], p + u);
     }
 
-    /* Fill in the rest in the u direction */
+    // Fill in the rest in the u direction
     for (v = 0; v < size[1]; v++)
     {
-	mesh_fill_curve_2(numcp[0], size[0], 1, p + v * size[0]);
+		Mesh_FillCurve2(numcp[0], size[0], 1, p + v * size[0]);
     }
 }
 
-static void
-mesh_fill_patch_c(int *numcp, int *size, colour_t *p)
+static void Mesh_FillPatchC(int *numcp, int *size, colour_t *p)
 {
     int step, u, v;
 
-    /* Fill in control points in v direction */
+    // Fill in control points in v direction
     step = (size[0]-1) / (numcp[0]-1);    
     for (u = 0; u < size[0]; u += step)
     {
-	mesh_fill_curve_c(numcp[1], size[1], size[0], p + u);
+		Mesh_FillCurveC(numcp[1], size[1], size[0], p + u);
     }
 
-    /* Fill in the rest in the u direction */
+    // Fill in the rest in the u direction
     for (v = 0; v < size[1]; v++)
     {
-	mesh_fill_curve_c(numcp[0], size[0], 1, p + v * size[0]);
+		Mesh_FillCurveC(numcp[0], size[0], 1, p + v * size[0]);
     }
 }
 
-static void
-mesh_create(cface_t *face, mesh_t *mesh)
+static void Mesh_Create(cface_t *face, mesh_t *mesh)
 {
     int step[2], size[2], len, i, u, v, p;
     vec3_t *cp;
     cvertex_t *vert;
 
-    cp = (vec3_t*)malloc(face->numverts * sizeof(vec3_t));
+    cp = (vec3_t *)malloc(face->numverts * sizeof(vec3_t));
     vert = face->verts;
+
     for (i=0; i < face->numverts; i++)
     {
-	vec_copy(vert->v_point, cp[i]);
-	vert++;
+		VectorCopy(vert->v_point, cp[i]);
+		vert++;
     }
 
-    /* Find the degree of subdivision in the u and v directions */
-    mesh_find_size(face->mesh_cp, cp, size);
+    // Find the degree of subdivision in the u and v directions
+    Mesh_FindSize(face->mesh_cp, cp, size);
     free(cp);
 
-    /* Allocate space for mesh */
+    // Allocate space for mesh
     len = size[0] * size[1];
     mesh->size[0] = size[0];
     mesh->size[1] = size[1];
-    mesh->points = (vec3_t*)malloc(len * (sizeof(vec3_t) +
+    mesh->points = (vec3_t *)malloc(len * (sizeof(vec3_t) +
 					  2 * sizeof(texcoord_t) +
 					 sizeof(colour_t)));
-    mesh->colour = (colour_t*)(mesh->points + len);
-    mesh->tex_st = (texcoord_t*)(mesh->colour + len);
+    mesh->colour = (colour_t *)(mesh->points + len);
+    mesh->tex_st = (texcoord_t *)(mesh->colour + len);
     mesh->lm_st = mesh->tex_st + len;
 
-    /* Fill in sparse mesh control points */
+    // Fill in sparse mesh control points
     step[0] = (size[0]-1) / (face->mesh_cp[0]-1);
     step[1] = (size[1]-1) / (face->mesh_cp[1]-1);
     vert = face->verts;
     for (v = 0; v < size[1]; v += step[1])
     {
-	for (u = 0; u < size[0]; u += step[0])
-	{
-	    p = v * size[0] + u;
-	    vec_copy(vert->v_point, mesh->points[p]);
-	    colour_copy(vert->colour, mesh->colour[p]);
-	    vec2_copy(vert->tex_st, mesh->tex_st[p]);
-	    vec2_copy(vert->lm_st, mesh->lm_st[p]);
-	    vert++;
-	}
+		for (u = 0; u < size[0]; u += step[0])
+		{
+			p = v * size[0] + u;
+			VectorCopy(vert->v_point, mesh->points[p]);
+			Vector4Copy(vert->colour, mesh->colour[p]);
+			Vector2Copy(vert->tex_st, mesh->tex_st[p]);
+			Vector2Copy(vert->lm_st, mesh->lm_st[p]);
+			vert++;
+		}
     }
 
-    /* Fill in each mesh */
-    mesh_fill_patch_3(face->mesh_cp, size, mesh->points);
-    mesh_fill_patch_c(face->mesh_cp, size, mesh->colour);
-    mesh_fill_patch_2(face->mesh_cp, size, (vec2_t*)mesh->tex_st);
-    mesh_fill_patch_2(face->mesh_cp, size, (vec2_t*)mesh->lm_st);
+    // Fill in each mesh
+    Mesh_FillPatch3(face->mesh_cp, size, mesh->points);
+    Mesh_FillPatchC(face->mesh_cp, size, mesh->colour);
+    Mesh_FillPatch2(face->mesh_cp, size, (vec2_t *)mesh->tex_st);
+    Mesh_FillPatch2(face->mesh_cp, size, (vec2_t *)mesh->lm_st);
 
-    /* Allocate and fill element table */
+    // Allocate and fill element table
     mesh->numelems = (size[0]-1) * (size[1]-1) * 6;
     mesh->elems = (uint_t*)malloc(mesh->numelems * sizeof(uint_t));
 
     i = 0;
     for (v = 0; v < size[1]-1; ++v)
     {
-	for (u = 0; u < size[0]-1; ++u)
-	{
-	    mesh->elems[i++] = v * size[0] + u;
-	    mesh->elems[i++] = (v+1) * size[0] + u;
-	    mesh->elems[i++] = v * size[0] + u + 1;
-	    mesh->elems[i++] = v * size[0] + u + 1;
-	    mesh->elems[i++] = (v+1) * size[0] + u;
-	    mesh->elems[i++] = (v+1) * size[0] + u + 1;
-	}
+		for (u = 0; u < size[0]-1; ++u)
+		{
+			mesh->elems[i++] = v * size[0] + u;
+			mesh->elems[i++] = (v+1) * size[0] + u;
+			mesh->elems[i++] = v * size[0] + u + 1;
+			mesh->elems[i++] = v * size[0] + u + 1;
+			mesh->elems[i++] = (v+1) * size[0] + u;
+			mesh->elems[i++] = (v+1) * size[0] + u + 1;
+		}
     }
 }

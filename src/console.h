@@ -28,11 +28,12 @@
 #define CON_BUFFER_SIZE		512
 #define CON_LINE_WIDTH		78
 #define CON_MINIBUFFER_SIZE	256
+#define CON_PROMT_SIZE		16
 
 typedef struct console_s {
 	int height;
 	aboolean isOpen;
-	char *prompt;
+	char prompt[CON_PROMT_SIZE];
 	char history[CON_HIST_SIZE][CON_LINE_WIDTH];
 	char chars[CON_BUFFER_SIZE][CON_LINE_WIDTH];
 	char minibuffer[CON_MINIBUFFER_SIZE];

@@ -354,8 +354,6 @@ void RotateAroundDirection( vec3_t axis[3], float yaw ) {
 	CrossProduct( axis[0], axis[1], axis[2] );
 }
 
-
-
 void vectoangles( const vec3_t value1, vec3_t angles ) {
 	float	forward;
 	float	yaw, pitch;
@@ -1015,14 +1013,9 @@ void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs ) {
 }
 
 
-int VectorCompare( const vec3_t v1, const vec3_t v2 ) {
-	if (v1[0] != v2[0] || v1[1] != v2[1] || v1[2] != v2[2]) {
-		return 0;
-	}
-			
-	return 1;
+int _VectorCompare( const vec3_t v1, const vec3_t v2 ) {
+	return ((v1[0] == v2[0]) && (v1[1] == v2[1]) && (v1[2] == v2[2]));
 }
-
 
 vec_t VectorNormalize( vec3_t v ) {
 	float	length, ilength;
@@ -1059,10 +1052,10 @@ vec_t VectorNormalize2( const vec3_t v, vec3_t out) {
 	float	length, ilength;
 
 	length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
-	length = sqrt (length);
 
 	if (length)
 	{
+		length = sqrt (length);
 		ilength = 1/length;
 		out[0] = v[0]*ilength;
 		out[1] = v[1]*ilength;
@@ -1110,16 +1103,17 @@ void _VectorScale( const vec3_t in, vec_t scale, vec3_t out ) {
 	out[2] = in[2]*scale;
 }
 
-void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross ) {
+void _CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross ) {
 	cross[0] = v1[1]*v2[2] - v1[2]*v2[1];
 	cross[1] = v1[2]*v2[0] - v1[0]*v2[2];
 	cross[2] = v1[0]*v2[1] - v1[1]*v2[0];
 }
 
 vec_t VectorLength( const vec3_t v ) {
-	return sqrt (v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
-}
+	vec_t length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
 
+	return length ? sqrt (length) : 0;
+}
 
 vec_t Distance( const vec3_t p1, const vec3_t p2 ) {
 	vec3_t	v;
@@ -1136,7 +1130,7 @@ vec_t DistanceSquared( const vec3_t p1, const vec3_t p2 ) {
 }
 
 
-void VectorInverse( vec3_t v ){
+void _VectorInverse( vec3_t v ){
 	v[0] = -v[0];
 	v[1] = -v[1];
 	v[2] = -v[2];
