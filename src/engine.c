@@ -16,6 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <windows.h>
 #include "util.h"
 #include "a_shared.h"
 #include "sys_main.h"
@@ -35,36 +36,22 @@
 #include "server.h"
 #include "network.h"
 
-#include "windows.h"
-
-
-
-cvar_t * com_maxfps ;
-
+cvar_t *com_maxfps;
 
 typedef struct cvarTable_s {
 	cvar_t	**cvar;
 	char	*name;
 	char	*resetString;
-	int	flags;
+	int		flags;
 } cvarTable_t;
 
 
 static cvarTable_t cvarTable [] =
 {
-
-	{&com_maxfps , "com_maxfps", "85", CVAR_ARCHIVE }
-
-
-
-
-
-
-
+	{&com_maxfps, "com_maxfps", "85", CVAR_ARCHIVE}
 };
 
-const static int	cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
-
+const static int cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
 
 void Engine_GetCvars( void )
 {
@@ -76,161 +63,110 @@ void Engine_GetCvars( void )
 	}
 }
 
-
 void Engine_Shutdown (void)
 {
-
-// TODO !
-	/*	Cbuf_AddText("writeconfig \n");
-		Cbuf_Execute();
-	*/
-
-		CL_Shutdown ();
-
-		Net_Shutdown();
-
-		Cbuf_Free();
-		Cmd_Shutdown();
-		Con_Shutdown();
-		Cvar_Shutdown();  
-		
-		Key_Shutdown ();
+	// TODO !
+/*
+	Cbuf_AddText("writeconfig \n");
+	Cbuf_Execute();
+*/
 	
-		FS_Shutdown();
-		
-		
+	CL_Shutdown ();
+	Net_Shutdown();
+	Cbuf_Free();
+	Cmd_Shutdown();
+	Con_Shutdown();
+	Cvar_Shutdown();  
+	Key_Shutdown ();
+	FS_Shutdown();
 }
 
 
-static void Cmd_Quit ( void )
+static void Cmd_Quit (void)
 {
 	Engine_Shutdown ();
-
 	exit (0);
-
-
-
 }
 
-
-
-int Engine_Init (void )
+aboolean Engine_Init (void)
 {
-
-
-
 	Key_ClearStates();
 	Swap_Init ();
-	
 	Con_Init();
-
-
 	FS_Init("baseq3");
-	
 	Key_Init ();
-
 	Cmd_Init();
 	Cbuf_Init ();
 	Cvar_Init();
 	
-
-	// essential commands :
-	Cmd_AddCommand("quit" ,Cmd_Quit);
-
+	// essential commands
+	Cmd_AddCommand("quit", Cmd_Quit);
 
 	Cbuf_AddText("exec q3config.cfg\n");
 	Cbuf_Execute();
 
-
-
-	if (!SV_Init())
-	{
+	if (!SV_Init()) {
 		Error ("Could not initialize server subsystem");
+		return afalse;
 	}
-	if (!CL_Init ())
-	{
+
+	if (!CL_Init()) {
 		Error ("Could not initialize client subsystem");
+		return afalse;
 	}
 	
-
-
-
 	if (!Net_Init())
 	{
 		Error ("Could not initialize networking");
+		return afalse;
 	}
-
-
 
 	Engine_GetCvars();
 
+	// Init UI
+	UI_main(UI_INIT, 0, 0, 0, 0, 0, 0, 0);
+	UI_main(UI_SET_ACTIVE_MENU, UIMENU_MAIN, 0, 0, 0, 0, 0, 0);
 
-		// Init UI :
-	UI_main(UI_INIT,0,0,0,0,0,0,0);
-	UI_main(UI_SET_ACTIVE_MENU,UIMENU_MAIN,0,0,0,0,0,0 );
-
-
-
-
-
-	return 1;
-
-
-
+	return atrue;
 }
 
-
-
-void Engine_Render_Next_Frame ( void )
+void Engine_Render_Next_Frame (void)
 {
-
-	static uint_t LastTime =0;
-	static uint_t LastFPS=0,numframes=0;
-	uint_t Now = Sys_Get_Time ();
+	static uint_t LastTime = 0;
+	static uint_t LastFPS = 0, numframes = 0;
+	uint_t Now = Sys_Get_Time();
 	uint_t Diff;
 	
-	if ( ! LastTime ) 
+	if (!LastTime) 
 	{
-		LastTime=Now;
-		return ;
-	}
-	if (! LastFPS )
-	{
-		LastFPS =Now;
-		return ;
+		LastTime = Now;
+		return;
 	}
 
-
-
-	Diff = Now - LastTime ;
-
-
-	if (Diff > (uint_t )(1000.0 / (float )com_maxfps->integer) )
+	if (!LastFPS)
 	{
-		LastTime = Now ;
-		g_frametime=(double)Now/1000.0;
+		LastFPS = Now;
+		return;
+	}
 
-		numframes ++;
+	Diff = Now - LastTime;
+
+	if (Diff > (uint_t )(1000.0 / (float)com_maxfps->integer))
+	{
+		LastTime = Now;
+		g_frametime = (double)Now / 1000.0;
+
+		numframes++;
 		Cbuf_Execute();
-		CL_Run_Frame ();
-
+		CL_Run_Frame();
 	}
 
+	Diff = Now - LastFPS;
 
-	Diff = Now - LastFPS ;
-
-	if (Diff > 1000 )
+	if (Diff > 1000)
 	{
-
-		Con_DPrintf ("FPS : %i \n",numframes );
-
-		numframes=0;
-
-		LastFPS = Now ;
-
-
+		Con_DPrintf ("FPS: %i\n", numframes);
+		numframes = 0;
+		LastFPS = Now;
 	}
-
-
-
 }

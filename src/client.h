@@ -32,18 +32,11 @@ extern cvar_t *cl_packetdup;
 extern cvar_t *cl_mouseAccel;
 extern cvar_t *cl_maxPing;
 
-
-
-
-
-
-
-void CL_Run_Frame (void );
-
-int CL_Startup (void );
-int CL_Init (void );
-int CL_Shutdown (void );
-void CL_KeyEvent (int Key );
+void CL_Run_Frame (void);
+void CL_Startup (void);
+aboolean CL_Init (void);
+aboolean CL_Shutdown (void);
+void CL_KeyEvent (int Key);
 
 
 

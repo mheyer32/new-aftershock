@@ -15,19 +15,18 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "a_shared.h"	/* cvar_t */
-#include "console.h"	/* Con_Printf */
-#include "command.h"	/* Cbuf_InsertText */
+#include "a_shared.h"	// cvar_t
+#include "console.h"	// Con_Printf
+#include "command.h"	// Cbuf_InsertText
 #include "c_var.h"
-#include "io.h"			/* FS_Write */
+#include "io.h"			// FS_Write
 #include "util.h"
 
 
 // From GOLK :www.digital-phenomenon.de
-
 #define MAX_CVARS	1024	
 
-/* TODO: put elsewhere */
+// TODO: put elsewhere
 extern cvar_t	*sv_cheats;
 
 static cvar_t	cvars[MAX_CVARS];
@@ -38,9 +37,9 @@ static aboolean	cvar_dirty = afalse;
 char *copystring(const char *s);
 
 /*
-============
+=================
 Cvar_FindVar
-============
+=================
 */
 cvar_t *Cvar_FindVar( const char *var_name )
 {
@@ -57,7 +56,13 @@ cvar_t *Cvar_FindVar( const char *var_name )
 	return( NULL );
 }
 
-/*TODO: where to put this? */
+/*
+=================
+Com_MatchPattern
+
+TODO: where to put this?
+=================
+*/
 aboolean Com_MatchPattern( char *pattern, char *string, aboolean case_sensitive )
 {
 	char		buf[MAX_STRING_CHARS];
@@ -82,7 +87,7 @@ aboolean Com_MatchPattern( char *pattern, char *string, aboolean case_sensitive 
 				continue;
 			diff = strlen( string ) - num;
 			if( diff < 0 ) {
-				return( afalse );
+				return afalse;
 			}
 			pstr = string;
 			j = 0;
@@ -105,7 +110,7 @@ aboolean Com_MatchPattern( char *pattern, char *string, aboolean case_sensitive 
 				j++;
 				pstr++;
 				if( j > diff )
-					return( afalse );
+					return afalse;
 			}
 		} else if( *pattern == '?' ) {
 		} else if( *pattern == '[' ) {
@@ -123,7 +128,7 @@ aboolean Com_MatchPattern( char *pattern, char *string, aboolean case_sensitive 
 					break;
 
 				if( *pattern == ']' && pattern[1] != ']' )
-					return( afalse );
+					return afalse;
 
 				if( pattern[1] == '-' && pattern[2] && (pattern[2] != ']' || pattern[3] == ']') ) {
 					if( case_sensitive ) {
@@ -149,7 +154,7 @@ aboolean Com_MatchPattern( char *pattern, char *string, aboolean case_sensitive 
 			}
 
 			if( !flag )
-				return( afalse );
+				return afalse;
 
 			while( *pattern ) {
 				if( *pattern == ']' && pattern[1] != ']' )
@@ -159,19 +164,24 @@ aboolean Com_MatchPattern( char *pattern, char *string, aboolean case_sensitive 
 		} else {
 			if( case_sensitive ) {
 				if( *pattern != *string )
-					return( afalse );
+					return afalse;
 			} else {
 				if( toupper( *pattern ) != toupper( *string ) )
-					return( afalse );
+					return afalse;
 			}
 		}
 		pattern++;
 		string++;
 	}
 
-	return( atrue );
+	return atrue;
 }
 
+/*
+=================
+Cmd_cvarlist
+=================
+*/
 static void Cmd_cvarlist( void )
 {
 	cvar_t	*cvar;
@@ -202,6 +212,11 @@ static void Cmd_cvarlist( void )
 	Con_Printf( "\n%d total cvars\n", num_cvars );
 }
 
+/*
+=================
+Cmd_reset
+=================
+*/
 static void Cmd_reset(void)
 {
 	char buf [1024];
@@ -213,6 +228,11 @@ static void Cmd_reset(void)
 	}
 }
 
+/*
+=================
+Cmd_restart
+=================
+*/
 void Cmd_restart(void)
 {
 	cvar_t *cvar;
@@ -223,7 +243,11 @@ void Cmd_restart(void)
 	}
 }
 
-/*IS-START*/
+/*
+=================
+Cmd_set
+=================
+*/
 static void Cmd_set(void)
 {
 	char buf1[1024],buf2[1024];
@@ -236,6 +260,11 @@ static void Cmd_set(void)
 	}
 }
 
+/*
+=================
+Cmd_seta
+=================
+*/
 static void Cmd_seta(void)
 {
 	cvar_t	*cvar;
@@ -251,6 +280,11 @@ static void Cmd_seta(void)
 	}
 }
 
+/*
+=================
+Cmd_toggle
+=================
+*/
 static void Cmd_setu(void)
 {
 	cvar_t	*cvar;
@@ -266,6 +300,11 @@ static void Cmd_setu(void)
 	}
 }
 
+/*
+=================
+Cmd_toggle
+=================
+*/
 static void Cmd_sets(void)
 {
 	cvar_t	*cvar;
@@ -280,8 +319,12 @@ static void Cmd_sets(void)
 		Con_Printf( "usage: sets <variable> <value>\n" );
 	}
 }
-/*IS-END*/
 
+/*
+=================
+Cmd_toggle
+=================
+*/
 static void Cmd_toggle(void)
 {
 	cvar_t	*cvar;
@@ -290,7 +333,7 @@ static void Cmd_toggle(void)
 	if( Cmd_Argc() == 2 ) {
 		Cmd_Argv( 1,arg,1024 );
 		cvar = Cvar_FindVar( arg );
-/*MAX-START*/
+
 		if( cvar ) {
 			if( cvar->integer ) {
 				Cvar_Set( arg, "0" );
@@ -298,12 +341,16 @@ static void Cmd_toggle(void)
 				Cvar_Set( arg, "1" );
 			}
 		}
-/*MAX-END*/ 
 	} else {
 		Con_Printf( "usage: toggle <variable>\n" );
 	}
 }
 
+/*
+=================
+Cmd_vstr
+=================
+*/
 static void Cmd_vstr(void)
 {
 	cvar_t	*cvar;
@@ -318,7 +365,11 @@ static void Cmd_vstr(void)
 	}
 }
 
-/*IS-START*/
+/*
+=================
+Cvar_Get
+=================
+*/
 cvar_t *Cvar_Get( const char *var_name, const char *resetString, int flags )
 {
 	cvar_t *cvar;
@@ -342,8 +393,8 @@ cvar_t *Cvar_Get( const char *var_name, const char *resetString, int flags )
 		cvar					= &cvars[num_cvars++];
 		cvar->name				= copystring( var_name );
 		cvar->string			= copystring( resetString );
-		/*?? MAX: if were creating, isn't it unmodified? */
-		/*?? IS: This is needed, if some initialization routine checks if modified is set */
+		// ?? MAX: if were creating, isn't it unmodified?
+		// ?? IS: This is needed, if some initialization routine checks if modified is set
 		cvar->modified			= atrue;
 		cvar->modificationCount = 0;
 		cvar->value				= (float)atof( resetString );
@@ -381,10 +432,12 @@ cvar_t *Cvar_Get( const char *var_name, const char *resetString, int flags )
 
 	return( cvar );
 }
-/*IS-END*/
 
-/* MAX: this isn't working */
-/* IS: it isn't?? */
+/*
+=================
+Cvar_Set2
+=================
+*/
 cvar_t *Cvar_Set2( const char *var_name, const char *value, aboolean usercreated )
 {
 	cvar_t *cvar;
@@ -464,13 +517,18 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, aboolean usercreated
 	cvar->value = (float)atof( cvar->string );
 	cvar->integer = atoi( cvar->string );
 
-	/* IS: maybe we can delete cvar_dirty and check for cvar->modified instead */
-	/* MAX: yes but the check should be for modified & CVAR_ARCHIVE */
+	// IS: maybe we can delete cvar_dirty and check for cvar->modified instead
+	// MAX: yes but the check should be for modified & CVAR_ARCHIVE
 	if( cvar->flags & CVAR_ARCHIVE )
 		cvar_dirty = atrue;
 
 	return( cvar );
 }
+/*
+=================
+Cvar_Set
+=================
+*/
 
 cvar_t *Cvar_Set( const char *var_name, const char *value )
 {
@@ -478,9 +536,9 @@ cvar_t *Cvar_Set( const char *var_name, const char *value )
 }
 
 /*
-============
+=================
 Cvar_SetValue
-============
+=================
 */
 void Cvar_SetValue( const char *var_name, float value )
 {
@@ -490,6 +548,7 @@ void Cvar_SetValue( const char *var_name, float value )
 		Com_sprintf( val, sizeof(val), "%i", (int)value );
 	else
 		Com_sprintf( val, sizeof(val), "%f", value );
+
 	Cvar_Set( var_name, val );
 }
 
@@ -572,12 +631,12 @@ void Cvar_SetDirty( aboolean state )
 }
 
 /*
-============
+=================
 Cvar_WriteVariables
 
 Writes lines containing "seta <variable> \"<value>\"" for all variables
 with the archive flag set to true.
-============
+=================
 */
 void Cvar_WriteVariables( fileHandle_t file )
 {

@@ -84,8 +84,8 @@ void CL_ParseEntity(sizebuf_t *p,int EntityIndex, entityState_t  * e,entityState
 {
 	byte EntityBitMask[7]; // 56 Bits, 50 werden nur gebraucht
 	unsigned int MaskIndex;
-	char Text [MAX_STRING_CHARS];
-	char dummy [MAX_STRING_CHARS];
+//	char Text [MAX_STRING_CHARS];
+//	char dummy [MAX_STRING_CHARS];
 
 
 	// entityState_t * e = &cent->currentState;	// hole aktuellen state des entities
@@ -261,11 +261,11 @@ void CL_ParseEntity(sizebuf_t *p,int EntityIndex, entityState_t  * e,entityState
 
 void CL_ParseSnapshot(sizebuf_t * p)
 {
-	char dummy[255];
+//	char dummy[255];
 	byte delta,b,b2;
 		
 	WORD mask = 0;
-	int i,min,sek, deltaSeqNr;
+	int i,/*min,sek,*/ deltaSeqNr;
 
 	snapshot_t * s;		// der aktuelle snapshot
 	snapshot_t * ds;	// der passende Delta snapshot

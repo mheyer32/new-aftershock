@@ -3,24 +3,19 @@
 #include "keycodes.h"
 #include "keys.h"
 
-
-
-
-void Sys_Keyboard_Event ( unsigned int Vkey ,aboolean down )
+void Sys_Keyboard_Event (unsigned int Vkey, aboolean down)
 {
-	int key=-1 ;
-	int is_char =0;
+	int key = -1;
+	int is_char = 0;
 
-
-	if (Vkey >= 0x30 && Vkey <= 0x39 )
+	if (Vkey >= 0x30 && Vkey <= 0x39)
 	{
-
-		is_char =1;
-		key = Vkey - 0x30+ '0';
+		is_char = 1;
+		key = Vkey - 0x30 + '0';
 	}
-	else if ( Vkey >= 0x41 && Vkey <=0x5A )
+	else if (Vkey >= 0x41 && Vkey <= 0x5A)
 	{
-		is_char =1;
+		is_char = 1;
 		key = Vkey - 0x41 + 'a';
 	}
 	else if (Vkey >= 0x70 && Vkey <= 0x7E) 
@@ -28,117 +23,145 @@ void Sys_Keyboard_Event ( unsigned int Vkey ,aboolean down )
 		key = Vkey - 0x70 + K_F1;
 	}
 	else {
-		switch ( Vkey )
+		switch (Vkey)
 		{
-			
 		case VK_TAB:
-			key=K_TAB;
+			key = K_TAB;
 			break;
+
 		case VK_RETURN:
-			key=K_ENTER;
+			key = K_ENTER;
 			break;
+
 		case VK_ESCAPE:
-			key=K_ESCAPE;
-			break;			// Vic: ESCAPE = SPACE?
+			key = K_ESCAPE;
+			break; 	// Vic: ESCAPE = SPACE?
+
 		case VK_SPACE:	
-			key=K_SPACE;
+			key = K_SPACE;
 			break;
+
 		case VK_BACK:
-			key=K_BACKSPACE;
+			key = K_BACKSPACE;
 			break;
-		//case 
-		//	K_COMMAND
-		//case VK_CAPSLOCK
-		//	K_CAPSLOCK
-		//	K_POWER
-		case VK_PAUSE :
-			key=K_PAUSE;
+
+		case VK_PAUSE:
+			key = K_PAUSE;
 			break;
 
 		case VK_UP:
-			key=K_UPARROW;
+			key = K_UPARROW;
 			break;
+
 		case VK_DOWN:
-			key=K_DOWNARROW;
+			key = K_DOWNARROW;
 			break;
+
 		case VK_LEFT:
-			key=K_LEFTARROW;
+			key = K_LEFTARROW;
 			break;
+
 		case VK_RIGHT:
-			key=K_RIGHTARROW;
+			key = K_RIGHTARROW;
 			break;
+
 		case 18:
-			key=K_ALT;
+			key = K_ALT;
 			break;
+
 		case VK_CONTROL:
-			key=K_CTRL;
+			key = K_CTRL;
 			break;
+
 		case VK_SHIFT:
-			key=K_SHIFT;
+			key = K_SHIFT;
 			break;
+
 		case VK_INSERT:
-			key=K_INS;
+			key = K_INS;
 			break;
+
 		case VK_DELETE:
-			key=K_DEL;
+			key = K_DEL;
 			break;
+
 		case 34:
-			key=K_PGDN;
+			key = K_PGDN;
 			break;
+
 		case 33:
-			key=K_PGUP;
+			key = K_PGUP;
 			break;
+
 		case VK_HOME:
-			key=K_HOME;
+			key = K_HOME;
 			break;
+
 		case VK_END:
-			key=K_END;
+			key = K_END;
 			break;
-		//case 
-		//K_KP_HOME,
+
 		case VK_NUMPAD8:
-			key=K_KP_UPARROW;
+			key = K_KP_UPARROW;
 			break;
 		case VK_NUMPAD9:
-			key=K_KP_PGUP;
+			key = K_KP_PGUP;
 			break;
+
 		case VK_NUMPAD4:
-			key=K_KP_LEFTARROW;
+			key = K_KP_LEFTARROW;
 			break;
+
 		case VK_NUMPAD5:
-			key=K_KP_5;
+			key = K_KP_5;
 			break;
+
 		case VK_NUMPAD6: 
-			key=K_KP_RIGHTARROW;
+			key = K_KP_RIGHTARROW;
 			break;
+
 		case VK_NUMPAD1:
-			key=K_KP_END;
+			key = K_KP_END;
 			break;
+
 		case VK_NUMPAD2:
-			key=K_KP_DOWNARROW;
+			key = K_KP_DOWNARROW;
 			break;
+
 		case VK_NUMPAD3:
-			key=K_KP_PGDN;
+			key = K_KP_PGDN;
 			break;
-	//K_KP_ENTER,
-	//K_KP_INS,
-	//K_KP_DEL,
+
+
 		case VK_DIVIDE:
-			key=K_KP_SLASH;
+			key = K_KP_SLASH;
 			break;
-	//K_KP_MINUS,
-		case VK_ADD :
-			key=K_KP_PLUS;
+
+		case VK_ADD:
+			key = K_KP_PLUS;
 			break;
+
 		case VK_NUMLOCK:
-			key=K_KP_NUMLOCK;
+			key = K_KP_NUMLOCK;
 			break;
 
-//		case 220: // TILDE :
-		case 192: // TILDE : Vic : was 220 (?)
-
-			key=K_TILDE;
+		case 192: // TILDE: Vic : was 220 (?)
+			key = K_TILDE;
 			break;
+
+		case 189: // minus
+			key = '-';
+			is_char = atrue;
+			break;
+
+		case 187: // plus
+			key = '+';
+			is_char = atrue;
+			break;
+
+		default:
+			break;
+			
 	//K_KP_STAR,
 	//K_KP_EQUALS,
 
@@ -201,23 +224,8 @@ void Sys_Keyboard_Event ( unsigned int Vkey ,aboolean down )
 	K_AUX15,
 	K_AUX16,
 	*/
-
 		}
 	}
 
-
-	Key_Update_Keystate (key,down,is_char );
-
+	Key_Update_Keystate (key, down, is_char );
 }
-
-
-
-
-
-
-
-
-
-
-
-

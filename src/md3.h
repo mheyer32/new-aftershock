@@ -21,16 +21,11 @@
 
 #include "cmap.h"
 
-
-
 #define MD3_ID_HEADER	 (*(int*)"IDP3")
 #define MD3_ALIAS_VERSION	15
+#define MAX_MD3_MODELS		256+1
 #define MAX_MD3_MESHES      16
 #define MAX_MD3_SKINS       128+1
-
-
-
-
 
 typedef struct
 {
@@ -42,10 +37,10 @@ typedef struct
 	int numframes;
     vec3_t **points;
 	vec3_t *normals;
-    vec2_t *tex_st;  /* Texture coords */
-    vec2_t **norms;  /* Used for environment mapping ? */
+    texcoord_t *tex_st;  /* Texture coords */
+    texcoord_t **norms;  /* Used for environment mapping ? */
     int numelems;
-    unsigned int  *elems;
+    uint_t *elems;
 	int * skins;
 } md3mesh_t;
 
@@ -107,23 +102,19 @@ typedef struct
 } md3mesh_file_t;
 
 
-
 typedef struct 
 {
-
 	char name [128];
 	vec3_t mins,maxs;
 	int nummeshes;
 	int numframes;
 	int numtags;
 	int numskins;
-	int * ids;
-	md3tag_t ** tags;
+	int *ids;
+	md3tag_t **tags;
 	md3mesh_t *meshes;
-	md3boneframe_t * frames;
-
-}md3model2_t;
-
+	md3boneframe_t *frames;
+} md3model2_t;
 
 typedef struct
 {
@@ -131,49 +122,25 @@ typedef struct
     byte tc[2];
 } md3vert_t;
 
-
-
-
-
-
 typedef struct {
 
-	char mesh_name [68];
-	int shaderref ;
-}mesh_skin_t;
-
-
+	char mesh_name[68];
+	int shaderref;
+} mesh_skin_t;
 
 typedef struct {
 	char name [68];
-	mesh_skin_t  skins[MAX_MD3_MESHES];
+	mesh_skin_t skins[MAX_MD3_MESHES];
 	int num_mesh_skins;
+} skin_t;
 
+void MD3_Shutdown (void);
+void MD3_Init(void);
+aboolean R_LoadMD3(md3model2_t *md3, const char *filename);
 
-
-
-}skin_t ;
-
-
-
-
-
-
-
-
-
-
-
-int MD3_Shutdown (void );
-int MD3_Init(void );
-int LoadMD3(md3model2_t * md3, const char *filename);
-
-#define MAX_MD3MODELS 256+1
-
-extern md3model2_t *r_md3models;
-extern skin_t md3skins [MAX_MD3_SKINS];
-extern int md3skin_count ;
+extern md3model2_t r_md3models[MAX_MD3_MODELS];
+extern skin_t md3skins[MAX_MD3_SKINS];
+extern int r_md3Skincount;
 extern int r_md3Modelcount;
-
 
 #endif /*__MD3_H__*/

@@ -62,24 +62,20 @@ static cvarTable_t cvarTable[] = {
 	{ &sv_cheats, "sv_cheats", "1", CVAR_ROM },
 	{ &sv_hostname, "sv_hostname", "noname", CVAR_ARCHIVE | CVAR_SERVERINFO },
 	{ &sv_maxclients, "sv_maxclients", "8", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_LATCH },
-	{ &sv_privateClients, "sv_privateClients","0", CVAR_SERVERINFO},
-	{ &sv_keywords, "sv_keywords","", CVAR_SERVERINFO},
-	{ &timelimit, "timelimit","0",CVAR_ARCHIVE | CVAR_SERVERINFO },
-	{ &fraglimit, "fraglimit","15",CVAR_ARCHIVE | CVAR_SERVERINFO},
-	{ &dmflags,"dmflags","0",CVAR_ARCHIVE | CVAR_SERVERINFO },
-	{ &sv_floodProtect,"sv_floodProtect","1", CVAR_ARCHIVE| CVAR_SERVERINFO},
-	{ &sv_maxRate,"sv_maxRate","0",CVAR_ARCHIVE | CVAR_SERVERINFO},
+	{ &sv_privateClients, "sv_privateClients", "0", CVAR_SERVERINFO},
+	{ &sv_keywords, "sv_keywords", "", CVAR_SERVERINFO},
+	{ &timelimit, "timelimit", "0", CVAR_ARCHIVE | CVAR_SERVERINFO },
+	{ &fraglimit, "fraglimit", "15", CVAR_ARCHIVE | CVAR_SERVERINFO},
+	{ &dmflags, "dmflags","0", CVAR_ARCHIVE | CVAR_SERVERINFO },
+	{ &sv_floodProtect, "sv_floodProtect", "1", CVAR_ARCHIVE| CVAR_SERVERINFO},
+	{ &sv_maxRate, "sv_maxRate", "0", CVAR_ARCHIVE | CVAR_SERVERINFO},
 	{ &sv_padPackets, "sv_padPackets", "0", 0 },
 	{ &sv_running, "sv_running", "0", CVAR_ROM },
 	{ &sv_timeout, "sv_timeout", "200", 0 },
-	{ &mapname ,"mapname","Q3DM1",CVAR_SERVERINFO}
+	{ &mapname, "mapname", "Q3DM1", CVAR_SERVERINFO }
 };
 
-const static int	cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
-
-
-
-
+const static int cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
 
 typedef struct client_s {
 	net_address_t		address;
@@ -104,16 +100,15 @@ typedef struct {
 	int				sizeofGEntity_t;
 	playerState_t	*clients;
 	int				sizeofGClient;
-
-}server_t ;
+} server_t;
 
 
 server_static_t svs;
 server_t sv;
 
-char * entitypos =NULL ;
+char *entitypos = NULL;
 
-void SV_GetCvars( void )
+void SV_GetCvars (void)
 {
 	int		i;
 	cvarTable_t	*cv;
@@ -123,10 +118,8 @@ void SV_GetCvars( void )
 	}
 }
 
-
-
 /* TODO: this could be optimized */
-void SV_SetConfigstring( int num, const char *string )
+void SV_SetConfigstring(int num, const char *string)
 {
 	gameState_t		oldstate;
 	char			*configstring;
@@ -135,21 +128,21 @@ void SV_SetConfigstring( int num, const char *string )
 	int				size;
 	int				i;
 
-	if( num < 0 || num >= MAX_CONFIGSTRINGS ) {
+	if ( num < 0 || num >= MAX_CONFIGSTRINGS ) {
 		Error( "SV_SetConfigstring: bad index %i", num);
+		return;
 	}
 
 	memcpy( &oldstate, &svs.gamestate, sizeof(svs.gamestate) );
-	memset( &svs.gamestate,0, sizeof(svs.gamestate) );
+	memset( &svs.gamestate, 0, sizeof(svs.gamestate) );
 
 	size = sizeof( svs.gamestate.stringData );
 	configstring = svs.gamestate.stringData;
 
 	for( i=0; i<MAX_CONFIGSTRINGS; i++ ) {
-
 		svs.gamestate.stringOffsets[i] = svs.gamestate.dataCount;
 
-		if( i == num ) {
+		if ( i == num ) {
 			value = string;
 		} else {
 			value = oldstate.stringData + oldstate.stringOffsets[i];
@@ -157,7 +150,7 @@ void SV_SetConfigstring( int num, const char *string )
 
 		len = strlen( value );
 
-		if( svs.gamestate.dataCount + len + 1 > MAX_GAMESTATE_CHARS) {
+		if ( svs.gamestate.dataCount + len + 1 > MAX_GAMESTATE_CHARS) {
 			Error( "MAX_GAMESTATE_CHARS exceeded" );
 		}
 
@@ -170,202 +163,198 @@ void SV_SetConfigstring( int num, const char *string )
 	}
 }
 
-void SV_GetConfigstring( int num, char *buffer, int bufferSize )
+void SV_GetConfigstring (int num, char *buffer, int bufferSize)
 {
-	if( num < 0 || num >= MAX_CONFIGSTRINGS ) {
+	if (num < 0 || num >= MAX_CONFIGSTRINGS) {
 		Error( "SV_GetConfigstring: bad index %i", num);
+		return;
 	}
 
 	A_strncpyz(buffer, svs.gamestate.stringData + svs.gamestate.stringOffsets[num], bufferSize);
-	//SV_GetConfigstring: bufferSize == %i
 }
 
-void SV_GetServerinfo( char *buffer, int bufferSize )
+void SV_GetServerinfo (char *buffer, int bufferSize)
 {
-	SV_GetConfigstring( CS_SERVERINFO, buffer, bufferSize );
+	SV_GetConfigstring (CS_SERVERINFO, buffer, bufferSize);
 }
 
-void SV_MakeServerinfo( char *serverinfo )
+void SV_MakeServerinfo(char *serverinfo)
 {
 	cvar_t *cvar;
 
-	for( cvar=cvarlist; cvar; cvar=cvar->next ) {
-		if( cvar->flags & CVAR_SERVERINFO ) {
-			Info_SetValueForKey( serverinfo, cvar->name, cvar->string );
+	for (cvar = cvarlist; cvar; cvar = cvar->next) {
+		if (cvar->flags & CVAR_SERVERINFO) {
+			if (cvar->name && cvar->string)
+				Info_SetValueForKey(serverinfo, cvar->name, cvar->string);
 		}
 	}
 }
 
 
-void SV_Get_GameState ( gameState_t * state )
+void SV_Get_GameState (gameState_t *state)
 {
-	memcpy (state,&svs.gamestate,sizeof (gameState_t ));
-
+	memcpy (state, &svs.gamestate, sizeof(gameState_t));
 }
 
-static void Cmd_map (void )
+static void Cmd_map (void)
 {
 	char name [MAX_OSPATH];
-	if (Cmd_Argc()<2)
+
+	if (Cmd_Argc() < 2)
 	{
-		Con_Printf("Invalid call to map ");
+		Con_Printf("Usage: map [mapname]\n");
+		return;
+	}
+
+	Cmd_Argv(1, name, MAX_OSPATH);
+
+	Cvar_Set2 ("mapname", name, 0);
+
+	if (!SV_Startup(mapname->string))
+		return;
+	
+//	CL_Startup ();
+
+	GAME_main (GAME_RUN_FRAME, 1000, 0, 0, 0, 0, 0, 0);
+}
+
+static void Cmd_spmap (void )
+{
+	char name [MAX_OSPATH];
+
+	if (Cmd_Argc() < 2)
+	{
+		Con_Printf("Usage: spmap [mapname]\n");
 		return ;
 	}
 
+	Cmd_Argv(1, name, MAX_OSPATH);
 
-	Cmd_Argv(1,name,MAX_OSPATH);
+	Cvar_Set2 ("mapname", name, 0);
 
-	Cvar_Set2 ("mapname",name,0);
-
-	SV_Startup(mapname->string);
+	if (!SV_Startup(mapname->string))
+		return;
 	
+//	CL_Startup ();
 
-	CL_Startup ();
-
-
-	GAME_main (GAME_RUN_FRAME,1000,0,0,0,0,0,0);
+	GAME_main (GAME_RUN_FRAME, 1000, 0, 0, 0, 0, 0, 0);
 }
 
-
-void SV_LocateGameData (  void *gEntities, int numEntities, int sizeofGEntity_t,
-						 playerState_t *Gclients, int sizeofGClient ) 
+void SV_LocateGameData (void *gEntities, int numEntities, int sizeofGEntity_t,
+						 playerState_t *Gclients, int sizeofGClient) 
 {
-
-	sv.gEnts=gEntities;
-	sv.numGEntities=numEntities;
-	sv.sizeofGEntity_t=sizeofGEntity_t;
-	sv.clients=Gclients;
-	sv.sizeofGClient=sizeofGClient;
-
+	sv.gEnts = gEntities;
+	sv.numGEntities = numEntities;
+	sv.sizeofGEntity_t = sizeofGEntity_t;
+	sv.clients = Gclients;
+	sv.sizeofGClient = sizeofGClient;
 }
 
-
-int SV_Init (void )
+int SV_Init (void)
 {
-
-
-
 	SV_GetCvars();
 
-	Cmd_AddCommand("map",Cmd_map);
-	
-	memset (&svs,0,sizeof (svs ));
+	Cmd_AddCommand("map", Cmd_map);
+	Cmd_AddCommand("spmap", Cmd_spmap);
 
-	svs.initialized=1;
+	memset (&svs, 0, sizeof (svs));
 
+	svs.initialized = 1;
 	return 1;
-
 }
 
-
-
-int SV_Shutdown (void )
+int SV_Shutdown (void)
 {
-
-
-
-
-
-	svs.initialized=0;
+	svs.initialized = 0;
 
 	return 1;
 }
 
-
-int SV_Startup (char * name )
+int SV_Startup (char *name)
 {
+//	char buf [MAX_OSPATH]; // Vic
+	char buf [MAX_INFO_STRING];
 
-	char buf [MAX_OSPATH];
+	Con_Printf("------ Server Initialization ------\n");
 
-	Con_Printf( "------ Server Initialization ------\n" );
+	Cvar_Set2("sv_running", "1", 0);
 
-	Cvar_Set2( "sv_running", "1",0 );
+	Com_sprintf(buf, sizeof(buf), "map %s", name);
+	Cvar_Set2("nextmap", buf, 0);
 
-	Com_sprintf( buf, sizeof(buf), "map %s", name );
-	Cvar_Set2( "nextmap", buf,0 );
-
-
-	if (!CM_LoadMap (name , 1))
+	if (!CM_LoadMap (name, 1))
 		return 0;
 
-	entitypos = cm.entityspawn ;
+	entitypos = cm.entityspawn;
 
-	Cvar_Set2( "mapname", name,0 );
+	Cvar_Set2("mapname", name, 0);
 
+	memset(buf, 0, sizeof(buf));
 
-	memset( buf,0, sizeof(buf) );
 	SV_MakeServerinfo(buf);
-
-
 	SV_SetConfigstring( CS_SERVERINFO, buf );
 
 	if (!LoadGame()) 
 	{
-		Error ("Could not load Game ! ");
+		Error ("Could not load Game!");
 		return 0;
 	}
+
 	GAME_main(0, 0, 0,0,0,0,0,0);
 
-	Con_Printf( "-----------------------------------\n" );
-
+	Con_Printf("-----------------------------------\n" );
 	return 1;
 }
 
 
-void SV_SetBrushModel( sharedEntity_t *ent, const char *name )
+void SV_SetBrushModel(sharedEntity_t *ent, const char *name)
 {
 	int			model_idx;
 	cmodel_t	*model;
 
 	if( !ent || !name ) {
 		Error( "SV_SetBrushModel: NULL" );
+		return;
 	}
 
 	ent->r.contents = -1;
-	VectorClear( ent->r.mins );
-	VectorClear( ent->r.maxs );
+	VectorClear(ent->r.mins);
+	VectorClear(ent->r.maxs);
 
-	if( !name || !name[0] || name[0] != '*' || !name[1] )
+	if (!name || !name[0] || (name[0] != '*') || !name[1])
 		return;
 
-	model_idx = atoi( name+1 );
+	model_idx = atoi( name + 1 );
 
-	if( model_idx < 0 || model_idx > cm.num_models ) {
+	if (model_idx < 0 || model_idx > cm.num_models) {
 		Con_Printf( "SV_SetBrushModel: %s isn't a brush model\n", name );
 		return;
 	}
 
 	model = &cm.models[model_idx];
 
-	VectorCopy( model->mins, ent->r.mins );
-	VectorCopy( model->maxs, ent->r.maxs );
-
-
-
+	VectorCopy(model->mins, ent->r.mins);
+	VectorCopy(model->maxs, ent->r.maxs);
 }
 
-
-
-int SV_Get_Entity_Token ( char *buffer, int bufferSize )
+int SV_Get_Entity_Token (char *buffer, int bufferSize)
 {
-	
 	char *token;
 	
 	COM_BeginParseSession ();
 
 	while (entitypos)
 	{
-	token = COM_ParseExt ( & entitypos ,1);
-	
-	if (! token [0]) // new Line 
-		continue;
-			
-	A_strncpyz ( buffer , token , bufferSize ); // success
-	
-	return 1;
+		token = COM_ParseExt (&entitypos, 1);
 		
-	}	
+		if (!token[0]) // new Line 
+			continue;
+				
+		A_strncpyz (buffer, token, bufferSize); // success
+		
+		return 1;
+	}
+
 	return 0;
-	
 }
 

@@ -25,20 +25,16 @@
 #include "io.h"
 #include "client.h"
 
-
-
-static aboolean  Keys[256];
-
-static int overstrike_mode =0;
-static int ActiveKeyCatcher=0;
+static aboolean Keys[256];
+static int overstrike_mode = 0;
+static int ActiveKeyCatcher = 0;
 
 typedef struct {
-	char keyname [MAX_APATH];
-	char command [MAX_APATH];
-}bind_t;
+	char keyname[MAX_APATH];
+	char command[MAX_APATH];
+} bind_t;
 
 bind_t key_bindings[256];
-
 
 typedef struct keyname_s {
 	char	*name;
@@ -153,222 +149,219 @@ static keyname_t keynames[] = {
 	{NULL, 0}
 };
 
-static void  Cmd_Bind (void );
-static void Cmd_Unbindall (void );
+static void  Cmd_Bind (void);
+static void Cmd_Unbindall (void);
 
-int Key_Init ( void )
+int Key_Init(void)
 {
-	
-	memset (Keys ,0,256 * sizeof (aboolean ));
+	memset (Keys, 0, 256 * sizeof(aboolean));
 
-	Cmd_AddCommand("bind",Cmd_Bind);
-	Cmd_AddCommand("unbindall",Cmd_Unbindall);
- 
+	Cmd_AddCommand("bind", Cmd_Bind);
+	Cmd_AddCommand("unbindall", Cmd_Unbindall);
+
 	return 1;
 }
 
 void Key_Shutdown (void )
 {
-	
-
-
-
-
-
 }
 
-
-
-
-
-int Key_IsDown( int keynum ) 
+int Key_IsDown (int keynum) 
 {
-	return Keys[keynum]; 
+	return (int)Keys[keynum]; 
 }
 
-void Key_ClearStates( void ) 
+void Key_ClearStates (void)
 {
-	memset(Keys,0,256*sizeof(int));
+	memset(Keys, 0, 256 * sizeof(int));
 }
-
-
 
 int Key_GetOverstrikeMode(void)
 {
 	return overstrike_mode;
-
-}
-void Key_SetOverstrikeMode (int state )
-{
-	overstrike_mode=state;
 }
 
-
-
-
-void Key_Update_Keystate ( int key ,int state ,aboolean is_char )
+void Key_SetOverstrikeMode (int state)
 {
+	overstrike_mode = state;
+}
 
-	if (key < 0 )
-		return ;
+void Key_Update_Keystate (int key, int state, aboolean is_char)
+{
+	if ((key < 0) || (key >= 256))
+		return;
 
-	if (key==K_TILDE && state )
+	if ((key == K_TILDE) && state)
 	{
-		Con_Toggle ();
-		return ;
+		Con_Toggle();
+		return;
 	}
 
-	if (Keys[key]!=state || state )
+	if ((Keys[key] != state) || state)
 	{
-		Keys[key]=state ;
+		Keys[key] = state;
 
-		if (is_char )
+		if (is_char)
 		{
 			if (Keys[K_SHIFT])
 			{
-				key = toupper (key);
-			}
-			key |= K_CHAR_FLAG;
+				switch (key)
+				{
+					case '1':
+						key = '!';
+						break;
 
+					case '2':
+						key = '@';
+						break;
+
+					case '3':
+						key = '#';
+						break;
+
+					case '4':
+						key = '$';
+						break;
+
+					case '5':
+						key = '%';
+						break;
+
+					case '6':
+						key = '^';
+						break;
+
+					case '7':
+						key = '&';
+						break;
+
+					case '8':
+						key = '*';
+						break;
+
+					case '9':
+						key = '(';
+						break;
+
+					case '0':
+						key = ')';
+						break;
+
+					case '-':
+						key = '_';
+						break;
+
+					case '=':
+						key = '+';
+						break;
+
+					default:
+						key = toupper(key);
+						break;
+				}
+			}
+			
+			key |= K_CHAR_FLAG;
 		}
 
-
-		if ( ActiveKeyCatcher & KEYCATCH_CONSOLE  && state )
+		if ((ActiveKeyCatcher & KEYCATCH_CONSOLE) && state)
 		{
 			Con_KeyEvent(key);
 		}
-		else if ( ActiveKeyCatcher & KEYCATCH_UI && state)
+		else if ((ActiveKeyCatcher & KEYCATCH_UI) && state)
 		{
 			UI_KeyEvent(key);
 		}
-		else if (ActiveKeyCatcher & KEYCATCH_MESSAGE )
+		else if (ActiveKeyCatcher & KEYCATCH_MESSAGE)
 		{
-
-
 		}
 		else 
 		{
 			CL_KeyEvent(key);
 		}
-
 	}
-
-
 }
 
+static int lastx = 0, lasty = 0;
 
-
-static int lastx=0,lasty=0;
-
-void Key_Update_MousePosition ( int cur_x ,int cur_y )
+void Key_Update_MousePosition(int cur_x, int cur_y)
 {
-	int x,y;
-	if (cur_x!=lastx || cur_y!=lasty )
+	int x, y;
+
+	if ((cur_x != lastx) || (cur_y != lasty))
 	{
 		x = cur_x - lastx;
 		y = cur_y - lasty;
 
-		
 		if (ActiveKeyCatcher & KEYCATCH_CONSOLE )
 		{
-
-
-
 		}
 		else if ( ActiveKeyCatcher & KEYCATCH_UI )
 		{
-			UI_MouseEvent (x,y);
-			lastx= cur_x;
-			lasty= cur_y;
+			UI_MouseEvent (x, y);
+			lastx = cur_x;
+			lasty = cur_y;
 		}
 		else if ( ActiveKeyCatcher & KEYCATCH_MESSAGE )
 		{
-
-
 		}
 		else
 		{
-
 		}
 
-
-
-
 	}
-
-
 }
-
-
-
 
 // TODO !!!
 void Key_MouseDown (int wParam )
 {
+	Cbuf_Execute();
 
-		Cbuf_Execute();
-	if (MK_LBUTTON & wParam )
-		{
-			Keys[K_MOUSE1]=1;
-			UI_main(UI_KEY_EVENT,K_MOUSE1,0,0,0,0,0,0);
-		}
-	if (MK_RBUTTON & wParam )
-		{
-			Keys[K_MOUSE2]=1;
-			UI_main(UI_KEY_EVENT,K_MOUSE2,0,0,0,0,0,0);
-		}
-	if (MK_MBUTTON & wParam )
-		{
-			Keys[K_MOUSE3]=1;
-			UI_main(UI_KEY_EVENT,K_MOUSE3,0,0,0,0,0,0);
-		}
+	if (MK_LBUTTON & wParam)
+	{
+		Keys[K_MOUSE1] = 1;
+		UI_main(UI_KEY_EVENT, K_MOUSE1, 0, 0, 0, 0, 0, 0);
+	}
 
+	if (MK_RBUTTON & wParam)
+	{
+		Keys[K_MOUSE2] = 1;
+		UI_main(UI_KEY_EVENT, K_MOUSE2, 0, 0, 0, 0, 0, 0);
+	}
 
-
+	if (MK_MBUTTON & wParam)
+	{
+		Keys[K_MOUSE3] = 1;
+		UI_main(UI_KEY_EVENT, K_MOUSE3, 0, 0, 0, 0, 0, 0);
+	}
 }
 
 // TODO !!!
 void Key_MouseUp (int wParam)
 {
-		if (MK_LBUTTON & wParam )
-			{
-				Keys[K_MOUSE1]=0;
-				
-			}
-		if (MK_RBUTTON & wParam )
-			{
-				Keys[K_MOUSE2]=0;
-			
-			}
-		if (MK_MBUTTON & wParam )
-			{
-				Keys[K_MOUSE3]=0;
-			
-			}
-
-
-
-
-}
-
-
-void Key_SetCatcher( int catcher ) 
-{
-
-	ActiveKeyCatcher=catcher;
+	if (MK_LBUTTON & wParam)
+		Keys[K_MOUSE1] =0;
 	
+	if (MK_RBUTTON & wParam)
+		Keys[K_MOUSE2] = 0;
+	
+	if (MK_MBUTTON & wParam)
+		Keys[K_MOUSE3] = 0;
 }
 
-int Key_GetCatcher( void )
+
+void Key_SetCatcher(int catcher) 
+{
+	ActiveKeyCatcher = catcher;
+}
+
+int Key_GetCatcher(void)
 {
 	return ActiveKeyCatcher;
 }
 
-
-
 void Key_KeynumToStringBuf( int keynum, char *buf, int buflen ) 
 {
-
 	keyname_t *kn;
 	char charbuf[2];
 
@@ -384,7 +377,7 @@ void Key_KeynumToStringBuf( int keynum, char *buf, int buflen )
 		return;
 	}
 
-	for (kn=keynames ; kn->name ; kn++) {
+	for (kn = keynames ; kn->name ; kn++) {
 		if (keynum == kn->keynum) {
 			A_strncpyz(buf, kn->name, buflen);
 			return;
@@ -392,7 +385,6 @@ void Key_KeynumToStringBuf( int keynum, char *buf, int buflen )
 	}
 
 	A_strncpyz(buf, "<OUT OF RANGE>", buflen);
-
 }
 
 
@@ -432,25 +424,20 @@ int Key_StringToKeynum(const char *a)
 		}
 	}
 
-	return(-1);
+	return -1;
 }
 
 void Key_GetBindingBuf( int keynum, char *buf, int buflen ) 
 {
-
 	A_strncpyz(buf,key_bindings[keynum].command,buflen);
-
-
-
 }
 
 void Key_SetBinding( int keynum, const char *binding ) 
 {
-	bind_t * bind ;
+	bind_t *bind;
 
-
-	if (keynum<0 || keynum >= K_LAST_KEY )
-		return ;
+	if (keynum < 0 || keynum >= K_LAST_KEY )
+		return;
 
 	bind = &key_bindings [keynum];
 

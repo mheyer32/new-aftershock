@@ -25,10 +25,10 @@
 #include "ui.h"
 #include "command.h"
 #include "cgame.h"
+#include "cmap.h"
 #include "keys.h"
 
-
-cvar_t *cl_running ;
+cvar_t *cl_running;
 cvar_t *cl_cdkey;
 cvar_t *cl_yawspeed;
 cvar_t *cl_pitchspeed;
@@ -42,42 +42,35 @@ typedef struct cvarTable_s {
 	cvar_t	**cvar;
 	char	*name;
 	char	*resetString;
-	int	flags;
+	int		flags;
 } cvarTable_t;
+
+typedef struct 
+{
+	connstate_t connstate;
+	aboolean	demo_playing;
+	entityState_t current_entities[256];
+} client_t;
 
 
 static cvarTable_t cvarTable [] =
 {
-	{&cl_running , "cl_running","0",CVAR_ARCHIVE},
-	{&cl_cdkey, "cl_cdkey","" ,CVAR_ARCHIVE},
-	{&cl_yawspeed,"cl_yawspeed","100", CVAR_ARCHIVE },
-	{&cl_pitchspeed,"cl_pitchspeed","100",CVAR_ARCHIVE},
-	{&cl_maxpackets,"cl_maxpackets","30",CVAR_ARCHIVE},
-	{&cl_packetdup,"cl_packetdup","1",CVAR_ARCHIVE},
-	{&cl_mouseAccel, "cl_mouseAccel","0",CVAR_ARCHIVE},
-	{&cl_maxPing,"cl_maxPing","800",CVAR_ARCHIVE}
-
+	{&cl_running, "cl_running", "0", CVAR_ARCHIVE},
+	{&cl_cdkey, "cl_cdkey", "", CVAR_ARCHIVE},
+	{&cl_yawspeed, "cl_yawspeed", "100", CVAR_ARCHIVE },
+	{&cl_pitchspeed, "cl_pitchspeed", "100", CVAR_ARCHIVE},
+	{&cl_maxpackets, "cl_maxpackets", "30", CVAR_ARCHIVE},
+	{&cl_packetdup, "cl_packetdup", "1", CVAR_ARCHIVE},
+	{&cl_mouseAccel, "cl_mouseAccel", "0", CVAR_ARCHIVE},
+	{&cl_maxPing, "cl_maxPing", "800", CVAR_ARCHIVE}
 };
 
-const static int	cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
-
-
-
-typedef struct 
-{
-	connstate_t connstate ;
-	aboolean demo_playing ;
-	entityState_t current_entities[256];
-
-}client_t ;
+const static int cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
 
 client_t cl;
 
-
-
-static int client_prepared =0;
-
-
+static aboolean client_prepared = afalse;
+static int realtime = 0;
 
 void CL_GetCvars( void )
 {
@@ -89,47 +82,35 @@ void CL_GetCvars( void )
 	}
 }
 
-static void Cmd_vid_restart (void )
+static void Cmd_vid_restart (void)
 {
-	client_prepared=0;
+	client_prepared = afalse;
 
-	R_Shutdown ();
-	R_Init ();
+	R_Shutdown();
+	R_Init();
 
-	client_prepared=1;
+	client_prepared = atrue;
 
 	if (Key_GetCatcher () & KEYCATCH_UI)
-		UI_main(UI_SET_ACTIVE_MENU,UIMENU_MAIN,0,0,0,0,0,0 );
+		UI_main(UI_SET_ACTIVE_MENU, UIMENU_MAIN, 0, 0, 0, 0, 0, 0 );
 }
 
-static void Cmd_demo (void )
+static void Cmd_demo (void)
 {
 	char demo_name [MAX_OSPATH];
-	char fname [MAX_OSPATH]; 
 
-
-	Cmd_Argv(1,demo_name,MAX_OSPATH);
-
-	
-
-
-
-
+	Cmd_Argv(1, demo_name, MAX_OSPATH);
 }
 
-
-
-int CL_Init (void )
+aboolean CL_Init (void)
 {
-
-	Con_Printf (" ------ Client Initialization -------  \n");
-
+	Con_Printf ("------ Client Initialization -------\n");
 
 	R_Init();
 	S_Init();
 
-	cl.connstate =CA_UNINITIALIZED;
-	cl.demo_playing = afalse ;
+	cl.connstate = CA_UNINITIALIZED;
+	cl.demo_playing = afalse;
 
 	CL_GetCvars();
 	Cmd_AddCommand ("vid_restart",Cmd_vid_restart );
@@ -137,150 +118,128 @@ int CL_Init (void )
 
 	if (!LoadUI ())
 	{
-	
-		client_prepared=0;
-		Error ("FAILED to load UI ! ");
-		return 0;
+		client_prepared = afalse;
+		Error ("FAILED to load UI!");
+		return afalse;
 	}
 
+	client_prepared = atrue;
 
-	client_prepared=1;
+	Con_Printf("------ Client Initialization Successful ----\n");
 
-	Con_Printf(" ------ Client Initialization Successful ---- \n" );
-
-
-
-	cl.connstate=CA_DISCONNECTED; 	// not talking to a server
+	cl.connstate = CA_DISCONNECTED; 	// not talking to a server
 	
-	return 1;
-
+	return atrue;
 }
 
-
-int CL_Shutdown (void )
+aboolean CL_Shutdown (void)
 {
+	if (!client_prepared)
+		return afalse;
 
-	if (! client_prepared )
-		return 0;
-
-	Con_Printf(" ------ Client Shutdown --------  \n");
-
+	Con_Printf("------ Client Shutdown --------\n");
 
 	R_Shutdown ();
 	S_Shutdown ();
 
-
-	
 	if (!UnLoadUI()) 
-		return 0;
+		return afalse;
 
+	client_prepared = afalse;
 
-	client_prepared=0;
-
-	return 1;
-
-
-	
-
+	return atrue;
 }
 
-int CL_Startup (void )
+void CL_Startup (void)
 {
-
-	if (! client_prepared)
-		Error ("CL_Starup : not initialised ");
-
-
-
-
+	if (!client_prepared) {
+		Error ("CL_Starup: not initialised");
+		return;
+	}
 
 	LoadCGAME ();
-	CGAME_main(CG_INIT,0,0,0,0,0,0,0);
+	CGAME_main(CG_INIT, 0, 0, 0, 0, 0, 0, 0);
 
+	Cvar_Set ("cl_running", "1");
 
-	Cvar_Set ("cl_running","1");
-
-	return 1;
-
+	// Vic: FIXME!!!
+	cl.connstate = CA_CONNECTED;
 }
 
-int CL_End_Gaming (void )
+void CL_End_Gaming (void)
 {
-	if (!cl_running->integer)
-		Error ( "CL_End_Gaming : not running ");
+	if (!cl_running->integer) {
+		Error ("CL_End_Gaming: not running");
+		return;
+	}
 
-
-	CGAME_main (CG_SHUTDOWN ,0,0,0,0,0,0,0);
+	CGAME_main (CG_SHUTDOWN, 0, 0, 0, 0, 0, 0, 0);
 	UnLoadCGAME();
 
-
-
-	Cvar_Set ("cl_running","0");
-
-
-	return 1;
+	Cvar_Set ("cl_running", "0");
 }
 
-void CL_Run_Frame (void )
+void CL_Run_Frame (void)
 {
-
-		if (! client_prepared)
-			return ;
-
-
-
-		R_StartFrame();
-		
+	if (!client_prepared)
+		return;
 	
-		switch (cl.connstate)
-		{
+	R_StartFrame();
+	
+	switch (cl.connstate)
+	{
 		case CA_UNINITIALIZED:
 		case CA_DISCONNECTED: 	
-			{
-				if (Key_GetCatcher () & KEYCATCH_UI)
-					UI_Refresh ();
-			}
+			if (Key_GetCatcher () & KEYCATCH_UI)
+				UI_Refresh ();
+			break;	// Vic: ?
+
 		case CA_AUTHORIZING:
 			break;
+
 		case CA_CONNECTING:		
 			break;
+
 		case CA_CHALLENGING:		
 			break;
-		case CA_CONNECTED:		
+
+		case CA_CONNECTED:
+			{
+				realtime += (g_frametime * 1000);
+				CGAME_main (CG_DRAW_ACTIVE_FRAME, realtime, 0, 0, 0, 0, 0, 0);
+			}
 			break;
+
 		case CA_LOADING:		
 			break;
+
 		case CA_PRIMED:
 			break;
+
 		case CA_ACTIVE:
 			break;
+
 		case CA_CINEMATIC:
 			break;
-		} 
-
-
-
-		Con_Draw();
-
-
-		R_EndFrame ();
+	} 
+	
+	Con_Draw();
+	
+	R_EndFrame ();
 }
 
 
-void CL_KeyEvent (int Key )
+void CL_KeyEvent (int Key)
 {
-	char buf [MAX_STRING_CHARS ];
+	char buf[MAX_STRING_CHARS];
 
 	if (!cl_running->integer)
-		return ;
+		return;
 
-	Key_GetBindingBuf (Key,buf,MAX_STRING_CHARS);
+	Key_GetBindingBuf (Key, buf, MAX_STRING_CHARS);
 
 	if (!buf[0])
-		return ;
-
+		return;
 	
 	// TODO !!!
-
-
 }

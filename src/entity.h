@@ -18,12 +18,7 @@
 #ifndef __ENTITY_H__
 #define __ENTITY_H__
 
-
-void Start_Entity_Parsing (char * entdata ,int len );
-int Get_Entity_Token ( char *buffer, int bufferSize );
-
-
-
-
+void Start_Entity_Parsing (char *entdata, int len);
+aboolean Get_Entity_Token (char *buffer, int bufferSize);
 
 #endif /* __ENTITY_H__ */

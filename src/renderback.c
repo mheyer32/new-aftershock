@@ -64,6 +64,7 @@ static void render_pushmesh_deformed(mesh_t *mesh,cface_t *face);
 
 arrays_t arrays;
 
+static aboolean r_overlay = afalse;
 
 
 extern reference_t transform_ref;
@@ -120,7 +121,7 @@ void R_backend_shutdown(void )
 }
 
 
-static void R_Push_Quad ( quad_t * q )
+void R_Push_Quad ( quad_t * q )
 {
 	int i;
 
@@ -138,93 +139,76 @@ static void R_Push_Quad ( quad_t * q )
 	}
 }
 
-void Render_backend_Overlay ( quad_t * q,int numquads )
+void Render_backend_Overlay (quad_t *q, int numquads)
 {
+	int i, shader = q->shader;
+	quad_t *quad;
 
-	int i,shader=q->shader;
-	quad_t * quad;
-
-
-	for (i=0; i < numquads; ++i)
+	for (i = 0; i < numquads; ++i)
     {
-		quad=&q[i];
+		quad = &q[i];
 
-	/* Look for faces that share rendering state */
-	if (shader != quad->shader)
-	{
-	    /* Flush the renderer and reset */
-	  
+		// Look for quads that share rendering state
+		if (shader != quad->shader)
+		{
+			// Flush the renderer and reset
 			Render_Backend_Flush(shader, 0);
-	
-	    shader = quad->shader;
-	}
+			shader = quad->shader;
+		}
 
-	R_Push_Quad (quad);
-
-
-
-
+		R_Push_Quad (quad);
     }
-    /* Final flush to clear queue */
+
+    // Final flush to clear queue
 	Render_Backend_Flush(shader, 0);
 
 }
 
-void
-render_backend(facelist_t *facelist)
+void render_backend(facelist_t *facelist)
 {
-    int f, shader=0, lmtex=0;
-    uint_t key;
+    int f, shader = 0, lmtex = 0;
+    uint_t key = (uint_t)-1;
     cface_t *face;   
-    GL_EnableClientState(GL_VERTEX_ARRAY);
-    GL_EnableClientState(GL_TEXTURE_COORD_ARRAY);
 
     arrays.numverts = arrays.numelems = 0;
 
-
-    key = (uint_t)-1;
-	
-    for (f=0; f < facelist->numfaces; ++f)
+    for (f = 0; f < facelist->numfaces; f++)
     {
-	face = &cm.faces[facelist->faces[f].face];
+		face = &cm.faces[facelist->faces[f].face];
 
-	/* Look for faces that share rendering state */
-	if (facelist->faces[f].sortkey != key)
-	{
-	    /* Flush the renderer and reset */
-	    if (f)
-		Render_Backend_Flush(shader,lmtex);
-	    shader = face->shadernum;
-	    lmtex = face->lightmapnum;
-	    key = facelist->faces[f].sortkey;
-	}
+		// Look for faces that share rendering state
+		if (facelist->faces[f].sortkey != key)
+		{
+			// Flush the renderer and reset
+			if (f) Render_Backend_Flush(shader, lmtex);
+			shader = face->shadernum;
+			lmtex = face->lightmapnum;
+			key = facelist->faces[f].sortkey;
+		}
 
-	/* Push the face to the triangle arrays */
-	switch (face->facetype)
-	{
-	    case FACETYPE_NORMAL:
-	    case FACETYPE_TRISURF:
-		    render_pushface(face);
-		break;
-	    case FACETYPE_MESH:
-		if (facelist->faces[f].face<r_nummeshes)// bugfix : need to find the source !!!
-		render_pushmesh(&r_meshes[facelist->faces[f].face]);
-		break;
-	    default:
-		break;
-	}
+		// Push the face to the triangle arrays
+		switch (face->facetype)
+		{
+			case FACETYPE_NORMAL:
+			case FACETYPE_TRISURF:
+				render_pushface(face);
+				break;
+
+			case FACETYPE_MESH:
+				if (facelist->faces[f].face < r_nummeshes)// bugfix : need to find the source !!!
+					render_pushmesh(&r_meshes[facelist->faces[f].face]);
+				break;
+
+			default:
+				break;
+		}
     }
-    /* Final flush to clear queue */
-	
-	Render_Backend_Flush(shader,lmtex);
 
-
-	
-   
+    // Final flush to clear queue
+	Render_Backend_Flush(shader, lmtex);
 }
 
-void
-render_backend_sky(int numsky, int *skylist)
+void render_backend_sky(int numsky, int *skylist)
 {
     int s, i, shader;
     float skyheight;
@@ -269,29 +253,23 @@ render_backend_sky(int numsky, int *skylist)
 static void
 render_pushface(cface_t *face)
 {
-    int  *elem,*finaladdress;
-    cvertex_t *vert;
-    elem = face->elems;
-	finaladdress=elem+face->numelems;
-	while (elem<finaladdress)
-	{
-	arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
-	arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
-	arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
+    int *elem = face->elems;
+    cvertex_t *vert = face->verts;
+	int i;
+
+    for (i = 0; i < face->numelems; i++) {
+		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
     }
     
-    vert = face->verts;
-	finaladdress=(void *)(vert+face->numverts);
-	while (vert<(cvertex_t *)finaladdress)
+    for (i = 0; i < face->numverts; i++)
 	{
-	vec_copy(vert->v_point, arrays.verts[arrays.numverts]);
-	VectorCopy (vert->v_norm ,arrays.norms [arrays.numverts]);
-
-	vec2_copy(vert->tex_st, arrays.tex_st[arrays.numverts]);
-	vec2_copy(vert->lm_st, arrays.lm_st[arrays.numverts]);
-	colour_copy(vert->colour, arrays.colour[arrays.numverts]);
-	vert++;
-	arrays.numverts++;
+		vec_copy(vert->v_point, arrays.verts[arrays.numverts]);
+		VectorCopy (vert->v_norm ,arrays.norms [arrays.numverts]);
+		vec2_copy(vert->tex_st, arrays.tex_st[arrays.numverts]);
+		vec2_copy(vert->lm_st, arrays.lm_st[arrays.numverts]);
+		colour_copy(vert->colour, arrays.colour[arrays.numverts]);
+		vert++;
+		arrays.numverts++;
     }	    
 }
 
@@ -435,7 +413,7 @@ static double render_func_eval(uint_t func, float *args)
 }
 
 // TODO !!!
-static void Render_Backend_Make_Vertices (shader_t *s )
+void Render_Backend_Make_Vertices (shader_t *s )
 {
 	int i;
 
@@ -481,7 +459,7 @@ static void Render_Backend_Make_Vertices (shader_t *s )
 	}
 }
 
-static float * Render_Backend_Make_TexCoords (shaderpass_t * pass ,int stage )
+float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 {
 	int i = arrays.numverts, n = 0;
 	mat4_t mat, mat2; 
@@ -668,7 +646,7 @@ static float * Render_Backend_Make_TexCoords (shaderpass_t * pass ,int stage )
 	return *(float **)&out;
 }
 
-static byte * Render_Backend_Make_Colors ( shaderpass_t * pass )
+byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 {
 	int i;
 	byte rgb;
@@ -760,6 +738,99 @@ static byte * Render_Backend_Make_Colors ( shaderpass_t * pass )
 	return *(byte **)&col;
 }
 
+void R_Begin2d (void)
+{
+	if (r_overlay)
+		return;
+
+	glViewport(0, 0, winX, winY);
+
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(0, winX, winY, 0, -999.000000, 999.000000);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	GL_Disable (GL_CULL_FACE);
+	GL_DepthFunc (GL_ALWAYS);
+	GL_DepthMask (GL_FALSE);
+	GL_Enable (GL_BLEND);
+	GL_BlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	r_overlay = atrue;
+}
+
+void R_End2d (void)
+{
+	if (!r_overlay)
+		return;
+
+	GL_Disable (GL_BLEND);
+	GL_DepthMask(GL_TRUE);
+	GL_Enable (GL_CULL_FACE);
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();   
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+
+	r_overlay = afalse;
+}
+
+void R_DrawStretchPic (float x, float y, float w, float h, float s1, float t1, float s2, float t2, int hShader)
+{
+	quad_t q;
+	extern colour_t r_actcolor;
+
+	if (hShader < 0) 
+		return;
+
+	arrays.numelems = arrays.numverts = 0;
+
+	q.verts[0][0] = x;
+	q.verts[0][1] = y;
+	q.verts[0][2] = 0;
+	q.tc[0][0] = s1;
+	q.tc[0][1] = t1;
+	colour_copy (r_actcolor, q.color[0]);
+	
+	q.verts[1][0] = x + w;
+	q.verts[1][1] = y;
+	q.verts[1][2] = 0;
+	q.tc[1][0] = s2;
+	q.tc[1][1] = t1;
+	colour_copy (r_actcolor, q.color[1]);
+	
+	q.verts[2][0] = x + w;
+	q.verts[2][1] = y + h;
+	q.verts[2][2] = 0;
+	q.tc[2][0] = s2;
+	q.tc[2][1] = t2;
+	colour_copy (r_actcolor, q.color[2]);
+	
+	q.verts[3][0] = x;
+	q.verts[3][1] = y + h;
+	q.verts[3][2] = 0;
+	q.tc[3][0] = s1;
+	q.tc[3][1] = t2;
+	colour_copy (r_actcolor, q.color[3]);
+	
+	q.elems[0] = 0;
+	q.elems[1] = 1;
+	q.elems[2] = 2;
+	q.elems[3] = 0;
+	q.elems[4] = 2;
+	q.elems[5] = 3;
+	
+	R_Push_Quad (&q);
+	
+	R_Begin2d ();
+
+	Render_Backend_Flush_Generic (&r_shaders[hShader], 0);
+
+	R_End2d ();
+}
 
 void Render_Backend_Flush (int shadernum ,int lmtex )
 {
@@ -772,6 +843,9 @@ void Render_Backend_Flush (int shadernum ,int lmtex )
 	}
 
 	s=&r_shaders [shadernum];
+
+	Render_Backend_Flush_Generic(s,lmtex);
+	return;
 
 	switch (s->flush)
 	{
@@ -840,7 +914,6 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 		GL_ClientActiveTextureARB (GL_TEXTURE0_ARB);
 	}
 	
-	
 	for (i=0;i<s->numpasses;i++)
 	{
 		pass=&s->pass[i];
@@ -897,13 +970,15 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 		else
 			GL_Disable(GL_ALPHA_TEST);
 
-		// Depth :
-		GL_DepthFunc(pass->depthfunc);
-		if (pass->flags & SHADER_DEPTHWRITE)
-			GL_DepthMask(GL_TRUE);
-		else
-			GL_DepthMask(GL_FALSE);
-
+		if (!r_overlay)
+		{
+			// Depth :
+			GL_DepthFunc(pass->depthfunc);
+			if (pass->flags & SHADER_DEPTHWRITE)
+				GL_DepthMask(GL_TRUE);
+			else
+				GL_DepthMask(GL_FALSE);
+		}
 
 		// Draw it :
 		glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,

@@ -36,8 +36,7 @@ int r_lightmapsize;
 int r_addshaderstart;
 
 
-
-vec3_t r_eyepos;
+vec3_t r_eyepos = {0, 0, 0};
 vec3_t r_eyedir;
 float r_eye_az, r_eye_el;
 float r_eyefov;
@@ -64,14 +63,8 @@ texfile_t *r_texfiles;
 
 skybox_t *r_skybox; 
 
-
-
-
-
-
 int r_numbrushes;
-int actLeaf=0;
+int actLeaf = 0;
 float r_sinfov;
 float r_cosfov;
-
 

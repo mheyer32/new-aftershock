@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-
+#include <time.h>
 #include "a_shared.h"
 #include "sys_main.h"
 #include "util.h"
@@ -32,7 +32,6 @@
 #include "render.h"
 #include "renderback.h"
 #include "io.h"
-#include <time.h>
 #include "keys.h"
 #include "console.h"
 #include "shader.h"
@@ -42,13 +41,9 @@
 #include "server.h"
 #include "brushtest.h"
 #include "sound.h"
-
 #include "net_lan.h"
 
 typedef    int  SYSCALL (int arg, ...) ;
-
-
-
 
 static float GETFLOAT( int x )
 {
@@ -58,368 +53,399 @@ static float GETFLOAT( int x )
 }
 
 static int PASSFLOAT( float x ) {
-	float	Temp;
+	float Temp;
 	Temp = x;
 	return *(int *)&Temp;
 }
 
-
-
-
-static void Call_R_AddPolyToScene(int Shader ,int numVerts,const polyVert_t *verts )
+static void Call_R_AddPolyToScene(int Shader, int numVerts, const polyVert_t *verts)
 {
-	R_AddPolyToScene(verts,numVerts,Shader);
-
-
+	R_AddPolyToScene(verts, numVerts, Shader);
 }
 
-
-static void Call_Cvar_Register (unsigned int flags,const char *resetString,const char *var_name,vmCvar_t *cvar )
+static void Call_Cvar_Register (unsigned int flags, const char *resetString, const char *var_name, vmCvar_t *cvar )
 {
-	Cvar_Register(cvar,var_name,resetString,flags );
+	Cvar_Register(cvar, var_name, resetString, flags);
 }
 
-static void Call_Cvar_Set(const char *value,const char *var_name )
+static void Call_Cvar_Set(const char *value, const char *var_name)
 {
-	Cvar_Set(var_name,value );
+	Cvar_Set(var_name, value);
 }
 
-static void Call_Cvar_SetValue(int  value, const char *var_name )
+static void Call_Cvar_SetValue(int value, const char *var_name)
 {
-	
-	Cvar_SetValue(var_name,GETFLOAT (value));
-
-
+	Cvar_SetValue(var_name, GETFLOAT(value));
 }
 
-static void Call_Cvar_Create(unsigned int flags,const char *resetString, const char *var_name )
+static void Call_Cvar_Create(unsigned int flags, const char *resetString, const char *var_name)
 {
-	Cvar_Get( var_name, resetString, flags );
+	Cvar_Get (var_name, resetString, flags);
 }
 
-static void Call_Cvar_VariableStringBuffer( int bufsize,char *buffer, const char *var_name )
+static void Call_Cvar_VariableStringBuffer(int bufsize,char *buffer, const char *var_name)
 {
-	Cvar_VariableStringBuffer(var_name,buffer,bufsize);
-
+	Cvar_VariableStringBuffer(var_name, buffer, bufsize);
 }
 
-
-static int Call_FOpenFile ( int mode ,int  *handle,const char *path) 
+static int Call_FOpenFile (int mode,int *handle, const char *path) 
 {
-	return FS_OpenFile(path,handle, mode ); 
+	return FS_OpenFile(path, handle, mode); 
 }
 
-static void Call_FS_Read(int  handle,int len,void *buffer ) 
+static void Call_FS_Read(int handle, int len, void *buffer) 
 {
-	FS_Read(buffer,len ,handle); 
-}
-static int Call_FS_Write( int  handle ,int len,const void *buffer) 
-{
-	return FS_Write( buffer, len, handle ); 
+	FS_Read(buffer, len, handle); 
 }
 
-static int  Call_FS_GetFileList (int bufsize,char *listbuf, const char *extension,const char *path)
+static int Call_FS_Write(int handle, int len, const void *buffer) 
 {
-	return FS_GetFileList (path,extension,listbuf,bufsize);
-
+	return FS_Write (buffer, len, handle); 
 }
 
-static void Call_Cmd_Argv(int bufferLength,char *buffer, int n )
+static int  Call_FS_GetFileList (int bufsize, char *listbuf, const char *extension,const char *path)
 {
-	Cmd_Argv(n,buffer,bufferLength);
+	return FS_GetFileList (path, extension, listbuf, bufsize);
 }
 
-static Call_Cbuf_ExecuteText(const char *text,cbufExec_t exec_when )
+static void Call_Cmd_Argv (int bufferLength, char *buffer, int n)
 {
-
-	Cbuf_ExecuteText(exec_when,text);
+	Cmd_Argv(n, buffer, bufferLength);
 }
 
-static void Call_Key_SetBinding( const char *binding,int keynum ) 
+static Call_Cbuf_ExecuteText(const char *text, cbufExec_t exec_when)
 {
-	Key_SetBinding( keynum,binding ) ;
+	Cbuf_ExecuteText(exec_when, text);
+}
+
+static void Call_Key_SetBinding (const char *binding, int keynum) 
+{
+	Key_SetBinding (keynum, binding);
 }
 
 static void Call_Key_GetBindingBuf(int buflen,char *buf, int keynum ) 
 {
-	Key_GetBindingBuf( keynum, buf, buflen ) ;
-
+	Key_GetBindingBuf (keynum, buf, buflen);
 }
 
 static void Call_Key_KeynumToStringBuf(int buflen,char *buf, int keynum )
 {
-	 Key_KeynumToStringBuf( keynum, buf, buflen );
+	 Key_KeynumToStringBuf (keynum, buf, buflen);
 }
 
 static void Call_R_DrawStretchPic(int hShader,int t2,int s2,int t1,int s1,int h,int w,int y,int x)
 {
-	R_DrawStretchPic (GETFLOAT(x),GETFLOAT(y),GETFLOAT(w),GETFLOAT(h),GETFLOAT(s1),GETFLOAT(t1),
-		GETFLOAT(s2),GETFLOAT(t2),hShader);
-
-
+	R_DrawStretchPic (GETFLOAT(x), GETFLOAT(y), GETFLOAT(w), GETFLOAT(h), GETFLOAT(s1), GETFLOAT(t1),
+		GETFLOAT(s2), GETFLOAT(t2), hShader);
 }
 
-static void Call_R_AddLightToScene(int b ,int g,int r,int intensity, const vec3_t org)
+static void Call_R_AddLightToScene(int b, int g, int r, int intensity, const vec3_t org)
 {
-	R_AddLightToScene( org, GETFLOAT(intensity),GETFLOAT( r),GETFLOAT( g),GETFLOAT(b) );
+	R_AddLightToScene (org, GETFLOAT(intensity), GETFLOAT(r),GETFLOAT(g), GETFLOAT(b));
 }
-static void Call_LAN_GetLocalServerAddressString(int buflen, char *buf, int n )
+
+static void Call_LAN_GetLocalServerAddressString(int buflen, char *buf, int n)
 {
-	LAN_GetLocalServerAddressString( n, buf, buflen );
+	LAN_GetLocalServerAddressString (n, buf, buflen);
 }
 
-static void Call_LAN_GetGlobalServerAddressString(int buflen, char *buf, int n )
+static void Call_LAN_GetGlobalServerAddressString(int buflen, char *buf, int n)
 {
-	LAN_GetGlobalServerAddressString( n, buf, buflen );
+	LAN_GetGlobalServerAddressString (n, buf, buflen);
 }
 
-static void Call_LAN_GetPing( int *pingtime,int buflen,char *buf , int n)
+static void Call_LAN_GetPing(int *pingtime, int buflen, char *buf, int n)
 {
-	LAN_GetPing( n, buf, buflen, pingtime );
+	LAN_GetPing (n, buf, buflen, pingtime);
 }
 
-static void Call_LAN_GetPingInfo( int buflen ,char *buf,int n)
+static void Call_LAN_GetPingInfo (int buflen, char *buf, int n)
 {
-	LAN_GetPingInfo( n, buf,buflen );
+	LAN_GetPingInfo (n, buf, buflen);
 }
 
-static void Call_Cmd_Args( int bufferLength ,char *buffer)
+static void Call_Cmd_Args(int bufferLength, char *buffer)
 {
-	Cmd_Args( buffer, bufferLength );
-
+	Cmd_Args(buffer, bufferLength);
 }
 
-static void Call_R_LerpTag( const char *tagName, int  frac ,int endFrame, int startFrame,int model,orientation_t *tag) 
+static void Call_R_LerpTag (const char *tagName, int frac, int endFrame, int startFrame, int model, orientation_t *tag) 
 {
-	R_LerpTag( tag, model, startFrame, endFrame,GETFLOAT(frac), tagName ); 
-
+	R_LerpTag (tag, model, startFrame, endFrame, GETFLOAT(frac), tagName); 
 }
-
 
 static void	Call_S_StartLocalSound(int channelNum, sfxHandle_t sfx)
 {
-	S_StartLocalSound( sfx, channelNum );
-
+	S_StartLocalSound (sfx, channelNum);
 }
 
 
- int UI_Call (int arg, ...)
+int UI_Call (int arg, ...)
 {
-
-	 va_list mark;
-	 va_start (mark,arg);
-	 
+	va_list mark;
+	va_start (mark, arg);
+	
 	switch (arg)
 	{
+		case UI_ERROR:
+			Error (va_arg(mark, const char *));
+			break;
+			
+		case UI_PRINT:
+			Con_Printf(va_arg(mark, char *));
+			break;
 
-	case UI_ERROR:
-		Error (va_arg(mark,const char *));
-		break;   
-	case UI_PRINT:
-		Con_Printf(va_arg(mark,char*));
-		break;
-	case UI_MILLISECONDS:
-		return Sys_Get_Time();
-		break;
-	case UI_CVAR_SET:
-		Call_Cvar_Set(va_arg(mark,char*),va_arg(mark,char*));
-		break;
-	case UI_CVAR_VARIABLEVALUE:
-		return  PASSFLOAT(  Cvar_VariableValue( va_arg(mark,const char* )));
-		break;
-	case UI_CVAR_VARIABLESTRINGBUFFER:
-		Call_Cvar_VariableStringBuffer(va_arg(mark,int) ,va_arg(mark,char *), va_arg(mark,const char *)) ;
-		break;
-	case UI_CVAR_SETVALUE:
-		Call_Cvar_SetValue(va_arg(mark,int),va_arg(mark,char*));
-		break;
-	case UI_CVAR_RESET:
-		Cvar_Reset(va_arg(mark,const char *));
-		break;
-	case UI_CVAR_CREATE:
-		Call_Cvar_Create( va_arg(mark,int),va_arg(mark,char*) ,va_arg(mark,char*)); 
-		break;
-	case UI_CVAR_INFOSTRINGBUFFER:
-		break;  // TODO !
-	case UI_ARGC:
-		return Cmd_Argc ();
-		break;
-	case UI_ARGV:
-		Call_Cmd_Argv(va_arg(mark,int),va_arg(mark,char *),va_arg(mark,int));
-		break;
-	case UI_CMD_EXECUTETEXT:
-		Call_Cbuf_ExecuteText(va_arg(mark,char *),va_arg(mark,int));
-		break;
-	case UI_FS_FOPENFILE:
-		return Call_FOpenFile(va_arg(mark,int), va_arg(mark,int*),va_arg(mark, const char*) ) ;
-		break;
-	case UI_FS_READ:
-		Call_FS_Read(va_arg(mark,int),va_arg(mark,int), va_arg(mark,void*));
-		break;
-	case UI_FS_WRITE:
-		Call_FS_Write( va_arg(mark,int)   ,va_arg(mark,int ),va_arg(mark,const void *)); 
-		break;  
-	case UI_FS_FCLOSEFILE:
-		FS_FCloseFile( va_arg(mark,int) ); 
-		break;
-	case UI_FS_GETFILELIST:
-		return	Call_FS_GetFileList (va_arg(mark,int),va_arg(mark,char*), va_arg(mark,const char *),va_arg(mark,const char*));
-		break;
-	case UI_R_REGISTERMODEL:
-		return R_RegisterModel( va_arg(mark,const char *)) ;
-		break;
-	case UI_R_REGISTERSKIN:
-		return R_RegisterSkin( va_arg(mark,const char *));
-		break;   
-	case UI_R_REGISTERSHADERNOMIP:
-		return R_RegisterShaderNoMip( va_arg(mark,const char *)) ;
-		break;
-	case UI_R_CLEARSCENE:
-		R_ClearScene ();
-		break;
-	case UI_R_ADDREFENTITYTOSCENE:
-		R_AddRefEntityToScene( va_arg(mark,const refEntity_t *) );
-		break;
-	case UI_R_ADDPOLYTOSCENE:
-		Call_R_AddPolyToScene(  va_arg(mark,int)  , va_arg(mark,int),va_arg(mark, const polyVert_t *) ); 
-		break;
-	case UI_R_ADDLIGHTTOSCENE:
-		Call_R_AddLightToScene(va_arg(mark,int)  ,va_arg (mark,int),va_arg(mark,int),
-			va_arg(mark,int),va_arg(mark, const vec3_t));
-		break; 
-	case UI_R_RENDERSCENE:
-		R_RenderScene( va_arg(mark,const refdef_t *) ) ;
-		break;
-	case UI_R_SETCOLOR:
-		R_SetColor( va_arg(mark,const float * )) ;
-		break;
-	case UI_R_DRAWSTRETCHPIC:
-		Call_R_DrawStretchPic(va_arg(mark,int),va_arg(mark, int),va_arg(mark, int),va_arg(mark, int)
-						,va_arg(mark, int), va_arg(mark,int), va_arg(mark,int),va_arg(mark, int),va_arg(mark, int));
-		break;
-	case UI_UPDATESCREEN:
-		R_Update_Screen ();
-		break;
-	case UI_CM_LERPTAG:
-		Call_R_LerpTag( va_arg (mark,const char *),va_arg (mark, int ) ,va_arg (mark,int ),
-			va_arg (mark,int ),va_arg (mark,int ),va_arg(mark,orientation_t *)); 
-		break; 
-	case UI_CM_LOADMODEL:
-		break;  // TODO !
-	case UI_S_REGISTERSOUND:
-		return S_RegisterSound( va_arg (mark,const char *) );
-		break ; // TODO !
-	case UI_S_STARTLOCALSOUND:
-		Call_S_StartLocalSound (va_arg (mark,int ), va_arg (mark,sfxHandle_t ));
-		break;  // TODO !
-	case UI_KEY_KEYNUMTOSTRINGBUF:
-		Call_Key_KeynumToStringBuf(va_arg(mark,int),va_arg(mark,char*),va_arg(mark,int));
-		break;
-	case UI_KEY_GETBINDINGBUF:
-		Call_Key_GetBindingBuf(va_arg(mark,int),va_arg(mark,char*),va_arg(mark,int));
-		break;
-	case UI_KEY_SETBINDING:
-		Call_Key_SetBinding(va_arg(mark,const char *),va_arg(mark,int));
-		break;
-	case UI_KEY_ISDOWN:
-		return Key_IsDown( va_arg(mark,int) ); 
-		break;
-	case UI_KEY_GETOVERSTRIKEMODE:
-		return Key_GetOverstrikeMode();
-		break;
-	case UI_KEY_SETOVERSTRIKEMODE:
-		Key_SetOverstrikeMode(va_arg(mark,int));
-		break;
-	case UI_KEY_CLEARSTATES:
-		Key_ClearStates();
-		break;
-	case UI_KEY_GETCATCHER:
-		return Key_GetCatcher();
-		break;
-	case UI_KEY_SETCATCHER:
-		Key_SetCatcher(va_arg(mark,int)); 
-		break;
-	case UI_GETCLIPBOARDDATA:
-		break; // TODO !
-	case UI_GETGLCONFIG:
-		GetGlConfig(va_arg (mark,glconfig_t*));
-		break;
-	case UI_GETCLIENTSTATE:
-		break;   // TODO !
-	case UI_GETCONFIGSTRING:
-		break;   // TODO !
-	case UI_LAN_GETLOCALSERVERCOUNT:
-		return LAN_GetLocalServerCount( );
-		break;
-	case UI_LAN_GETLOCALSERVERADDRESSSTRING:
-		Call_LAN_GetLocalServerAddressString(va_arg (mark,int) , va_arg(mark,char *), va_arg(mark,int)  );
-		break;
-	case UI_LAN_GETGLOBALSERVERCOUNT:
-		return  LAN_GetGlobalServerCount();
-		break;
-	case UI_LAN_GETGLOBALSERVERADDRESSSTRING:
-		Call_LAN_GetGlobalServerAddressString(va_arg(mark,int ), va_arg(mark,char *), va_arg(mark,int) );
-		break;
-	case UI_LAN_GETPINGQUEUECOUNT:
-		return LAN_GetPingQueueCount( );
-		break;
-	case UI_LAN_CLEARPING:
-		LAN_ClearPing( va_arg(mark,int) );
-		break;
-	case UI_LAN_GETPING:
-		Call_LAN_GetPing( va_arg(mark,int *),va_arg(mark,int) ,va_arg(mark,char *) ,va_arg(mark,int));
-		break;
-	case UI_LAN_GETPINGINFO:
-		Call_LAN_GetPingInfo( va_arg(mark,int)  ,va_arg(mark,char *),va_arg(mark,int));
-		break;
-	case UI_CVAR_REGISTER:
-		Call_Cvar_Register (va_arg (mark,int),va_arg(mark,const char*),va_arg(mark,const char*),va_arg(mark,vmCvar_t*) );
-		break; 
-	case UI_CVAR_UPDATE:
-		Cvar_Update(va_arg(mark, vmCvar_t *));
-		break;
-	case UI_MEMORY_REMAINING:
-		return Sys_GetRemaining_Memory();
-		break;
-	case UI_GET_CDKEY:
-		break;  // TODO !
-	case UI_SET_CDKEY:
-		break;  // TODO !
+		case UI_MILLISECONDS:
+			return Sys_Get_Time();
+			break;
 
-	case UI_MEMSET :
-	case UI_MEMCPY:
-	case UI_STRNCPY:
-	case UI_SIN:
-	case UI_COS:
-	case UI_ATAN2:
-	case UI_SQRT:
-	case UI_FLOOR:
-	case UI_CEIL:
-		break;
+		case UI_CVAR_SET:
+			Call_Cvar_Set(va_arg(mark, char*), va_arg(mark, char*));
+			break;
 
-	default:
-		Con_Printf ("UI_Call : unknown trap : %i \n",arg);
-		return 0;
+		case UI_CVAR_VARIABLEVALUE:
+			return PASSFLOAT(Cvar_VariableValue(va_arg(mark, const char *)));
+			break;
 
-		break;
+		case UI_CVAR_VARIABLESTRINGBUFFER:
+			Call_Cvar_VariableStringBuffer(va_arg(mark, int), va_arg(mark, char *), va_arg(mark,const char *)) ;
+			break;
+
+		case UI_CVAR_SETVALUE:
+			Call_Cvar_SetValue(va_arg(mark, int), va_arg(mark, char *));
+			break;
+
+		case UI_CVAR_RESET:
+			Cvar_Reset(va_arg(mark, const char *));
+			break;
+
+		case UI_CVAR_CREATE:
+			Call_Cvar_Create(va_arg(mark,int),va_arg(mark,char*) ,va_arg(mark,char*)); 
+			break;
+
+		case UI_CVAR_INFOSTRINGBUFFER:
+			break;  // TODO !
+
+		case UI_ARGC:
+			return Cmd_Argc ();
+			break;
+
+		case UI_ARGV:
+			Call_Cmd_Argv(va_arg(mark,int),va_arg(mark,char *),va_arg(mark,int));
+			break;
+
+		case UI_CMD_EXECUTETEXT:
+			Call_Cbuf_ExecuteText(va_arg(mark,char *),va_arg(mark,int));
+			break;
+
+		case UI_FS_FOPENFILE:
+			return Call_FOpenFile(va_arg(mark,int), va_arg(mark,int*),va_arg(mark, const char*) ) ;
+			break;
+
+		case UI_FS_READ:
+			Call_FS_Read(va_arg(mark,int),va_arg(mark,int), va_arg(mark,void*));
+			break;
+
+		case UI_FS_WRITE:
+			Call_FS_Write( va_arg(mark,int)   ,va_arg(mark,int ),va_arg(mark,const void *)); 
+			break;
+
+		case UI_FS_FCLOSEFILE:
+			FS_FCloseFile( va_arg(mark,int) ); 
+			break;
+
+		case UI_FS_GETFILELIST:
+			return	Call_FS_GetFileList (va_arg(mark,int),va_arg(mark,char*), va_arg(mark,const char *),va_arg(mark,const char*));
+			break;
+
+		case UI_R_REGISTERMODEL:
+			return R_RegisterModel( va_arg(mark,const char *)) ;
+			break;
+
+		case UI_R_REGISTERSKIN:
+			return R_RegisterSkin( va_arg(mark,const char *));
+			break;
+
+		case UI_R_REGISTERSHADERNOMIP:
+			return R_RegisterShaderNoMip( va_arg(mark,const char *)) ;
+			break;
+
+		case UI_R_CLEARSCENE:
+			R_ClearScene ();
+			break;
+
+		case UI_R_ADDREFENTITYTOSCENE:
+			R_AddRefEntityToScene( va_arg(mark,const refEntity_t *) );
+			break;
+
+		case UI_R_ADDPOLYTOSCENE:
+			Call_R_AddPolyToScene(  va_arg(mark,int) , va_arg(mark,int),va_arg(mark, const polyVert_t *) ); 
+			break;
+
+		case UI_R_ADDLIGHTTOSCENE:
+			Call_R_AddLightToScene(va_arg(mark,int),va_arg (mark,int),va_arg(mark,int),
+				va_arg(mark,int),va_arg(mark, const vec3_t));
+			break;
+
+		case UI_R_RENDERSCENE:
+			R_RenderScene( va_arg(mark,const refdef_t *) );
+			break;
+
+		case UI_R_SETCOLOR:
+			R_SetColor( va_arg(mark,const float * )) ;
+			break;
+
+		case UI_R_DRAWSTRETCHPIC:
+			Call_R_DrawStretchPic(va_arg(mark,int),va_arg(mark, int),va_arg(mark, int),va_arg(mark, int)
+				,va_arg(mark, int), va_arg(mark,int), va_arg(mark,int),va_arg(mark, int),va_arg(mark, int));
+			break;
+
+		case UI_UPDATESCREEN:
+			R_Update_Screen ();
+			break;
+
+		case UI_CM_LERPTAG:
+			Call_R_LerpTag( va_arg (mark,const char *),va_arg (mark, int ) ,va_arg (mark,int ),
+				va_arg (mark,int ),va_arg (mark,int ),va_arg(mark,orientation_t *)); 
+			break;
+
+		case UI_CM_LOADMODEL:
+			break;  // TODO !
+
+		case UI_S_REGISTERSOUND:
+			return S_RegisterSound( va_arg (mark,const char *) );
+			break; // TODO !
+
+		case UI_S_STARTLOCALSOUND:
+			Call_S_StartLocalSound (va_arg (mark,int ), va_arg (mark,sfxHandle_t ));
+			break;  // TODO !
+
+		case UI_KEY_KEYNUMTOSTRINGBUF:
+			Call_Key_KeynumToStringBuf(va_arg(mark,int),va_arg(mark,char*),va_arg(mark,int));
+			break;
+
+		case UI_KEY_GETBINDINGBUF:
+			Call_Key_GetBindingBuf(va_arg(mark,int),va_arg(mark,char*),va_arg(mark,int));
+			break;
+
+		case UI_KEY_SETBINDING:
+			Call_Key_SetBinding(va_arg(mark,const char *),va_arg(mark,int));
+			break;
+
+		case UI_KEY_ISDOWN:
+			return Key_IsDown( va_arg(mark,int) ); 
+			break;
+
+		case UI_KEY_GETOVERSTRIKEMODE:
+			return Key_GetOverstrikeMode();
+			break;
+
+		case UI_KEY_SETOVERSTRIKEMODE:
+			Key_SetOverstrikeMode(va_arg(mark,int));
+			break;
+
+		case UI_KEY_CLEARSTATES:
+			Key_ClearStates();
+			break;
+
+		case UI_KEY_GETCATCHER:
+			return Key_GetCatcher();
+			break;
+
+		case UI_KEY_SETCATCHER:
+			Key_SetCatcher(va_arg(mark,int)); 
+			break;
+
+		case UI_GETCLIPBOARDDATA:
+			break; // TODO !
+
+		case UI_GETGLCONFIG:
+			GetGlConfig(va_arg (mark,glconfig_t*));
+			break;
+
+		case UI_GETCLIENTSTATE:
+			break;   // TODO !
+
+		case UI_GETCONFIGSTRING:
+			break;   // TODO !
+
+		case UI_LAN_GETLOCALSERVERCOUNT:
+			return LAN_GetLocalServerCount();
+			break;
+
+		case UI_LAN_GETLOCALSERVERADDRESSSTRING:
+			Call_LAN_GetLocalServerAddressString(va_arg (mark, int), va_arg(mark, char *), va_arg(mark, int));
+			break;
+
+		case UI_LAN_GETGLOBALSERVERCOUNT:
+			return LAN_GetGlobalServerCount();
+			break;
+
+		case UI_LAN_GETGLOBALSERVERADDRESSSTRING:
+			Call_LAN_GetGlobalServerAddressString(va_arg(mark, int), va_arg(mark, char *), va_arg(mark, int));
+			break;
+
+		case UI_LAN_GETPINGQUEUECOUNT:
+			return LAN_GetPingQueueCount();
+			break;
+
+		case UI_LAN_CLEARPING:
+			LAN_ClearPing(va_arg(mark, int));
+			break;
+
+		case UI_LAN_GETPING:
+			Call_LAN_GetPing(va_arg(mark, int *), va_arg(mark, int), va_arg(mark, char *), va_arg(mark, int));
+			break;
+
+		case UI_LAN_GETPINGINFO:
+			Call_LAN_GetPingInfo (va_arg(mark, int), va_arg(mark, char *), va_arg(mark, int));
+			break;
+
+		case UI_CVAR_REGISTER:
+			Call_Cvar_Register (va_arg(mark, int), va_arg(mark, const char *), va_arg(mark, const char *), va_arg(mark, vmCvar_t *));
+			break;
+
+		case UI_CVAR_UPDATE:
+			Cvar_Update(va_arg(mark, vmCvar_t *));
+			break;
+
+		case UI_MEMORY_REMAINING:
+			return Sys_GetRemaining_Memory();
+			break;
+
+		case UI_GET_CDKEY:
+			break;  // TODO !
+
+		case UI_SET_CDKEY:
+			break;  // TODO !
+			
+		case UI_MEMSET:
+		case UI_MEMCPY:
+		case UI_STRNCPY:
+		case UI_SIN:
+		case UI_COS:
+		case UI_ATAN2:
+		case UI_SQRT:
+		case UI_FLOOR:
+		case UI_CEIL:
+			break;
+			
+		default:
+			Con_Printf ("UI_Call : unknown trap : %i \n",arg);
+			return 0;
+			break;
 	}
-
-
+	
 	return 0;
-
-
-
 }
 
 // SERVER :
-
-
 static void Call_SV_LocateGameData (int sizeofGClient ,playerState_t *Gclients,int sizeofGEntity_t,int numEntities, void *gEntities)
 {							
 	 SV_LocateGameData(gEntities, numEntities, sizeofGEntity_t,
-						 Gclients, sizeofGClient ) ;
-
+						 Gclients, sizeofGClient);
 }
+
 static void Call_SV_SetConfigstring(const char *string, int num )
 {
 	SV_SetConfigstring( num, string );
@@ -433,8 +459,7 @@ SV_GetConfigstring( num, buffer, bufferSize );
 
 static int Call_SV_Get_Entity_Token ( int bufferSize,char *buffer  )
 {
-
-	return  SV_Get_Entity_Token ( buffer, bufferSize );
+	return SV_Get_Entity_Token (buffer, bufferSize);
 }
 
 
@@ -479,10 +504,8 @@ int GAME_Call (int arg,...)
 
 		case G_MILLISECONDS:	// ( void );
 			return Sys_Get_Time();
-
 			break;
 
-	
 		case G_CVAR_REGISTER:	// ( vmCvar_t *vmCvar, const char *varName, const char *defaultValue, int flags );
 			Call_Cvar_Register (va_arg (mark,int),va_arg(mark,const char*),va_arg(mark,const char*),va_arg(mark,vmCvar_t*) );
 			break;
@@ -784,17 +807,11 @@ int GAME_Call (int arg,...)
 		break;
 	}
 
-
-
-
 	return 0;
-
 }
 
 int CGAME_Call (int arg,...)
 {
-
-
 	va_list mark;
 	va_start (mark,arg);
 

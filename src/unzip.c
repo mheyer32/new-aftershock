@@ -942,11 +942,12 @@ int Unz_GetStringForDir (unzFile * pak,const char * dir,const char *extension,ch
 					if (dir[0])
 					token +=strlen (dir)+1;
 
-					A_strncpyz (bufpos,token,bufsize-*len);
+//					A_strncpyz (bufpos,token, bufsize - (*len));
+					strcpy (bufpos, token);
 
 					bufpos+=strlen(token)+1;
 					*(bufpos-1)=0;
-					*len=bufpos-buf;	
+					*len=bufpos-buf;
 				}
 		}
 	}

@@ -596,7 +596,7 @@ void A_strncpyz( char *dest, const char *src, int destsize )
 		Com_Error( ERR_FATAL, "G_strncpyz: NULL src" );
 	}
 	if ( destsize < 1 ) {
-		Com_Error( ERR_FATAL, "G_strncpyz: destsize < 1" ); 
+		Com_Error( ERR_FATAL, "%s %i, G_strncpyz: destsize < 1", src, destsize ); 
 	}
 
 	strncpy( dest, src, destsize-1 );

@@ -18,11 +18,8 @@
 
 #include "a_shared.h"
 
-
-
-vec3_t	vec3_origin = {0,0,0};
+vec3_t	vec3_origin = {0, 0, 0};
 vec3_t	axisDefault[3] = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
-
 
 vec4_t		colorBlack	= {0, 0, 0, 1};
 vec4_t		colorRed	= {1, 0, 0, 1};
@@ -1169,13 +1166,13 @@ int Q_log2( int val ) {
 }
 
 
-
 /*
 =================
 PlaneTypeForNormal
 =================
 */
 int	PlaneTypeForNormal (vec3_t normal) {
+
 	if ( normal[0] == 1.0 )
 		return PLANE_X;
 	if ( normal[1] == 1.0 )
@@ -1185,7 +1182,6 @@ int	PlaneTypeForNormal (vec3_t normal) {
 	
 	return PLANE_NON_AXIAL;
 }
-
 
 
 /*
@@ -1286,49 +1282,17 @@ void PerpendicularVector( vec3_t dst, const vec3_t src )
 }
 
 
-// *********** MY STUFF ********************************
+// *********** NEW STUFF ********************************
 // *****************************************************
-
-
-
-void Merge_BoundingBoxes ( const vec3_t mins1 , const vec3_t maxs1 ,
-						  const vec3_t mins2 , const vec3_t maxs2 ,
-						  vec3_t rmins ,vec3_t rmaxs ) 
+void Merge_BoundingBoxes (const vec3_t mins1, const vec3_t maxs1,
+						  const vec3_t mins2, const vec3_t maxs2,
+						  vec3_t rmins,vec3_t rmaxs) 
 {
+	rmins[0] = min(mins1[0], mins2[0]);
+	rmins[1] = min(mins1[1], mins2[1]);
+	rmins[2] = min(mins1[2], mins2[2]);
 
-
-
-	if (mins1[0] < mins2[0] ) 
-			rmins [0] = mins1[0];
-	else rmins[0]= mins2[0];
-
-	if (mins1[1] < mins2[1] ) 
-			rmins [1] = mins1[1];
-	else rmins[1]= mins2[1];
-
-	if (mins1[2] < mins2[2] ) 
-			rmins [2] = mins1[2];
-	else rmins[2]= mins2[2];
-
-
-	if (maxs1[0] > maxs2[0] )
-			rmaxs[0] = maxs1[0];
-	else rmaxs [0] = maxs2 [0];
-
-	if (maxs1[1] > maxs2[1] )
-			rmaxs[1] = maxs1[1];
-	else rmaxs [1] = maxs2 [1];
-
-	if (maxs1[2] > maxs2[2] )
-			rmaxs[2] = maxs1[2];
-	else rmaxs [2] = maxs2 [2];
-
-
-
+	rmaxs[0] = max(maxs1[0], maxs2[0]);
+	rmaxs[1] = max(maxs1[1], maxs2[1]);
+	rmaxs[2] = max(maxs1[2], maxs2[2]);
 }
-
-
-
-
-
-

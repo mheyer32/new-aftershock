@@ -27,30 +27,25 @@
 #include "console.h"
 
 
-static file_t files [MAX_FILES ];
-static int files_used [MAX_FILES ];
-static int num_files=0;
-
-
+static file_t files [MAX_FILES];
+static int files_used [MAX_FILES];
+static int num_files = 0;
 static char basedir [MAX_OSPATH];
 
-
-char *FS_Add_Basedir (const char * s)
+char *FS_Add_Basedir (const char *s)
 {
 	static char buf [128];
 
-	sprintf (buf,"%s/%s",basedir,s);
+	sprintf (buf, "%s/%s", basedir, s);
 
 	return buf;
 }
 
-
-
-
-int Get_FirstFreeFile (void )
+int Get_FirstFreeFile (void)
 {
 	int i;
-	for (i=0;i<MAX_FILES;i++)
+
+	for (i = 0; i < MAX_FILES; i++)
 	{
 		if (!files_used[i])
 			return i;
@@ -60,11 +55,9 @@ int Get_FirstFreeFile (void )
 	return 0;
 }
 
-
-
-int FS_OpenFile (const char *path, int  *handle,fsMode_t mode)
+int FS_OpenFile (const char *path, int *handle,fsMode_t mode)
 {
-	int fnum =Get_FirstFreeFile ();
+	int fnum = Get_FirstFreeFile ();
 	file_t *f = &files[fnum];
 	void * h;
 	char *buf;
@@ -72,103 +65,96 @@ int FS_OpenFile (const char *path, int  *handle,fsMode_t mode)
 	if (!path || !handle )
 		return 0;
 
-
 	switch(mode) {
 		case FS_READ:
 			mode = OPEN_READONLY;
 			break;
+
 		case FS_WRITE:
 			mode = OPEN_WRITEONLY;
 			break;
+
 		case FS_APPEND:
 			mode = OPEN_APPEND;
 			break;
+
 		case FS_APPEND_SYNC:
 			/* TODO */
 			mode = OPEN_APPEND;
 			break;
+
 		default:
 			break;
 	}
 
-	buf=FS_Add_Basedir (path);
-	h=File_Open(buf,mode);
-	
+	buf = FS_Add_Basedir (path);
+	h = File_Open(buf, mode);
 	
 	if (h)
 	{
-		files_used[fnum]=1;
-		f->fhandle=h;
+		files_used[fnum] = 1;
+		f->fhandle = h;
 		f->type = FILE_NORMAL;
 
 		*handle = fnum +1;
-		A_strncpyz (f->name,path,MAX_APATH);
+		A_strncpyz (f->name, path, MAX_APATH);
 		return File_GetLen (h);
 	}
 	else	
-	if (Pak_FileExists(path))
-	{
-		files_used[fnum]=1;
-		f->fhandle=NULL;
-		f->type=FILE_IN_PAK;
+		if (Pak_FileExists(path))
+		{
+			files_used[fnum] = 1;
+			f->fhandle = NULL;
+			f->type = FILE_IN_PAK;
 
-		*handle = fnum +1;
-		A_strncpyz (f->name,path,MAX_APATH);
-		return Pak_GetFileLen(path);
-	}
+			*handle = fnum +1;
+			A_strncpyz (f->name, path, MAX_APATH);
+			return Pak_GetFileLen(path);
+		}
 
 	*handle = 0;
 	
-	Con_Printf ("WARNING :Could not open file : %s \n",path);
-
+	Con_Printf ("WARNING: Could not open file: %s\n", path);
 	return 0;
-
 }
 
-
-void FS_Read(void *buffer,int len ,int  handle) 
+void FS_Read(void *buffer, int len, int handle) 
 {
 	file_t *f;
 
-	if (handle <1 || handle > MAX_FILES )
+	if (handle < 1 || handle > MAX_FILES)
 		return;
 
-	if (!buffer )
-		Error ("FS_Read : buffer = NULL ! ");
+	if (!buffer)
+		Error ("FS_Read : buffer = NULL !");
 	
-	f = &files [handle-1];
+	f = &files [handle - 1];
 	
 	switch (f->type)
 	{
-	case FILE_NORMAL:
-		File_Read (buffer,len,f->fhandle);
-		break;
+		case FILE_NORMAL:
+			File_Read (buffer,len,f->fhandle);
+			break;
 
+		case FILE_IN_PAK:
+			if (!Pak_ReadFile (f->name,len,buffer))
+				Con_Printf ("WARNING: Could not read file %s\n", f->name);
+			break;
 
-
-	case FILE_IN_PAK:
-		if (!Pak_ReadFile (f->name,len,buffer))
-			Con_Printf ("WARNING: Could not read file %s\n",f->name);
-
-		break;
-
-	default :
-		Error ("FS_Read : Bad file type ! ");
+		default :
+			Error ("FS_Read: Bad file type!");
 	}
-
 }
 
-
-
-int FS_Write( const void *buffer, int len, int  handle ) 
+int FS_Write(const void *buffer, int len, int handle) 
 {
-	file_t * f ;
-	int byteswritten=0;
+	file_t *f;
+	int byteswritten = 0;
 
 	if (handle < 1 || handle > MAX_APATH)
 		return 0;
 
-	if (!buffer )
+	if (!buffer)
 		Error ("FS_Write : buffer = NULL !");
 
 	f= &files [handle];
@@ -176,37 +162,32 @@ int FS_Write( const void *buffer, int len, int  handle )
 	if (f->type != FILE_NORMAL)
 		return 0;
 	
-	byteswritten =File_Write( buffer,len,f->fhandle);
+	byteswritten = File_Write(buffer, len, f->fhandle);
 
 	return (byteswritten == len);
 }
 
-void FS_FCloseFile( int  handle ) 
+void FS_FCloseFile(int handle) 
 {
 	file_t *f;
 
-	if (handle<1 || handle > MAX_FILES)
-		return ;
+	if (handle < 1 || handle > MAX_FILES)
+		return;
 
-	f = &files [handle -1];
+	f = &files [handle - 1];
 
-	if (f->type==FILE_NORMAL)
+	if (f->type == FILE_NORMAL)
 		File_Close(f->fhandle);
 
-	files_used [handle-1] =0;
-
-
+	files_used [handle - 1] = 0;
 }
 
 void FS_Shutdown(void)
 {
-
 	Pak_Shutdown ();
-
-
 }
 
-void FS_Init (const char *dir )
+void FS_Init (const char *dir)
 {
 	void * handle;
 	char buf [MAX_OSPATH];
@@ -220,54 +201,43 @@ void FS_Init (const char *dir )
 
 	strcpy (basedir,dir );
 
-
 	// Find all pk3 files in the base-directory :
+	sprintf (buf, "%s/*.pk3", dir);
 
-	sprintf (buf,"%s/*.pk3",dir);
-
-	handle=File_FindFirst (buf,fname,0,0);
+	handle=File_FindFirst (buf, fname, 0, 0);
 
 	if (handle)
 	{
-		sprintf (buf2,"%s/%s",dir,fname);
+		sprintf (buf2, "%s/%s", dir, fname);
+
 		if (!Pak_OpenPak(buf2))
-			Error ("Could not open pk3 : %s ",fname);
+			Error ("Could not open pk3: %s", fname);
 	}
 	else 
 	{
-		Error ("Could not find any .pk3 files !");
+		Error ("Could not find any .pk3 files!");
 	}
 	
-	while(File_FindNext(handle,fname,0,0))
+	while(File_FindNext(handle, fname, 0, 0))
 	{
-		sprintf (buf2,"%s/%s",dir,fname);
+		sprintf (buf2, "%s/%s", dir, fname);
 			Pak_OpenPak(buf2);
-		
 	}
 
 	File_FindClose(handle);
 
 	Con_Printf ("-----  FS_INIT :Success --------\n");
-
-
 }
 
 // TODO !
-int FS_FileExists (char * file )
+int FS_FileExists (char *file)
 {
-	
-
 	return Pak_FileExists(file);
-
 }
 
-
-
-
-// Works , but could be faster 
-int  FS_GetFileList (const char *path,const char *extension,char *listbuf,int bufsize)
+// Works, but could be faster 
+int FS_GetFileList (const char *path, const char *extension, char *listbuf,int bufsize)
 {
-
 	char *bufpos;
 	int found=0,buflen=0;
 	char tmp [MAX_OSPATH];
@@ -276,54 +246,40 @@ int  FS_GetFileList (const char *path,const char *extension,char *listbuf,int bu
 	char *syspath;
 	char fname [MAX_OSPATH];
 
-	listbuf[0]=0;
-	bufpos=listbuf;
+	listbuf[0] = 0;
+	bufpos = listbuf;
 
 	// FIXME !!!
 	if (!path[0])
 		return 0;
 
+	syspath = FS_Add_Basedir (path);
 	
-	syspath=FS_Add_Basedir (path);
-	
-	sprintf (tmp,"%s/*.%s",syspath,extension);	
+	sprintf (tmp, "%s/*.%s", syspath, extension);	
 
-	handle=File_FindFirst (tmp,fname,0,0);
+	handle = File_FindFirst (tmp, fname, 0, 0);
 	
 	if (handle)
 	{
 		// TODO !!!
-
 		File_FindClose (handle);
 	}
 
-
-
-	found=Pak_GetFileList(path,extension,listbuf,bufsize);
+	found = Pak_GetFileList(path, extension, listbuf, bufsize);
 	
-
 	return found;
 }
 
-
-int FS_FileSize (const char * name )
+int FS_FileSize (const char *name)
 {
-	int len ,file;;
+	int len, file;
 
-
-	len = FS_OpenFile (name,&file,FS_READ);
+	len = FS_OpenFile (name, &file, FS_READ);
 
 	if (!len || !file )
 		return 0;
 	
 	FS_FCloseFile(file );
 
-	return len ;
-
+	return len;
 }
-
-
-
-
-
-

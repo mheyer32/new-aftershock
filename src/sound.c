@@ -16,14 +16,11 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-// Martin Kraus 2000-4-14 : disabled sound support 
-
-
 #include "a_shared.h"
 #include "c_var.h"
 #include "io.h"
 #include "console.h"
-//#include "Fmod/fmod.h"
+#include <fmod.h>
 //#include "Fmod/fmod_errors.h"
 #include "sound.h"
 
@@ -31,7 +28,7 @@
 #define MAX_SAMPLES 256 
 #define NUM_CHANNELS 32 
 
-/*
+
 typedef struct 
 {
 	char name [MAX_OSPATH];
@@ -41,10 +38,10 @@ typedef struct
 	vec3_t origin; 
 
 }sample_t ; 
-*/
+
 
  
-//static sample_t samples [MAX_SAMPLES ];
+static sample_t samples [MAX_SAMPLES ];
 static int s_num_samples =0;
 static int s_intialized =0;
 
@@ -127,7 +124,7 @@ int S_Init ( void )
 
 	S_GetCvars ();
 
-	/*memset (samples ,0, MAX_SAMPLES * sizeof (sample_t ));
+	memset (samples ,0, MAX_SAMPLES * sizeof (sample_t ));
 	s_num_samples =0;
 	
 	// FSOUND_INIT !!!
@@ -139,15 +136,16 @@ int S_Init ( void )
 		Con_Printf ("WARNING: Could not initialize Sound !\n");
 		return 0;
 	}
-
+/*
 	if (!FSOUND_3D_Listener_SetRolloffFactor(s_rolloff->value))
 	{
 		Con_Printf ("WARNING : Could not set RolloffFactor !\n");
 	}
-
+*/
+//	SOUND_3D_Listener_SetRolloffFactor(s_rolloff->value);
 	FSOUND_3D_Listener_SetDopplerFactor(s_doppler->value);
 
-*/
+
 
 
 
@@ -163,7 +161,7 @@ void S_Shutdown (void )
 	if (!s_intialized)
 		return ;
 
-/*	for (i=0;i<s_num_samples;i++ )
+	for (i=0;i<s_num_samples;i++ )
 	{
 		FSOUND_Sample_Free(samples[i].handle);
 	}
@@ -171,7 +169,7 @@ void S_Shutdown (void )
 	FSOUND_Close ();
 
 	s_num_samples=0;
-*/	s_intialized=0;
+	s_intialized=0;
 }
 
 
@@ -182,9 +180,9 @@ void S_Shutdown (void )
 // moves and the listener moves
 void		S_StartSound( vec3_t origin, int entityNum, int entchannel, sfxHandle_t sfx )
 {
-/*	sample_t * s=NULL;
+	sample_t * s=NULL;
 	vec3_t vel ={0.0,0.0,0.0};
-	int act_channel;
+	int act_channel = -1;
 
 	if (sfx < 0 || sfx > MAX_SAMPLES ) 
 		return ;
@@ -192,24 +190,20 @@ void		S_StartSound( vec3_t origin, int entityNum, int entchannel, sfxHandle_t sf
 	s= &samples [sfx];
 
 
-	act_channel=FSOUND_3D_PlaySound(entchannel,s->handle,origin,NULL);
+	act_channel=FSOUND_PlaySound3DAttrib(entchannel,s->handle,-1, 255, FSOUND_STEREOPAN,origin,NULL);
 
 	if (act_channel==-1) // problem :
 		return ;
 
-	
 	VectorCopy (origin,s->origin);
 	s->channel = act_channel;
-
-*/
-
 }
 
 // a local sound is always played full volume
 void		S_StartLocalSound( sfxHandle_t sfx, int channelNum )
 {
-/*	sample_t * s; 
-	int act_channel ;
+	sample_t * s; 
+	int act_channel = -1;
 
 	if (sfx< 0 ||sfx >= s_num_samples || !s_intialized)
 		return ;
@@ -222,7 +216,7 @@ void		S_StartLocalSound( sfxHandle_t sfx, int channelNum )
 		return ;
 
 	s->channel = act_channel ;
-*/
+
 
 }
 void		S_ClearLoopingSounds( void )
@@ -262,12 +256,11 @@ void		S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int in
 
 sfxHandle_t	S_RegisterSound( const char *sample )		// returns buzz if not found
 {
-/*	int file ,i ;
+	int file ,i ;
 	void * f_data ;
 	unsigned int f_len ;
 	FSOUND_SAMPLE * handle ;
 	int sound_mode =0;
-
 
 	if (!s_intialized)
 		return -1;
@@ -306,7 +299,7 @@ sfxHandle_t	S_RegisterSound( const char *sample )		// returns buzz if not found
 	FS_FCloseFile (file );
 
 	// set the standart mode ;
-	sound_mode = FSOUND_STEREO | FSOUND_LOOP_OFF | FSOUND_HW3D ;
+	sound_mode = FSOUND_STEREO | FSOUND_LOOP_OFF | FSOUND_HW3D | FSOUND_LOADMEMORY;
 
 	if (s_loadas8bit->integer)
 	{
@@ -317,9 +310,9 @@ sfxHandle_t	S_RegisterSound( const char *sample )		// returns buzz if not found
 		sound_mode |= FSOUND_16BITS ;
 	}
 
-	handle =FSOUND_Sample_LoadWavMemory(FSOUND_FREE , f_data ,sound_mode,
-								f_len );
-
+//	handle =FSOUND_Sample_LoadWavMemory(FSOUND_FREE , f_data ,sound_mode,
+//								f_len );
+	handle = FSOUND_Sample_Load (FSOUND_UNMANAGED, f_data, sound_mode, f_len);
 
 	free (f_data );
 
@@ -327,7 +320,7 @@ sfxHandle_t	S_RegisterSound( const char *sample )		// returns buzz if not found
 		return -1;
 
 	// Set some attributes :
-	FSOUND_Sample_SetMinMaxDistance (samples[s_num_samples].handle,s_mindistance->value,s_maxdistance->value)
+	FSOUND_Sample_SetMinMaxDistance (samples[s_num_samples].handle,s_mindistance->value,s_maxdistance->value);
 
 
 	A_strncpyz (samples[s_num_samples].name,sample ,MAX_OSPATH);
@@ -335,11 +328,8 @@ sfxHandle_t	S_RegisterSound( const char *sample )		// returns buzz if not found
 	samples[s_num_samples].mode=sound_mode ;
 	VectorClear (samples [s_num_samples].origin);
 	
-	s_num_samples++ ;
+	return s_num_samples++;
 
-	return s_num_samples -1 ;
-*/
-	return -1;
 }
 void		S_StartBackgroundTrack( const char *intro, const char *loop )	// empty name stops music
 {

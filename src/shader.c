@@ -555,8 +555,6 @@ shaderpass_tcmod(shader_t *shader, shaderpass_t *pass, int numargs,
 {
     pass->flags |= SHADER_TCMOD;
     
-;
-
 	if (pass->num_tc_mod == MAX_TC_MOD )
 		Error ("MAX_TC_MOD exceeded !");
 	
@@ -1040,28 +1038,24 @@ void Shader_Finish (shader_t *s )
 	// check if we can use Render_Backend_Flush_Multitexture_Combine :
 	// TODO :
 
-	/* Explicit depth write for first pass */
 	/* FIXME: is this how we handle transparent ? */
 	if (! (s->flags & SHADER_DEPTHWRITE) &&
 	! (s->flags & SHADER_TRANSPARENT) &&
 	! (s->flags & SHADER_SKY) && s->numpasses > 0)
 	{
-		s->pass[0].flags |= SHADER_DEPTHWRITE;
+		int i;
+		
+		for (i = 0; i < s->numpasses; i++)
+			if (!(s->pass[i].flags & SHADER_BLEND)) {
+				s->pass[0].flags |= SHADER_DEPTHWRITE;
+				break;
+			}
 	}
-
-
 
 	sort = (s->flags & SHADER_POLYGONOFFSET) + (s->cull << 1 ) + ( s->flush << 4 );
 
 	s->sortkey =sort;
-
-
-
 }
-
-
-
-
 
 int R_LoadShader ( const char * name ,int type )
 {
@@ -1134,71 +1128,62 @@ int R_LoadShader ( const char * name ,int type )
 
 		Shader_Finish(s);
 
-
 	}
 	// make a default shader :
 	else
 	{
-		switch (type )
+		switch (type)
 		{
-		case SHADER_2D :
-			s->flags =  SHADER_NOPICMIP;
+		case SHADER_2D:
+			s->flags = SHADER_NOPICMIP;
 			s->numpasses = 1;
-			s->pass[0].flags =  SHADER_BLEND ;
-			s->pass[0].blendsrc=GL_SRC_ALPHA;
-			s->pass[0].blenddst=GL_ONE_MINUS_SRC_ALPHA;
-			s->pass[0].texref = R_Load_Texture (name ,SHADER_NOMIPMAPS | SHADER_NOPICMIP);
+			s->pass[0].flags = SHADER_BLEND;
+			s->pass[0].blendsrc = GL_SRC_ALPHA;
+			s->pass[0].blenddst = GL_ONE_MINUS_SRC_ALPHA;
+			s->pass[0].texref = R_Load_Texture (name, SHADER_NOMIPMAPS | SHADER_NOPICMIP);
 			s->pass[0].depthfunc = GL_ALWAYS;
 			s->pass[0].rgbgen = RGB_GEN_VERTEX;
 			s->sort = SHADER_SORT_ADDITIVE;
-			s->deform_vertices=DEFORMV_NONE;
-			s->flush=SHADER_FLUSH_GENERIC;
-			s->cull=SHADER_CULL_DISABLE;
+			s->deform_vertices = DEFORMV_NONE;
+			s->flush = SHADER_FLUSH_GENERIC;
+			s->cull = SHADER_CULL_DISABLE;
 			break;
 
-		case SHADER_BSP :
-			 s->flags =0;
-			 s->numpasses = 1;
-			 s->pass[0].flags = SHADER_DEPTHWRITE;
-			 s->pass[0].texref =R_Load_Texture (name ,0); 
-	         s->pass[0].depthfunc = GL_LEQUAL;
-			 s->pass[0].rgbgen = RGB_GEN_VERTEX;	 
-		     s->sort = SHADER_SORT_OPAQUE;
-			 s->deform_vertices=DEFORMV_NONE;
-			 s->flush=SHADER_FLUSH_GENERIC;
-			 s->cull=SHADER_CULL_FRONT;
-			break;
-
-		case SHADER_MD3 :
+		case SHADER_BSP:
 			s->flags = 0;
 			s->numpasses = 1;
 			s->pass[0].flags = SHADER_DEPTHWRITE;
-			s->pass[0].texref = R_Load_Texture (name ,0);
+			s->pass[0].texref = R_Load_Texture (name, 0); 
+	        s->pass[0].depthfunc = GL_LEQUAL;
+			s->pass[0].rgbgen = RGB_GEN_VERTEX;	 
+		    s->sort = SHADER_SORT_OPAQUE;
+			s->deform_vertices = DEFORMV_NONE;
+			s->flush = SHADER_FLUSH_GENERIC;
+			s->cull = SHADER_CULL_FRONT;
+			break;
+
+		case SHADER_MD3:
+			s->flags = 0;
+			s->numpasses = 1;
+			s->pass[0].flags = SHADER_DEPTHWRITE;
+			s->pass[0].texref = R_Load_Texture (name, 0);
 			s->pass[0].depthfunc = GL_LESS;
 			s->pass[0].rgbgen = RGB_GEN_IDENTITY;
 			s->sort = SHADER_SORT_OPAQUE;
-			s->deform_vertices=DEFORMV_NONE;
-			s->flush=SHADER_FLUSH_GENERIC;
-			s->cull=SHADER_CULL_DISABLE;
+			s->deform_vertices = DEFORMV_NONE;
+			s->flush = SHADER_FLUSH_GENERIC;
+			s->cull = SHADER_CULL_FRONT;
 			break;
 
-		default :
+		default:
 			return -1;
-
 		}
-
-
 	}
 
-	
-	strcpy (s->name,name);
-
-
-//	shadercount++;
+	strcpy (s->name, name);
 
 	return shadercount++;
 }
-
 
 void
 Syntax(void)

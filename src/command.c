@@ -57,30 +57,24 @@ static void Cmd_cmdlist(void)
 }
 
 // TODO !
-/* executes the contents of a file as if they were typed in at the console */
+// executes the contents of a file as if they were typed in at the console
 void Cmd_exec(void)
 {
 	char			*data;
 	int				size;
 	fileHandle_t	f;
-	char file[MAX_APATH] ;
+	char file[MAX_APATH];
 
-
-	if (Cmd_Argc()>1)
+	if (Cmd_Argc() > 1)
 	{
-		
 		Cmd_Argv(1,file,MAX_APATH); 
 
 	}
 	else 
 	{
 		Con_Printf("Usage: exec <file>\n");
-		return ;
+		return;
 	}
-
-
-
-
 
 	if (file) {
 		
@@ -127,8 +121,6 @@ void Cmd_Writeconfig(void)
 	}
 }
 
-
-
 void Cmd_wait(void)
 {
 	wait = 1;
@@ -157,7 +149,7 @@ int	Cmd_Argc (void)
 Cmd_Argv
 ============
 */
-void	Cmd_Argv( int n, char *buffer, int bufferLength )
+void Cmd_Argv( int n, char *buffer, int bufferLength )
 {
 	if ( n >= cmd_argc )
 		A_strncpyz( buffer, "", bufferLength );
@@ -170,7 +162,7 @@ void	Cmd_Argv( int n, char *buffer, int bufferLength )
 Cmd_Args
 ============
 */
-void	Cmd_Args( char *buffer, int bufferLength )
+void Cmd_Args( char *buffer, int bufferLength )
 {
 	A_strncpyz( buffer, cmd_args, bufferLength );
 }
@@ -260,7 +252,7 @@ static cmd_t *Cmd_Find( const char *name )
 {
 	cmd_t *cmd;
 
-	if( !name ) return(0);
+	if( !name ) return 0;
 
 	for( cmd = cmdlist; cmd; cmd=cmd->next ) {
 		if( !A_stricmp(cmd->name, name ) ) {
@@ -268,7 +260,7 @@ static cmd_t *Cmd_Find( const char *name )
 		}
 	}
 
-	return(0);
+	return 0;
 }
 
 /* Add a command */
@@ -298,16 +290,16 @@ int Cmd_ExecuteCommand( const char *name )
 {
 	cmd_t *cmd;
 
-	if (!name) return (0);
+	if (!name) return 0;
 
 	cmd = Cmd_Find(name);
-	if(!cmd) return(0);
+	if(!cmd) return 0;
 
 	if( cmd->function )
 		cmd->function();
 	/* TODO */
 
-	return (1);
+	return 1;
 }
 
 void Cmd_Init( void )
@@ -491,7 +483,7 @@ void Cbuf_ExecuteText( cbufExec_t exec_when, const char *text )
 	}
 }
 
- void Cbuf_Free(void)
+void Cbuf_Free(void)
 {
 	cbuf_cursize = 0;
 	cbuf_maxsize = 0;

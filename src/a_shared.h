@@ -989,16 +989,7 @@ typedef enum connstate_e {
 } connstate_t;
 
 
-
-
-
-
-
-
-void * _cdecl malloc (unsigned int size );
-void * memcpy(void *, const void *, size_t);
-
-
-
+void *_cdecl malloc (unsigned int size);
+void *memcpy(void *, const void *, size_t);
 
 #endif

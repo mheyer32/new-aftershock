@@ -23,66 +23,55 @@
 int GAME_Call (int arg,...);
 int (__cdecl *GAME_syscall)( int arg, ... ) = GAME_Call;
 
-char  GAME_name[]="qagamex86.dll";
+char GAME_name[] = "qagamex86.dll";
 
 EntryFunc *GAME_entry;
 MainFunc *GAME_main;
 
-static int gameLoaded =0;
+static int gameLoaded = 0;
 
-
-int LoadGame (void )
+int LoadGame (void)
 {
+	if (gameLoaded)
+		return 1;
 
+	GAME_inst = LoadLibrary(FS_Add_Basedir(GAME_name));
 
+	if (!GAME_inst) 
+		return 0;
 
-	if (gameLoaded) return 1;
-
-	GAME_inst= LoadLibrary(FS_Add_Basedir(GAME_name) );
-	if (!GAME_inst) return 0;
-
-	GAME_entry=(EntryFunc*) GetProcAddress(
+	GAME_entry = (EntryFunc*) GetProcAddress(
 			GAME_inst,   
             "dllEntry"   
 	);
-	if (!GAME_entry) return 0;
- 
 
-	GAME_main=(MainFunc*) GetProcAddress(
+	if (!GAME_entry) 
+		return 0;
+ 
+	GAME_main = (MainFunc*) GetProcAddress(
 			GAME_inst,    
             "vmMain"   
 	);
 
-	if (!GAME_main) return 0;
+	if (!GAME_main) 
+		return 0;
 	
 	GAME_entry(GAME_syscall);
-	
 
-
-
-	gameLoaded=1;
+	gameLoaded = 1;
 	return 1;
-
-
-
 }
 
-int UnLoadGame (void )
+int UnLoadGame (void)
 {
-
-	if (! gameLoaded) 
+	if (!gameLoaded) 
 		return 0;
 
-
-
-	if (!GAME_inst )
+	if (!GAME_inst)
 		return 0;
-
 
 	FreeLibrary(GAME_inst);
 
-	gameLoaded=0;
+	gameLoaded = 0;
 	return 1;
-
-
 }

@@ -16,8 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-
-
+#include <windows.h>
 #include "a_shared.h"
 #include "util.h"
 #include "glinc.h"
@@ -26,12 +25,10 @@
 #include "ui.h"
 #include "io.h"
 
-#include <windows.h>
-
 int UI_Call (int arg, ...);
 int (__cdecl *UI_syscall)( int arg, ... ) = UI_Call;
 
-char  UI_name[]="uix86.dll";
+char UI_name[] = "uix86.dll";
 
 EntryFunc *UI_entry;
 MainFunc *UI_main;

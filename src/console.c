@@ -480,7 +480,7 @@ void Con_Draw(void)
 
 	/* background */
 	R_SetColor( colorWhite );
-	R_DrawStretchPic( 0.f, 0.f, (float)winX, y, 0.f, 1.f - (float)console.height / (float)winY, 1.f, 1.f, *console.shader );
+	R_DrawStretchPic( 0.0f, 0.0f, (float)winX, y, 0.f, 1.f - (float)console.height / (float)winY, 1.f, 1.f, *console.shader );
 
 	y -= 2;
 
@@ -564,8 +564,6 @@ void Con_Printf(const char *format, ...)
 {
 	char buffer[MAX_STRING_CHARS * 2];
 	va_list args;
-	time_t t;
-	struct tm *local_time;
 
 	va_start(args, format);
 	vsprintf(buffer, format, args);
@@ -573,6 +571,9 @@ void Con_Printf(const char *format, ...)
 	
 
 /*	if(logfile->integer && !conlog) {
+		time_t t;
+		struct tm *local_time;
+
 		conlog = FileOpen("aconsole.log", OPEN_APPEND);
 		if(conlog) {
 			time(&t);
@@ -651,10 +652,12 @@ void Con_KeyEvent( int key )
 		case K_KP_UPARROW:
 			Con_History(1);
 			break;
+
 		case K_DOWNARROW:
 		case K_KP_DOWNARROW:
 			Con_History(-1);
 			break;
+
 		case K_LEFTARROW:
 		case K_KP_LEFTARROW:
 			if (console.cursorPos) {
@@ -662,6 +665,7 @@ void Con_KeyEvent( int key )
 			}
 			Con_SetHScrollPos();
 			break;
+
 		case K_RIGHTARROW:
 		case K_KP_RIGHTARROW:
 			len = (int)strlen(console.minibuffer);
@@ -671,21 +675,23 @@ void Con_KeyEvent( int key )
 			Con_SetHScrollPos();
 			break;
 
-		case K_BACKSPACE :
+		case K_BACKSPACE:
 			len = strlen(console.minibuffer);
-						if (console.hScrollPos > 0)
-							console.hScrollPos--;
-						if (len && console.cursorPos) {
-							for(i=console.cursorPos-1; i<len-1; i++) {
-								console.minibuffer[i] = console.minibuffer[i+1];
-							}
-							console.minibuffer[i] = 0;
-							console.cursorPos--;
-						}
+			if (console.hScrollPos > 0)
+				console.hScrollPos--;
+			if (len && console.cursorPos) {
+				for(i=console.cursorPos-1; i<len-1; i++) {
+					console.minibuffer[i] = console.minibuffer[i+1];
+				}
+				console.minibuffer[i] = 0;
+				console.cursorPos--;
+			}
 			break;
-		case K_TAB :
+
+		case K_TAB:
 			Con_Complete();
 			break;
+
 		case K_INS:
 		case K_KP_INS:
 			if( Key_IsDown( K_SHIFT ) ) {
@@ -694,22 +700,26 @@ void Con_KeyEvent( int key )
 				Key_SetOverstrikeMode( !Key_GetOverstrikeMode() );
 			}
 			break;
+
 		case K_DEL:
 		case K_KP_DEL:
 			Con_Delete();
 			break;
+
 		case K_PGUP:
 		case K_KP_PGUP:
 			if (console.vScrollPos < console.numFilledLines - 1) {
 				console.vScrollPos++;
 			}
 			break;
+
 		case K_PGDN:
 		case K_KP_PGDN:
 			if (console.vScrollPos > 0) {
 				console.vScrollPos--;
 			}
 			break;
+
 		case K_HOME:
 		case K_KP_HOME:
 			if (Key_IsDown(K_CTRL)) {
@@ -719,6 +729,7 @@ void Con_KeyEvent( int key )
 				console.cursorPos = 0;
 			}
 			break;
+
 		case K_END:
 		case K_KP_END:
 			if (Key_IsDown(K_CTRL)) {
@@ -729,45 +740,54 @@ void Con_KeyEvent( int key )
 			}
 			break;
 
-		case K_ENTER :
+		case K_ENTER:
 			Con_ProcessCmd();
 			break;
-		case K_SPACE :
+		case K_SPACE:
 			Con_AddToMinibuffer(' ');
 			break;
 
 		default:
 			if ( key & K_CHAR_FLAG ) {
 				key &= ~K_CHAR_FLAG;
+
 				switch (key) {
 					case 1:		/* ^A */
 						console.cursorPos = 0;
 						console.hScrollPos = 0;
 						break;
+
 					case 3:		/* ^C */
 						memset(console.minibuffer,0, CON_MINIBUFFER_SIZE);
 						console.cursorPos = 0;
 						console.hScrollPos = 0;
 						break;
+
 					case 5:		/* ^E */
 						console.cursorPos = strlen(console.minibuffer);
 						Con_SetHScrollPos();
 						break;
+
 					case 12:		/* ^L */
 						Cmd_clear();
 						break;
+
 					case 14:		/* ^N */
 						Con_History(1);
 						break;
+
 					case 16:		/* ^P */
 						Con_History(-1);
 						break;
+
 					case 22:		/* ^V */
 						Con_Paste();
 						break;
+
 					case 127:		/* delete */
 						Con_Delete();
 						break;
+
 					default:
 						Con_AddToMinibuffer((char)key);
 						break;

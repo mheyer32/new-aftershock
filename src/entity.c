@@ -19,64 +19,47 @@
 #include "util.h"
 #include "entity.h"
 
+static char *entitydata = NULL;
+static char *entitypos = NULL;
 
-
-static char * entitydata =NULL ;
-static char * entitypos =NULL;
-
-
-
-void Start_Entity_Parsing (char * entdata , int len  )
+void Start_Entity_Parsing (char *entdata, int len)
 {
-
-	if (entdata  && len )
+	if (entdata && len)
 	{
-		entitydata =malloc (len );
-		memcpy( entitydata , entdata,len );
-		entitypos= entitydata;		
+		entitydata = malloc (len);
+		memcpy(entitydata, entdata, len);
+		entitypos = entitydata;		
 	}
-	else 
-	{
-		Error (" Start_Entity_Parsing : NULL ");
+	else {
+		Error ("Start_Entity_Parsing: NULL");
 	}
-
-
 }
 
 void End_Entity_Parsing (void )
 {
+	free (entitydata);
 
-	free (entitydata );
-
-	entitydata=NULL;
-	entitypos =NULL;
-
-
-
+	entitydata = NULL;
+	entitypos = NULL;
 }
 
-
-
-int Get_Entity_Token ( char *buffer, int bufferSize )
+aboolean Get_Entity_Token (char *buffer, int bufferSize)
 {
-	
 	char *token;
 	
 	COM_BeginParseSession ();
 
 	while (entitypos)
 	{
-	token = COM_Parse ( & entitypos );
-	
-	if (! token [0]) // new Line 
-		continue;
-			
-	A_strncpyz ( buffer , token , bufferSize ); // success
-	
-	return 1;
+		token = COM_Parse (&entitypos);
 		
+		if (!token[0]) // new Line 
+			continue;
+				
+		A_strncpyz (buffer, token, bufferSize); // success
+		
+		return atrue;
 	}	
 
-	return 0;
-	
+	return afalse;
 }

@@ -116,15 +116,15 @@ aboolean Net_Resolve( const char *hostname, net_address_t *addr )
 		udp_addr->sin_addr.S_un.S_un_b.s_b2 = (unsigned char)host->h_addr_list[0][1];
 		udp_addr->sin_addr.S_un.S_un_b.s_b3 = (unsigned char)host->h_addr_list[0][2];
 		udp_addr->sin_addr.S_un.S_un_b.s_b4 = (unsigned char)host->h_addr_list[0][3];
-		udp_addr->sin_port = htons( port );
+		udp_addr->sin_port = htons( (unsigned short)port );
 
-		Con_Printf( "%s resolved to %d.%d.%d.%d:%d\n", hostname,
+		Con_Printf("%s resolved to %d.%d.%d.%d:%d\n", hostname,
 				udp_addr->sin_addr.S_un.S_un_b.s_b1,
 				udp_addr->sin_addr.S_un.S_un_b.s_b2,
 				udp_addr->sin_addr.S_un.S_un_b.s_b3,
 				udp_addr->sin_addr.S_un.S_un_b.s_b4,
 				port );
-		return( atrue );
+		return atrue;
 	}
 
 	Con_Printf( "Couldn't resolve address\n" );

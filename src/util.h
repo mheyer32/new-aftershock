@@ -38,25 +38,27 @@ void Error(const char *fmt, ...);
 #endif
 
 #ifdef _WIN32
-#pragma warning(disable : 4018)     
-#pragma warning(disable : 4032)
-#pragma warning(disable : 4051)
-#pragma warning(disable : 4057)		
-#pragma warning(disable : 4100)		
-#pragma warning(disable : 4115)
-#pragma warning(disable : 4125)		
-#pragma warning(disable : 4127)		
-#pragma warning(disable : 4136)
-#pragma warning(disable : 4201)
-#pragma warning(disable : 4214)
-#pragma warning(disable : 4244)
-#pragma warning(disable : 4305)		
-#pragma warning(disable : 4310)		
-#pragma warning(disable : 4514)
-#pragma warning(disable : 4711)		
-#pragma warning(disable : 4220)		
+// unknown pragmas are SUPPOSED to be ignored, but....
+#pragma warning(disable : 4018)     // signed/unsigned mismatch
+//#pragma warning(disable : 4032)
+#pragma warning(disable : 4051)     // ALPHA
+//#pragma warning(disable : 4057)
+//#pragma warning(disable : 4100)
+//#pragma warning(disable : 4115)
+//#pragma warning(disable : 4125)
+//#pragma warning(disable : 4127)
+#pragma warning(disable : 4136)     // X86
+//#pragma warning(disable : 4201)
+//#pragma warning(disable : 4214)
+#pragma warning(disable : 4244)     // MIPS
+#pragma warning(disable : 4305)		// truncation from const double to float
+//#pragma warning(disable : 4310)
+//#pragma warning(disable : 4514)
+//#pragma warning(disable : 4711)
+//#pragma warning(disable : 4220)		
 
 #endif
+
 /*
 
 #ifdef ASHOCK_BIG_ENDIAN
@@ -85,14 +87,10 @@ void Error(const char *fmt, ...);
 */
 
 
-
-
 void Error(const char *fmt, ...);
 int strcmpEXT (char * str,char * str2 ,int len);
 int Search (const char * name ,char * in, char * buf ,int bufsize);
 
 char *copystring(const char *s);
-
-
 
 #endif /*__UTIL_H__*/

@@ -26,6 +26,7 @@
 #include "ui.h"
 #include "keys.h"
 #include "sys_key.h"
+#include "detect.h"
 
 glconfig_t glconfig;
 ext_info_t gl_ext_info;
@@ -1442,6 +1443,8 @@ GLint APIENTRY GL_ScaleImage( GLenum format,
    return 0;
 }
 
+extern int round_2 (int x );
+
 GLint APIENTRY GL_Build2DMipmaps( GLenum target, GLint components,
                                   GLsizei width, GLsizei height, GLenum format,
                                   GLenum type, const void *data )
@@ -2326,7 +2329,7 @@ int WIN_CreateWindow ( HINSTANCE inst ,int nCmdShow)
 
    ShowWindow( hWnd, nCmdShow );
    UpdateWindow( hWnd );
-
+	ShowCursor (FALSE);		// Vic: hide mouse
    return 1;
 
 
@@ -2360,6 +2363,8 @@ int WIN_Destroy_Window (void )
 
 		
 		DestroyWindow ( hWnd);
+
+	ShowCursor (TRUE);		// Vic: hide mouse
 
 		hWnd=NULL;
 
@@ -2548,53 +2553,55 @@ void  GetGlConfig(glconfig_t * config)
 	memcpy (config,&glconfig,sizeof (glconfig_t ));
 }
 
-
-int Init_OpenGL ( void )
+int Init_OpenGL (void)
 {
-
 	PIXELFORMATDESCRIPTOR pfd;
-	int iFormat=-1;
-	HINSTANCE glide ;
-	HINSTANCE dll ;
-	char * dllname ;
-
+	int iFormat = -1;
+	HINSTANCE glide;
+	HINSTANCE dll;
+	char *dllname;
+	unsigned long		i;
+	processor_t			*p;
+	processors_info_t	p_info;
+	int					num;
 
 	if (opengl_initialized)
 		return 1;
 
 	Con_Printf("Initializing OpenGl subsystem\n");
 
-
-
 	Con_Printf("...initializing AGL\n");
+
 	glide = LoadLibrary( "glide2x.dll" );
+
 	if( !glide )
 		glide = LoadLibrary( "glide3x.dll" );
+
 	if( glide ) {
 		FreeLibrary( glide );
 
-		dll =LoadLibrary (_3DFX_DRIVER_NAME);
+		dll = LoadLibrary (_3DFX_DRIVER_NAME);
+
 		if (dll)
 		{
 			dllname = _3DFX_DRIVER_NAME;
-			glconfig.driverType=GLDRV_VOODOO;
-			FreeLibrary ( dll );
+			glconfig.driverType = GLDRV_VOODOO;
+			FreeLibrary (dll);
 		}
 		else 
 		{
-			glconfig.driverType=GLDRV_ICD;
-			dllname =OPENGL_DRIVER_NAME;
+			glconfig.driverType = GLDRV_ICD;
+			dllname = OPENGL_DRIVER_NAME;
 		}
-
 	}
 	else
 	{
 		glconfig.driverType=GLDRV_ICD;
 		dllname =OPENGL_DRIVER_NAME;
-
 	}
 	
-	Con_Printf("...calling Load Library ('%s');",dllname);
+	Con_Printf("...calling Load Library ('%s');", dllname);
+
 	if (!GL_LoadDll ( dllname))
 	{
 		Con_Printf ("failed\n");
@@ -2603,14 +2610,11 @@ int Init_OpenGL ( void )
 	else 
 		Con_Printf ("succeded\n");
 
-
 	if (! WIN_CreateWindow ( hInst ,nCmdShow))
 		return 0;
 
-
 	Con_Printf ("\n");
 	Con_Printf ("Initializing OpenGL driver\n");
-
 
 	Con_Printf ("...getting DC:");
 	
@@ -2624,15 +2628,10 @@ int Init_OpenGL ( void )
 	else
 		Con_Printf("succeded\n");
 
+	iFormat = GL_ChoosePFD( 16, 16, 8 );
 
-	iFormat=GL_ChoosePFD( 16, 16, 8 );
-
-
-
-	if (iFormat<0)
-	{
+	if (iFormat < 0)
 		return 0;
-	}
 	
 	if (!SetPixelFormat( dc, iFormat, &pfd ))
 	{
@@ -2643,7 +2642,6 @@ int Init_OpenGL ( void )
 	{
 		Con_Printf("...PIXELFORMAT %i selected\n",iFormat);
 	}
-
 		
 	Con_Printf("...creating GL context :");
 	hRC = awglCreateContext( dc );
@@ -2672,12 +2670,10 @@ int Init_OpenGL ( void )
 		const char *renderer=glGetString(GL_RENDERER);
 		const char *version=glGetString(GL_VERSION);
 
-		A_strncpyz(glconfig.vendor_string,vendor,MAX_STRING_CHARS);
-		A_strncpyz(glconfig.extensions_string,ext,MAX_STRING_CHARS);
-		A_strncpyz(glconfig.renderer_string,renderer,MAX_STRING_CHARS);
-		A_strncpyz(glconfig.version_string,version,MAX_STRING_CHARS);
-
-
+		if (vendor) A_strncpyz(glconfig.vendor_string,vendor,MAX_STRING_CHARS);
+		if (ext)	A_strncpyz(glconfig.extensions_string,ext,MAX_STRING_CHARS);
+		if (renderer) A_strncpyz(glconfig.renderer_string,renderer,MAX_STRING_CHARS);
+		if (version) A_strncpyz(glconfig.version_string,version,MAX_STRING_CHARS);
 
 		if (r_allowExtensions->integer)
 		{
@@ -2839,8 +2835,6 @@ int Init_OpenGL ( void )
 
 				if (!glMultiTexCoord2fARB || !glMultiTexCoord2fARB || !glMultiTexCoord2fvARB || !glActiveTextureARB || !glClientActiveTextureARB)
 					return 0;
-
-
 			}
 			else
 			{
@@ -2854,7 +2848,6 @@ int Init_OpenGL ( void )
 				glClientActiveTextureARB=NULL;
 			}
 
-
 			if (IsExtensionSupported("GL_EXT_compiled_vertex_array"))
 			{
 				Con_Printf ("...using GL_EXT_compiled_vertex_array\n");
@@ -2867,7 +2860,6 @@ int Init_OpenGL ( void )
 		
 				if(!glLockArraysEXT || !glUnlockArraysEXT)
 					return 0;
-
 			}
 			else
 			{
@@ -2877,8 +2869,6 @@ int Init_OpenGL ( void )
 				glLockArraysEXT=NULL;
 				glUnlockArraysEXT=NULL;
 			}	
-
-
 
 			if (IsExtensionSupported("WGL_3DFX_gamma_control"))
 			{
@@ -2893,13 +2883,9 @@ int Init_OpenGL ( void )
 				gl_ext_info._WGL_3DFX_gamma=0;
 			}
 
-
 			Con_Printf("\n");
 
 		}
-
-
-
 	}
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE,&glconfig.maxTextureSize);
@@ -2914,10 +2900,10 @@ int Init_OpenGL ( void )
 	Con_Printf ("GL_MAX_TEXTURE_SIZE: %i\n",glconfig.maxTextureSize);
 	Con_Printf ("GL_MAX_ACTIVE_TEXTURES_ARB: %i\n",glconfig.maxTextureSize);
 
-
 	Con_Printf ("\n");
 	Con_Printf ("PIXELFORMAT:color(%i -bits) Z (%i bit) stencil (%i Bits)\n",(int)pfd.cColorBits,(int)pfd.cDepthBits,(int)pfd.cStencilBits);
 	Con_Printf ("MODE: %i, %i * %i",r_mode->integer,glconfig.vidWidth,glconfig.vidHeight);
+
 	if (r_fullscreen->integer)
 	{
 		Con_Printf(" fullscreen");
@@ -2935,12 +2921,42 @@ int Init_OpenGL ( void )
 		Con_Printf(" hz:N/A\n");
 	}
 
-	Con_Printf("CPU: TODO !!!\n");
-	Con_Printf("rendering primitives: single glDrawElements\n"); // TODO !!!
-	Con_Printf("texturemode: %s\n",r_textureMode->string);
-	Con_Printf("picmip:%i\n",r_picmip->integer);
-	Con_Printf("texture bits:%i\n",r_texturebits->integer);
+	// detect processor
+	// Vic: this is from GLOCK
+	CPU_detect( &p_info );
 
+	Con_Printf( "--- CPU detection ---\n" );
+	Con_Printf( "Number of system processors: %d\n", p_info.num_system_processors );
+	Con_Printf( "Number of available processors: %d\n", p_info.num_avail_processors );
+	num = p_info.num_avail_processors;
+	if( num > MAX_CPU )
+		num = MAX_CPU;
+	for( i = 0; i < num; i++ ) {
+		p = &p_info.processor[i];
+
+		Con_Printf( "Processor %d:\n", i );
+		Con_Printf( "\t%s %s\n", p->vendor, p->cpu_type );
+		Con_Printf( "\tFamily: %d, model: %d, stepping: %d\n", p->family, p->model, p->stepping );
+		Con_Printf( "\tFPU: %s\n", p->fpu_type );
+		Con_Printf( "\tMHz (estimated): %d\n", p->speed );
+		Con_Printf( ( p->MMX ) ? "\tMMX: present\n" : "\tMMX; not present\n" );
+		Con_Printf( ( p->ISSE ) ? "\tISSE: present\n" : "\tISSE: not present\n" );
+		Con_Printf( ( p->AMD3D ) ? "\t3DNow!: present\n" : "\t3DNow!: not present\n" );
+		if( p->serial_present ) {
+			Con_Printf( "\tSerial number: %s\n", p->serial_number );
+		} else {
+			Con_Printf( "\tSerial number: not present or disabled\n" );
+		}
+	}
+
+	p = p_info.processor;
+
+	Con_Printf ( "---------------------\n" );
+
+	Con_Printf("rendering primitives: single glDrawElements\n"); // TODO !!!
+	Con_Printf("texturemode: %s\n", r_textureMode->string);
+	Con_Printf("picmip:%i\n", r_picmip->integer);
+	Con_Printf("texture bits:%i\n", r_texturebits->integer);
 
 	Con_Printf("multitexture: ");
 	if (!r_ext_multitexture->integer)
@@ -2981,8 +2997,6 @@ int Init_OpenGL ( void )
 	{
 		Con_Printf("disabled\n");
 	}
-
-
 
 	// Reset the States :
 #if TRACK_GL_STATE

@@ -21,78 +21,59 @@
 #include "cgame.h"
 #include "io.h"
 
-
 EntryFunc *CGAME_entry;
 MainFunc *CGAME_main;
-
 
 int CGAME_Call (int arg,...);
 int (__cdecl *CGAME_syscall)( int arg, ... ) = CGAME_Call;
 
+char CGAME_name[] = "cgamex86.dll";
+HINSTANCE UI_inst, GAME_inst, CGAME_inst;
 
-
-
-char  CGAME_name[] ="cgamex86.dll";
-HINSTANCE UI_inst ,GAME_inst,CGAME_inst;
-
-static int cgameLoaded =0;
+static int cgameLoaded = 0;
 
 
 int LoadCGAME (void )
 {
 	if (cgameLoaded) return 1;
 
+	CGAME_inst = LoadLibrary(FS_Add_Basedir(CGAME_name));
 
-	
-	CGAME_inst= LoadLibrary(FS_Add_Basedir(CGAME_name) );
-	if (!CGAME_inst) return 0;
+	if (!CGAME_inst) 
+		return 0;
 
-	CGAME_entry=(EntryFunc*) GetProcAddress(
+	CGAME_entry = (EntryFunc *) GetProcAddress(
 			CGAME_inst,   
             "dllEntry"   
 	);
-	if (!CGAME_entry) return 0;
- 
 
-	CGAME_main=(MainFunc*) GetProcAddress(
+	if (!CGAME_entry)
+		return 0;
+
+	CGAME_main = (MainFunc*) GetProcAddress(
 			CGAME_inst,    
             "vmMain"   
 	);
 
-	if (!CGAME_main) return 0;
+	if (!CGAME_main) 
+		return 0;
 	
 	CGAME_entry(CGAME_syscall);
 	
-
-
-
-	cgameLoaded=1;
+	cgameLoaded = 1;
 	return 1;
-
-
 }
 
-int UnLoadCGAME (void )
+int UnLoadCGAME (void)
 {
-
-
-	if (! cgameLoaded) 
+	if (!cgameLoaded) 
 		return 0;
 
-
-
-	if (!CGAME_inst )
+	if (!CGAME_inst)
 		return 0;
-
 
 	FreeLibrary(CGAME_inst);
 
-	cgameLoaded=0;
+	cgameLoaded = 0;
 	return 1;
-
-
-
-
-
-
 }

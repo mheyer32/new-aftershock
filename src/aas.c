@@ -19,86 +19,70 @@
 #include "a_shared.h"
 #include "io.h"
 #include "console.h"
+#include "aas.h"
 
+static byte 		*aas_data = NULL;
+static aas_header_t *aas_header = NULL;
+aas_t aas;
 
-
-#define AAS_ID	(*(int * )"EAAS")
-#define AAS_VERSION 5
-
-
-// TODO !! 
-
-typedef struct 
+/*
+=================
+AAS_Load_Map
+=================
+*/
+aboolean AAS_Load_Map (char *mapname)
 {
-	int id;
-	int version ;
+	int len, file;
+	char fname[MAX_APATH];
 
+	COM_StripExtension(mapname, fname);
+	strcat(fname, ".aas");
 
-}aas_header_t;
+	len = FS_OpenFile (fname, &file, FS_READ);
 
-// aas files don`t seem to have a lump system (?) 
-// since the ints after the version are too big or negative ( correct me if I`m wrong )
+	if (!len)
+	{
+		Con_Printf ("Could not find aas file: %s\n", mapname);
+		return afalse;
+	}
 
+	aas_data = malloc (len);
+	
+	FS_Read (aas_data, len, file);
 
+	FS_FCloseFile (file);
 
+	aas_header = (aas_header_t *)aas_data; 
 
+	if (aas_header->version == AAS_VERSION)
+	{
+		// do nothing
+	}
+#ifdef AAS_SUPPORTV4
+	else if (aas_header->version == AAS_VERSION_)
+	{
+		// "decrypt"
+		int i;
+		unsigned char *buf = (unsigned char *)&(aas_header->crc);
 
+		for (i = 0; i < sizeof(aas_header_t) - 8; i++, buf++) 
+			*buf ^= i * 0x77;
+	}
+#endif
+	else
+		Con_Printf ("%s has wrong version: %s\n", fname, aas_header->version);
 
-int AAS_Load_Map ( char * mapname )
+	memset (&aas, 0, sizeof(aas_t));
+
+	// TODO
+
+	return atrue;
+}
+
+void AAS_Free (void)
 {
+	if (!aas_data) return; free (aas_data); aas_data = NULL;
+	if (!aas_header) return; free (aas_header); aas_header = NULL;
 
-	int len,file;
-	void * buf ;
-	char fname [MAX_APATH ];
-	aas_header_t *header;
-
-
-	COM_StripExtension(mapname,fname);
-	strcat(fname,".aas");
-
-	len =FS_OpenFile (fname,& file ,FS_READ );
-
-
-
-	if (!len )
-	{
-		Con_Printf ("Could not find aas file : %s\n" , mapname );
-		return 0;
-	}
-
-
-	buf =malloc (len);
-	
-	FS_Read (buf ,len, file );
-
-	FS_FCloseFile (file );
-
-	
-	header=buf; 
-
-
-
-	if ( header->id != AAS_ID )
-	{
-		Con_Printf ("Is not an .aas file : %s \n",fname);
-		return 0;
-	}
-
-	if (header->version != AAS_VERSION )
-	{
-		Con_Printf ("Has wrong version : %s \n",fname );
-		
-	}
-
-
-
-
-
-	free (buf );
-
-
-	return 1;
-
-
-
+	memset (&aas, 0, sizeof(aas_t));
 }

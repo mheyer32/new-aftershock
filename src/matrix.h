@@ -33,15 +33,6 @@ void Matrix3_Transponse (vec3_t in [3] ,vec3_t out [3]);
 
 void Matrix_Multiply_Vec3 (mat4_t a, vec3_t b, vec3_t product);
 
-int Matrix4_Inverse( mat4_t mr, mat4_t ma );
-
-
-
-
-
-
-
-
-
+aboolean Matrix4_Inverse (mat4_t mr, mat4_t ma);
 
 #endif 

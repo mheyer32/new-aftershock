@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 glut32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib lib/Zlib.lib lib/Libjpeg.lib winmm.lib ws2_32.lib /nologo /subsystem:windows /debug /machine:I386 /out:"d:\quake3\aftersho.exe"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Zlib.lib Libjpeg.lib winmm.lib ws2_32.lib d:\fmod\api\fmodvc.lib /nologo /subsystem:windows /debug /machine:I386 /out:"d:\quake3\aftersho.exe"
 
 !ELSEIF  "$(CFG)" == "aftersho - Win32 Debug"
 
@@ -79,7 +79,8 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib lib/Zlib.lib lib/Libjpeg.lib winmm.lib ws2_32.lib /nologo /subsystem:windows /debug /machine:I386 /out:"d:\quake3\aftersho.exe" /pdbtype:sept
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Zlib.lib Libjpeg.lib winmm.lib ws2_32.lib d:\fmod\api\fmodvc.lib /nologo /subsystem:windows /debug /machine:I386 /nodefaultlib:"libc" /out:"d:\quake3\aftersho.exe" /pdbtype:sept
+# SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
 
@@ -133,6 +134,10 @@ SOURCE=.\command.c
 # Begin Source File
 
 SOURCE=.\console.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\detect.c
 # End Source File
 # Begin Source File
 
@@ -271,10 +276,6 @@ SOURCE=.\unzip.c
 
 SOURCE=.\util.c
 # End Source File
-# Begin Source File
-
-SOURCE=.\vec.c
-# End Source File
 # End Group
 # Begin Group "Header-Dateien"
 
@@ -282,6 +283,10 @@ SOURCE=.\vec.c
 # Begin Source File
 
 SOURCE=.\a_shared.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\aas.h
 # End Source File
 # Begin Source File
 
