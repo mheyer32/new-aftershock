@@ -606,7 +606,7 @@ int R_Load_Texture (const char *name, int flags)
 	else
 	{
 		char ext[3];
-		char *tex_name = tex_name = Find_Texture (fname);
+		char *tex_name = Find_Texture (fname);
 
 		if (!tex_name)
 		{
