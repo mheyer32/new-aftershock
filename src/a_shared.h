@@ -242,6 +242,17 @@ typedef struct orientation_s {
 } orientation_t;
 
 
+// plane_t structure
+// !!! if this is changed, it must be changed in asm code too !!!
+typedef struct cplane_s {
+	vec3_t			normal;
+	float			dist;
+	unsigned char	type;			// for fast side tests: 0,1,2 = axial, 3 = nonaxial
+	unsigned char	signbits;		// signx + (signy<<1) + (signz<<2), used as lookup during collision
+	unsigned char	pad[2];
+} cplane_t;
+
+
 
 #ifndef min
 # define min(a,b)	(((a) < (b)) ? (a) : (b))
@@ -401,8 +412,8 @@ void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
 void AxisClear( vec3_t axis[3] );
 void AxisCopy( vec3_t in[3], vec3_t out[3] );
 
-void SetPlaneSignbits( struct cplane_s *out );
-int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct cplane_s *plane);
+void SetPlaneSignbits( cplane_t *out );
+int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, cplane_t *plane);
 
 float	AngleMod(float a);
 float	LerpAngle (float from, float to, float frac);
@@ -449,8 +460,8 @@ void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs );
 
 
 
-void SetPlaneSignbits( struct cplane_s *out );
-int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct cplane_s *plane);
+void SetPlaneSignbits( cplane_t *out );
+int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, cplane_t *plane);
 
 
 
@@ -680,16 +691,6 @@ COLLISION DETECTION
 #define	PLANE_Z			2
 #define	PLANE_NON_AXIAL	3
 
-
-// plane_t structure
-// !!! if this is changed, it must be changed in asm code too !!!
-typedef struct cplane_s {
-	vec3_t			normal;
-	float			dist;
-	unsigned char	type;			// for fast side tests: 0,1,2 = axial, 3 = nonaxial
-	unsigned char	signbits;		// signx + (signy<<1) + (signz<<2), used as lookup during collision
-	unsigned char	pad[2];
-} cplane_t;
 
 /* a trace is returned when a box is swept through the world */
 typedef struct trace_s {
@@ -994,7 +995,7 @@ typedef enum connstate_e {
 
 
 
-
+void * _cdecl malloc (unsigned int size );
 void * memcpy(void *, const void *, size_t);
 
 

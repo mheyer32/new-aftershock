@@ -27,16 +27,14 @@
 
 
 
-static int  Keys[256];
+static aboolean  Keys[256];
 
 static int overstrike_mode =0;
 static int ActiveKeyCatcher=0;
 
 typedef struct {
-	int keynum;
-	char keyname [256];
-	char command [256];
-
+	char keyname [MAX_APATH];
+	char command [MAX_APATH];
 }bind_t;
 
 bind_t key_bindings[256];
@@ -155,8 +153,29 @@ static keyname_t keynames[] = {
 	{NULL, 0}
 };
 
+static void  Cmd_Bind (void );
+static void Cmd_Unbindall (void );
+
+int Key_Init ( void )
+{
+	
+	memset (Keys ,0,256 * sizeof (aboolean ));
+
+	Cmd_AddCommand("bind",Cmd_Bind);
+	Cmd_AddCommand("unbindall",Cmd_Unbindall);
+ 
+	return 1;
+}
+
+void Key_Shutdown (void )
+{
+	
 
 
+
+
+
+}
 
 
 
@@ -427,11 +446,22 @@ void Key_GetBindingBuf( int keynum, char *buf, int buflen )
 
 void Key_SetBinding( int keynum, const char *binding ) 
 {
+	bind_t * bind ;
+
+
+	if (keynum<0 || keynum >= K_LAST_KEY )
+		return ;
+
+	bind = &key_bindings [keynum];
+
+	A_strncpyz (bind->command , binding , MAX_APATH);
+
+
 	
 
 }
 
-void  Cmd_Bind (void )
+static void  Cmd_Bind (void )
 {
 	char key [MAX_STRING_CHARS];
 	char command [MAX_STRING_CHARS];
@@ -456,14 +486,8 @@ void  Cmd_Bind (void )
 			
 
 
-		A_strncpyz( key_bindings[keynum].keyname,key,256);
-		A_strncpyz( key_bindings[keynum].command,command,256);
-
-		key_bindings[keynum].keynum=keynum;
-
-
-
-
+		A_strncpyz( key_bindings[keynum].keyname,key,MAX_APATH);
+		A_strncpyz( key_bindings[keynum].command,command,MAX_APATH);
 
 
 	}
@@ -474,7 +498,7 @@ void  Cmd_Bind (void )
 
 }
 
-void Cmd_Unbindall (void )
+static void Cmd_Unbindall (void )
 {
 	int i;
 

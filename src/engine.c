@@ -84,26 +84,35 @@ void Engine_Shutdown (void)
 	/*	Cbuf_AddText("writeconfig \n");
 		Cbuf_Execute();
 	*/
+
+		CL_Shutdown ();
+
+		Net_Shutdown();
+
 		Cbuf_Free();
 		Cmd_Shutdown();
 		Con_Shutdown();
-	//	Cvar_Shutdown();  TODO 
-
+		Cvar_Shutdown();  
 		
-		R_Shutdown ();
-
-
+		Key_Shutdown ();
+	
 		FS_Shutdown();
 		
-		Net_Shutdown();
 		
-		exit(0);
 }
 
 
+static void Cmd_Quit ( void )
+{
+	Engine_Shutdown ();
 
-void Cmd_Bind(void);
-void Cmd_Unbindall (void );
+	exit (0);
+
+
+
+}
+
+
 
 int Engine_Init (void )
 {
@@ -117,7 +126,8 @@ int Engine_Init (void )
 
 
 	FS_Init("baseq3");
-
+	
+	Key_Init ();
 
 	Cmd_Init();
 	Cbuf_Init ();
@@ -125,10 +135,8 @@ int Engine_Init (void )
 	
 
 	// essential commands :
-	Cmd_AddCommand("quit" ,Engine_Shutdown);
-	Cmd_AddCommand("bind",Cmd_Bind);
-	Cmd_AddCommand("unbindall",Cmd_Unbindall);
- 
+	Cmd_AddCommand("quit" ,Cmd_Quit);
+
 
 	Cbuf_AddText("exec q3config.cfg\n");
 	Cbuf_Execute();

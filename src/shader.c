@@ -35,7 +35,7 @@
 
 
 
-int numshaders=0,numshadersloaded=0;
+static int numshaders=0;
 int shadercount=0;
 extern int *ids;
 
@@ -43,6 +43,18 @@ extern int *ids;
 int shader_white =-1;
 int shader_text =-1;
 int shader_console =-1;
+
+typedef struct {
+	char name [MAX_APATH];
+	int offset ;
+}cache_t ;
+
+//char *shaderfiles [MAX_APATH];
+cache_t * shadercache =NULL;
+
+
+
+
 
 
 /* Maps shader keywords to functions */
@@ -61,7 +73,6 @@ static void Syntax(void);
 static void shader_parsefunc(char **args, shaderfunc_t *func);
 
 char *shaderbuf, *curpos, *endpos;
-static int *shaderfound;  /* Shader found in shader script files */
 
 /****************** shader keyword functions ************************/
 
@@ -591,7 +602,7 @@ shaderpass_tcmod(shader_t *shader, shaderpass_t *pass, int numargs,
 	}
 	else if (!stricmp (args[0],"turb"))
 	{
-		int i, a1;
+		int i, a1=0;
 		if (numargs == 5)
 			a1 = 1;
 		else if (numargs == 6)
@@ -696,16 +707,6 @@ static shaderkey_t shaderpasskeys[] =
 
 /* *************************************************************** */
 
-typedef struct cache_s{
-	char name [MAX_APATH];
-	int offset ;
-}cache_t ;
-
-char *shaderfiles [MAX_APATH];
-cache_t * shadercache =NULL;
-
-
-
 
 static void Load_Standard_Shaders (void)
 {
@@ -715,10 +716,6 @@ static void Load_Standard_Shaders (void)
 	shader_console =R_LoadShader (CONSOLE_SHADER_NAME,SHADER_2D);
 
 }
-
-
-
-
 
 
 
@@ -733,7 +730,7 @@ int Shader_Init (void )
 
 	Con_Printf ("Initializing Shaders :\n");
 
-	r_shaders=malloc(MAXSHADERS*sizeof(shader_t ));
+	r_shaders=(shader_t * )malloc(MAXSHADERS*sizeof(shader_t ));
 
 	numdirs =FS_GetFileList ("scripts","shader",dirlist,256 * MAX_APATH);
 
@@ -819,7 +816,7 @@ void Shader_MakeCache (void )
 
 	
 	
-	shadercache = malloc ( numshaders * sizeof (cache_t ));
+	shadercache =(cache_t *) malloc ( numshaders * sizeof (cache_t ));
 
 
 	ptr = shaderbuf;
@@ -833,7 +830,7 @@ void Shader_MakeCache (void )
 
 		if (!token[0]) continue;
 
-		strcpy (shadercache[i].name,token);
+		A_strncpyz (shadercache[i].name,token,MAX_APATH);
 
 		Shader_Skip (& ptr );	
 		i++;

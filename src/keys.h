@@ -21,8 +21,8 @@
 #define KEYS_H__
 
 
-void Cmd_Unbindall (void );
-void  Cmd_Bind (void );
+int Key_Init ( void );
+void Key_Shutdown (void );
 
 void Key_WriteBindings( int file );
 void Key_SetBinding( int keynum, const char *binding ) ;

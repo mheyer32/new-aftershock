@@ -473,6 +473,8 @@ int CM_LoadMap ( const char * mapname ,aboolean load_rdata )
 
 	CM_Load_Models ( load_rdata );
 
+	CM_Load_Fog (load_rdata );
+
 	cm.r_data_loaded = load_rdata ;
 
 	A_strncpyz (cm.name,mapname , MAX_APATH );

@@ -150,7 +150,7 @@ float BoxToPlane_Dist (vec3_t emins, vec3_t emaxs, struct cplane_s *p)
 {
 	float	dist1, dist2;
 	int		sides;
-	float dist ;
+//	float dist ;
 	int which ;
 
 

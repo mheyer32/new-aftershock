@@ -2672,10 +2672,10 @@ int Init_OpenGL ( void )
 		const char *renderer=glGetString(GL_RENDERER);
 		const char *version=glGetString(GL_VERSION);
 
-		strcpy(glconfig.vendor_string,vendor);
-		strcpy(glconfig.extensions_string,ext);
-		strcpy(glconfig.renderer_string,renderer);
-		strcpy(glconfig.version_string,version);
+		A_strncpyz(glconfig.vendor_string,vendor,MAX_STRING_CHARS);
+		A_strncpyz(glconfig.extensions_string,ext,MAX_STRING_CHARS);
+		A_strncpyz(glconfig.renderer_string,renderer,MAX_STRING_CHARS);
+		A_strncpyz(glconfig.version_string,version,MAX_STRING_CHARS);
 
 
 

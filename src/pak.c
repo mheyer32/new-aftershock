@@ -29,8 +29,7 @@
 
 
 
-#define MAX_PAKFILES 8
-
+#define MAX_PAKFILES 64
 
 
 static unzFile pakfiles [MAX_PAKFILES] ;

@@ -339,7 +339,7 @@ int Tex_Init ( void )
 {
 	r_num_textures =0;
 
-	textures = malloc (MAX_TEXTURES * sizeof (texture_t ));
+	textures = (texture_t *) malloc (MAX_TEXTURES * sizeof (texture_t ));
 
 	return 1;
 

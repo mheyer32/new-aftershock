@@ -41,6 +41,7 @@ cvar_t          *fraglimit ;
 cvar_t          *dmflags;
 cvar_t          *sv_floodProtect;
 cvar_t          *sv_maxRate;
+cvar_t			*mapname;
 
 static cvar_t	*sv_padPackets;
 static cvar_t	*sv_running;
@@ -48,7 +49,6 @@ static cvar_t	*sv_timeout;
 
 extern cvar_t *protocol;
 extern cvar_t *name;
-extern cvar_t *mapname;
 
 typedef struct cvarTable_s {
 	cvar_t	**cvar;
@@ -71,7 +71,8 @@ static cvarTable_t cvarTable[] = {
 	{ &sv_maxRate,"sv_maxRate","0",CVAR_ARCHIVE | CVAR_SERVERINFO},
 	{ &sv_padPackets, "sv_padPackets", "0", 0 },
 	{ &sv_running, "sv_running", "0", CVAR_ROM },
-	{ &sv_timeout, "sv_timeout", "200", 0 }
+	{ &sv_timeout, "sv_timeout", "200", 0 },
+	{ &mapname ,"mapname","Q3DM1",CVAR_SERVERINFO}
 };
 
 const static int	cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
@@ -204,21 +205,20 @@ void SV_Get_GameState ( gameState_t * state )
 
 static void Cmd_map (void )
 {
-
-	char mapname [MAX_APATH];
-
-	if (Cmd_Argc()<1)
+	char name [MAX_OSPATH];
+	if (Cmd_Argc()<2)
 	{
 		Con_Printf("Invalid call to map ");
 		return ;
 	}
 
 
+	Cmd_Argv(1,name,MAX_OSPATH);
 
-	Cmd_Argv(1,mapname,MAX_APATH);
+	Cvar_Set2 ("mapname",name,0);
 
-	SV_Startup(mapname);
-
+	SV_Startup(mapname->string);
+	
 
 	CL_Startup ();
 
@@ -272,7 +272,7 @@ int SV_Shutdown (void )
 }
 
 
-int SV_Startup (char * mapname )
+int SV_Startup (char * name )
 {
 
 	char buf [MAX_OSPATH];
@@ -281,16 +281,16 @@ int SV_Startup (char * mapname )
 
 	Cvar_Set2( "sv_running", "1",0 );
 
-	Com_sprintf( buf, sizeof(buf), "map %s", mapname );
+	Com_sprintf( buf, sizeof(buf), "map %s", name );
 	Cvar_Set2( "nextmap", buf,0 );
 
 
-	if (!CM_LoadMap (mapname , 1))
+	if (!CM_LoadMap (name , 1))
 		return 0;
 
 	entitypos = cm.entityspawn ;
 
-	Cvar_Set2( "mapname", mapname,0 );
+	Cvar_Set2( "mapname", name,0 );
 
 
 	memset( buf,0, sizeof(buf) );

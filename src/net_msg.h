@@ -26,6 +26,10 @@
 
 #include "network.h"		/* net_address_t */
 
+
+#define NET_MAX_PACKET_LEN 16384
+
+
 //============================================================================
 
 #define NET_MAXMESSAGE		65536
@@ -33,7 +37,12 @@
 typedef struct sizebuf_s {
 	aboolean	allowoverflow;	// if false, do a Sys_Error
 	aboolean	overflowed;		// set to true if the buffer size failed
-	byte		*data;
+	//byte		*data;
+
+	union {
+		unsigned int Sequence_Number ;
+		byte data [NET_MAX_PACKET_LEN];
+	};
 	int			maxsize;
 	int			cursize;
 	int			byte_offset;

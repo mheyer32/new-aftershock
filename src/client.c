@@ -21,6 +21,7 @@
 #include "console.h"
 #include "c_var.h"
 #include "render.h"
+#include "sound.h"
 #include "ui.h"
 #include "command.h"
 #include "cgame.h"
@@ -56,11 +57,22 @@ static cvarTable_t cvarTable [] =
 	{&cl_mouseAccel, "cl_mouseAccel","0",CVAR_ARCHIVE},
 	{&cl_maxPing,"cl_maxPing","800",CVAR_ARCHIVE}
 
-
-
 };
 
 const static int	cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
+
+
+
+typedef struct 
+{
+	connstate_t connstate ;
+	aboolean demo_playing ;
+	entityState_t current_entities[256];
+
+}client_t ;
+
+client_t cl;
+
 
 
 static int client_prepared =0;
@@ -77,7 +89,7 @@ void CL_GetCvars( void )
 	}
 }
 
-void Cmd_vid_restart (void )
+static void Cmd_vid_restart (void )
 {
 	client_prepared=0;
 
@@ -86,9 +98,23 @@ void Cmd_vid_restart (void )
 
 	client_prepared=1;
 
-	UI_main(UI_SHUTDOWN,0,0,0,0,0,0,0);
-	UI_main(UI_INIT,0,0,0,0,0,0,0);
-	UI_main(UI_SET_ACTIVE_MENU,UIMENU_MAIN,0,0,0,0,0,0 );
+	if (Key_GetCatcher () & KEYCATCH_UI)
+		UI_main(UI_SET_ACTIVE_MENU,UIMENU_MAIN,0,0,0,0,0,0 );
+}
+
+static void Cmd_demo (void )
+{
+	char demo_name [MAX_OSPATH];
+	char fname [MAX_OSPATH]; 
+
+
+	Cmd_Argv(1,demo_name,MAX_OSPATH);
+
+	
+
+
+
+
 }
 
 
@@ -100,11 +126,14 @@ int CL_Init (void )
 
 
 	R_Init();
+	S_Init();
 
-	// TODO :  SOUND 
+	cl.connstate =CA_UNINITIALIZED;
+	cl.demo_playing = afalse ;
 
 	CL_GetCvars();
 	Cmd_AddCommand ("vid_restart",Cmd_vid_restart );
+	Cmd_AddCommand ("demo",Cmd_demo);
 
 	if (!LoadUI ())
 	{
@@ -120,6 +149,9 @@ int CL_Init (void )
 	Con_Printf(" ------ Client Initialization Successful ---- \n" );
 
 
+
+	cl.connstate=CA_DISCONNECTED; 	// not talking to a server
+	
 	return 1;
 
 }
@@ -135,7 +167,7 @@ int CL_Shutdown (void )
 
 
 	R_Shutdown ();
-
+	S_Shutdown ();
 
 
 	
@@ -191,7 +223,6 @@ int CL_End_Gaming (void )
 
 void CL_Run_Frame (void )
 {
-		int catcher ;
 
 		if (! client_prepared)
 			return ;
@@ -199,16 +230,34 @@ void CL_Run_Frame (void )
 
 
 		R_StartFrame();
-
+		
 	
+		switch (cl.connstate)
+		{
+		case CA_UNINITIALIZED:
+		case CA_DISCONNECTED: 	
+			{
+				if (Key_GetCatcher () & KEYCATCH_UI)
+					UI_Refresh ();
+			}
+		case CA_AUTHORIZING:
+			break;
+		case CA_CONNECTING:		
+			break;
+		case CA_CHALLENGING:		
+			break;
+		case CA_CONNECTED:		
+			break;
+		case CA_LOADING:		
+			break;
+		case CA_PRIMED:
+			break;
+		case CA_ACTIVE:
+			break;
+		case CA_CINEMATIC:
+			break;
+		} 
 
-			
-		catcher=Key_GetCatcher ();
-
-		
-	//	if (catcher & KEYCATCH_UI )
-		UI_main(UI_REFRESH,(int)(g_frametime*1000.0),0,0,0,0,0,0 );
-		
 
 
 		Con_Draw();

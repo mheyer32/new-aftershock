@@ -79,7 +79,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Zlib.lib Libjpeg.lib winmm.lib ws2_32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Zlib.lib Libjpeg.lib winmm.lib ws2_32.lib fmodvc.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
 
 !ENDIF 
 
@@ -113,6 +113,10 @@ SOURCE=.\c_var.c
 # Begin Source File
 
 SOURCE=.\cgame.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\cl_parse.c
 # End Source File
 # Begin Source File
 
@@ -386,6 +390,10 @@ SOURCE=.\opengl.h
 # Begin Source File
 
 SOURCE=.\pak.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\protocol.h
 # End Source File
 # Begin Source File
 

@@ -160,6 +160,7 @@ int LoadUI (void );
 int UnLoadUI (void );
 void UI_KeyEvent (int Key );
 void UI_MouseEvent (int x, int y );
+void UI_Refresh (void );
 
 
 

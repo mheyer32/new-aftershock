@@ -102,9 +102,10 @@ void UI_MouseEvent (int x, int y )
 	UI_main(UI_MOUSE_EVENT,x,y,0,0,0,0,0);	  
 }
 
-
-
-
+void UI_Refresh (void )
+{
+	UI_main(UI_REFRESH,(int)(g_frametime*1000.0),0,0,0,0,0,0 );
+}
 
 
 

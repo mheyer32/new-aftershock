@@ -270,16 +270,6 @@ reference_t transform_ref;
 
 colour_t r_actcolor={255,255,255,255};
 
-static int
-classify_point(vec3_t p, int plane_n)
-{
-    /* Determine which side of plane p is on */
-    cplane_t *plane = &cm.planes[plane_n];
-
-    return (vec_dot(p, plane->normal) < plane->dist ? -1 : 1);
-	//return (vec_dot(p, r_planes[plane_n].vec) < r_planes[plane_n].offset ? -1 : 1);
-}
-
 
 
 void R_Init(void)
@@ -415,7 +405,7 @@ void R_DrawString( int x, int y, const char *str, vec4_t color )
 	float	frow;
 	float	fcol;
 	vec4_t	tempcolor;
-	int font =1;
+	//int font =1;
 
 	if (y < -SMALLCHAR_HEIGHT)
 		// offscreen

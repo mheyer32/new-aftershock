@@ -41,6 +41,7 @@
 #include "client.h"
 #include "server.h"
 #include "brushtest.h"
+#include "sound.h"
 
 #include "net_lan.h"
 
@@ -194,6 +195,14 @@ static void Call_R_LerpTag( const char *tagName, int  frac ,int endFrame, int st
 
 }
 
+
+static void	Call_S_StartLocalSound(int channelNum, sfxHandle_t sfx)
+{
+	S_StartLocalSound( sfx, channelNum );
+
+}
+
+
  int UI_Call (int arg, ...)
 {
 
@@ -298,8 +307,10 @@ static void Call_R_LerpTag( const char *tagName, int  frac ,int endFrame, int st
 	case UI_CM_LOADMODEL:
 		break;  // TODO !
 	case UI_S_REGISTERSOUND:
+		return S_RegisterSound( va_arg (mark,const char *) );
 		break ; // TODO !
 	case UI_S_STARTLOCALSOUND:
+		Call_S_StartLocalSound (va_arg (mark,int ), va_arg (mark,sfxHandle_t ));
 		break;  // TODO !
 	case UI_KEY_KEYNUMTOSTRINGBUF:
 		Call_Key_KeynumToStringBuf(va_arg(mark,int),va_arg(mark,char*),va_arg(mark,int));

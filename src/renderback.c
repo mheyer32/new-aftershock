@@ -61,9 +61,7 @@ static void render_stripmine(int numelems, int *elems);
 static int render_setstate(shaderpass_t *pass, uint_t lmtex);
 static void render_pushmesh_deformed(mesh_t *mesh,cface_t *face);
 
-static colour_t * R_Make_Rgba (shaderpass_t * pass );
-static float * R_Make_TexCoords (shaderpass_t * pass ,int stage);
-static void R_Make_Vertices (shader_t *s );
+
 arrays_t arrays;
 
 
@@ -307,7 +305,7 @@ void Render_backend_Overlay ( quad_t * q,int numquads )
 void
 render_backend(facelist_t *facelist)
 {
-    int f, shader, lmtex;
+    int f, shader=0, lmtex=0;
     uint_t key;
     cface_t *face;   
     GL_EnableClientState(GL_VERTEX_ARRAY);
@@ -694,7 +692,7 @@ static void Render_Backend_Make_Vertices (shader_t *s )
 static float * Render_Backend_Make_TexCoords (shaderpass_t * pass ,int stage )
 {
 
-	int i=arrays.numverts,n;
+	int i=arrays.numverts,n=0;
 	mat4_t mat,mat2; 
 	vec2_t * in = arrays.tex_st;
 	vec2_t * out ;
@@ -882,7 +880,7 @@ static float * Render_Backend_Make_TexCoords (shaderpass_t * pass ,int stage )
 
 		do {
 			Matrix_Multiply_Vec2(mat,*in++,*out++);
-		}while ( --i );
+		}while ( --i>0 );
 
 		out=arrays.stage_tex_st[stage];
 	}
@@ -902,7 +900,7 @@ static byte * Render_Backend_Make_Colors ( shaderpass_t * pass )
 {
 	int i;
 	byte rgb;
-	colour_t * col;
+	colour_t * col=NULL;
 
 
 	switch (pass->rgbgen)

@@ -322,7 +322,7 @@ void MSG_Checksum( sizebuf_t *buf )
 
 void MSG_Alloc( sizebuf_t *buf, int startsize )
 {
-	buf->data = (byte *)malloc( startsize );
+//	buf->data = (byte *)malloc( startsize );
 	buf->maxsize = startsize;
 	buf->cursize = 0;
 	buf->bit_offset = 0;
@@ -331,8 +331,8 @@ void MSG_Alloc( sizebuf_t *buf, int startsize )
 
 void MSG_Free( sizebuf_t *buf )
 {
-	free( buf->data );
-	buf->data = NULL;
+	//free( buf->data );
+	//buf->data = NULL;
 	buf->maxsize = 0;
 	buf->cursize = 0;
 	buf->bit_offset = 0;
