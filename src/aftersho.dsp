@@ -318,6 +318,10 @@ SOURCE=.\console.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\detect.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\engine.h
 # End Source File
 # Begin Source File

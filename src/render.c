@@ -254,8 +254,6 @@ static int dyn_polys_count = 0;
 
 static cplane_t clipplanes[4];
 
-static mat4_t model_view_mat;
-
 aboolean r_WorldMap_loaded = afalse;
 
 // This will be used by the backend when doing sfx like environment-mapping
@@ -292,6 +290,7 @@ void R_Init(void)
     GL_EnableClientState(GL_VERTEX_ARRAY);
 	GL_EnableClientState(GL_TEXTURE_COORD_ARRAY);
 	GL_EnableClientState(GL_COLOR_ARRAY);
+	GL_EnableClientState(GL_NORMAL_ARRAY);
 
 	GL_Disable(GL_DITHER);
     glShadeModel(GL_SMOOTH);
@@ -539,7 +538,6 @@ void R_LerpTag(orientation_t *tag, int model, int startFrame, int endFrame, floa
 {
 	int i, tagnum = -1;
 	md3model2_t *mod;
-	md3tag_t *st, *et;
 
 	if ((model < 1) || (model > r_md3Modelcount))
 		return;
@@ -562,7 +560,7 @@ void R_LerpTag(orientation_t *tag, int model, int startFrame, int endFrame, floa
 	if (endFrame < 0) 
 		endFrame = mod->numframes - 1;
 
-	for (i = 0; i< mod->numtags; i++)
+	for (i = 0; i < mod->numtags; i++)
 	{
 		if (!A_strncmp (tagName, mod->tags[startFrame][i].name, MAX_APATH))
 		{
@@ -574,34 +572,42 @@ void R_LerpTag(orientation_t *tag, int model, int startFrame, int endFrame, floa
 	if (tagnum < 0) 
 		return;
 
-	frac = bound (0.0f, frac, 1.0f);
-	st = &mod->tags[startFrame][tagnum];
-	et = &mod->tags[endFrame][tagnum];
+	frac = bound (0.01f, frac, 0.99f);
 
 	if (!frac)
 	{
-		VectorCopy(st->pos, tag->origin);
-		VectorCopy(st->rot[0], tag->axis[0]);
-		VectorCopy(st->rot[1], tag->axis[1]);
-		VectorCopy(st->rot[2], tag->axis[2]);
+		VectorCopy(mod->tags[startFrame][tagnum].pos, tag->origin);
+		VectorCopy(mod->tags[startFrame][tagnum].rot[0], tag->axis[0]);
+		VectorCopy(mod->tags[startFrame][tagnum].rot[1], tag->axis[1]);
+		VectorCopy(mod->tags[startFrame][tagnum].rot[2], tag->axis[2]);
 	}
 	else if (frac == 1.0f)
 	{
-		VectorCopy(et->pos, tag->origin);
-		VectorCopy(et->rot[0], tag->axis[0]);
-		VectorCopy(et->rot[1], tag->axis[1]);
-		VectorCopy(et->rot[2], tag->axis[2]);
+		VectorCopy(mod->tags[endFrame][tagnum].pos, tag->origin);
+		VectorCopy(mod->tags[endFrame][tagnum].rot[0], tag->axis[0]);
+		VectorCopy(mod->tags[endFrame][tagnum].rot[1], tag->axis[1]);
+		VectorCopy(mod->tags[endFrame][tagnum].rot[2], tag->axis[2]);
 	}
 	else 
 	{
-		R_InterpolateNormal(st->rot[0], et->rot[0], frac, tag->axis[0]);
-		R_InterpolateNormal(st->rot[1], et->rot[1], frac, tag->axis[1]);
-		R_InterpolateNormal(st->rot[2], et->rot[2], frac, tag->axis[2]);
-		R_InterpolateNormal(st->pos, et->pos, frac, tag->origin);
+		R_InterpolateNormal(
+			mod->tags[startFrame][tagnum].rot[0],
+			mod->tags[endFrame][tagnum].rot[0],
+			frac, tag->axis[0]);
+		R_InterpolateNormal(
+			mod->tags[startFrame][tagnum].rot[1], 
+			mod->tags[endFrame][tagnum].rot[1], 
+			frac, tag->axis[1]);
+		R_InterpolateNormal(
+			mod->tags[startFrame][tagnum].rot[2], 
+			mod->tags[endFrame][tagnum].rot[2], 
+			frac, tag->axis[2]);
+		R_InterpolateNormal(
+			mod->tags[startFrame][tagnum].pos, 
+			mod->tags[endFrame][tagnum].pos, 
+			frac, tag->origin);
 	}
 }
-
-void Matrix4_MultiplyFast(mat4_t b, mat4_t c, mat4_t a);
 
 /*
 =================
@@ -612,7 +618,6 @@ TODO: Optimize, put to backend.
 */
 void R_Render_Model (const refEntity_t *re)
 {
-	mat4_t loadmat;
 	md3model2_t *model;
 	md3mesh_t *mesh;
 	skin_t *skin;
@@ -626,41 +631,39 @@ void R_Render_Model (const refEntity_t *re)
 		return;
 
 	model = &r_md3models[re->hModel-1];
-	arrays.numverts = arrays.numelems = 0;
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 
-	glLoadMatrixf(model_view_mat);
-
-	loadmat[0] = re->axis[0][0];
-	loadmat[1] = re->axis[0][1];
-	loadmat[2] = re->axis[0][2];
-	loadmat[3] = 0;
-	loadmat[4] = re->axis[1][0];
-	loadmat[5] = re->axis[1][1];
-	loadmat[6] = re->axis[1][2];
-	loadmat[7] = 0;
-	loadmat[8] = re->axis[2][0];
-	loadmat[9] = re->axis[2][1];
-	loadmat[10] = re->axis[2][2];
-	loadmat[11] = 0;
-	loadmat[12] = re->origin[0];
-	loadmat[13] = re->origin[1];
-	loadmat[14] = re->origin[2];
-	loadmat[15] = 1.0;
+	transform_ref.obj_matrix[0] = re->axis[0][0];
+	transform_ref.obj_matrix[1] = re->axis[0][1];
+	transform_ref.obj_matrix[2] = re->axis[0][2];
+	transform_ref.obj_matrix[3] = 0;
+	transform_ref.obj_matrix[4] = re->axis[1][0];
+	transform_ref.obj_matrix[5] = re->axis[1][1];
+	transform_ref.obj_matrix[6] = re->axis[1][2];
+	transform_ref.obj_matrix[7] = 0;
+	transform_ref.obj_matrix[8] = re->axis[2][0];
+	transform_ref.obj_matrix[9] = re->axis[2][1];
+	transform_ref.obj_matrix[10] = re->axis[2][2];
+	transform_ref.obj_matrix[11] = 0;
+	transform_ref.obj_matrix[12] = re->origin[0];
+	transform_ref.obj_matrix[13] = re->origin[1];
+	transform_ref.obj_matrix[14] = re->origin[2];
+	transform_ref.obj_matrix[15] = 1.0;
 
 	if (re->nonNormalizedAxes) {
-		VectorNormalize(&loadmat[0]);
-		VectorNormalize(&loadmat[4]);
-		VectorNormalize(&loadmat[8]);
+		VectorNormalize(&transform_ref.obj_matrix[0]);
+		VectorNormalize(&transform_ref.obj_matrix[4]);
+		VectorNormalize(&transform_ref.obj_matrix[8]);
 	}
 
-	glMultMatrixf(loadmat);
+	Matrix4_Multiply (transform_ref.world_matrix, transform_ref.obj_matrix, transform_ref.matrix);
 
-	memcpy(transform_ref.matrix, loadmat, sizeof(mat4_t));
-	transform_ref.inv_matrix_calculated = 0;
-	transform_ref.matrix_identity = 0;
+	glLoadMatrixf(transform_ref.matrix);
+
+	transform_ref.inv_matrix_calculated = afalse;
+	transform_ref.matrix_identity = afalse;
 
 	// Set the shader time
 	shadertime = cl_frametime - (double)re->shaderTime;
@@ -702,12 +705,12 @@ void R_Render_Model (const refEntity_t *re)
 
 			arrays.numverts = arrays.numelems = 0;
 
-			glMatrixMode(GL_MODELVIEW);
 			glPopMatrix();
 			return;
 		}
 
 		arrays.numverts = 0;
+		arrays.numelems = 0;
 		elems = mesh->elems;
 
 	    for (k = 0; k < mesh->numelems; k++)
@@ -753,7 +756,6 @@ void R_Render_Model (const refEntity_t *re)
 	transform_ref.matrix_identity = atrue;
 	transform_ref.inv_matrix_calculated = afalse;
 
-	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 }
 
@@ -887,10 +889,10 @@ void R_Render_PortalSurface (const refEntity_t *re)
 {
 }
 
+void Matrix4_Rotate(mat4_t a, float angle, float x, float y, float z, mat4_t ret);
+
 void R_RenderScene (const refdef_t *fd)
 {
-	mat4_t modmat;
-
 	memcpy (&r_render_def, fd, sizeof (refdef_t));
 
 	// Setup projection
@@ -902,37 +904,26 @@ void R_RenderScene (const refdef_t *fd)
 	// Setup the Matrix
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
-    glLoadIdentity();
 
-    glRotatef(-90, 1, 0, 0);	// put Z going up
-    glRotatef(90, 0, 0, 1);	    // put Z going up
+	transform_ref.world_matrix[0] = fd->viewaxis[1][0];
+	transform_ref.world_matrix[1] = 0;
+	transform_ref.world_matrix[2] = -1;
+	transform_ref.world_matrix[3] = 0;
+	transform_ref.world_matrix[4] = -fd->viewaxis[0][0];
+	transform_ref.world_matrix[5] = -fd->viewaxis[0][1];
+	transform_ref.world_matrix[6] = -fd->viewaxis[0][2];
+	transform_ref.world_matrix[7] = 0;
+	transform_ref.world_matrix[8] = fd->viewaxis[2][0];
+	transform_ref.world_matrix[9] = 1;
+	transform_ref.world_matrix[10] = 0;
+	transform_ref.world_matrix[11] = 0;
+	transform_ref.world_matrix[12] = -fd->vieworg[0];
+	transform_ref.world_matrix[13] = -fd->vieworg[1];
+	transform_ref.world_matrix[14] = -fd->vieworg[2];
+	transform_ref.world_matrix[15] = 1;
 
-	Matrix4_Identity(modmat);
-
-	modmat[0]	= fd->viewaxis[0][0];
-	modmat[1]	= fd->viewaxis[0][1];
-	modmat[2]	= fd->viewaxis[0][2];
-	modmat[3]	= 0;
-
-	modmat[4]	= fd->viewaxis[1][0];
-	modmat[5]	= fd->viewaxis[1][1];
-	modmat[6]	= fd->viewaxis[1][2];
-	modmat[7]	= 0;
-
-	modmat[8]	= fd->viewaxis[2][0];
-	modmat[9]	= fd->viewaxis[2][1];
-	modmat[10]	= fd->viewaxis[2][2];
-	modmat[11]	= 0;
-
-	modmat[12]	= fd->vieworg[0];
-	modmat[13]	= fd->vieworg[1];
-	modmat[14]	= fd->vieworg[2];
-	modmat[15]	= 1.0f;
-
-	glMultMatrixf(modmat);
-
-	glGetFloatv (GL_MODELVIEW_MATRIX, model_view_mat);
-
+	// Load a rotated matrix
+	glLoadMatrixf (transform_ref.world_matrix);
 	glViewport(fd->x, winY - fd->height - fd->y, fd->width, fd->height); // TODO ?
 
 	VectorCopy (fd->vieworg, r_eyepos);
@@ -947,7 +938,7 @@ void R_RenderScene (const refdef_t *fd)
 
 	// Render World
 	if (r_drawworld->integer)
-		if (!(fd->rdflags & RDF_NOWORLDMODEL) )
+		if (!(fd->rdflags & RDF_NOWORLDMODEL))
 			R_Draw_World();
 
 	// Render Entities

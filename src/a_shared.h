@@ -1062,17 +1062,28 @@ void Error(const char *fmt, ...);
 
 // Casting floats to unsigned chars is also very expensive, just
 // NEVER cast with (unsigned char)
-#if !(defined __linux__ && defined __i386__ && !defined C_ONLY)
-#if defined __LCC__ || defined C_ONLY || !id386
+//#if !(defined __linux__ && defined __i386__ && !defined C_ONLY)
+//#if defined __LCC__ || defined C_ONLY || !id386
+#if 0
 
-#define FloatToByte(x) (byte)(x)
+#define FloatToByte(x)		(byte)(x)
+#define FloatToIntRet(x)	(int)(x)
 
 #else
 
 __forceinline byte __stdcall FloatToByte(float x) 
 { 
-	float  t = x + (float) 0xC00000;
+	float t = x + (float) 0xC00000;
 	return * (byte *) &t; 
+}
+
+// Doesn't take the pointer, is a bit faster
+__forceinline int __stdcall FloatToIntRet(float x)
+{
+	int	   t;
+	__asm  fld   x  
+	__asm  fistp t
+	return t;
 }
 
 #endif
@@ -1094,4 +1105,3 @@ void *Hunk_AllocDebug( int size, ha_pref preference, char *label, char *file, in
 void *Hunk_Alloc( int size, ha_pref preference );
 #endif
 
-#endif

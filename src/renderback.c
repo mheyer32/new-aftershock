@@ -63,30 +63,32 @@ aboolean r_overlay = afalse;
 
 extern reference_t transform_ref;
 
-__inline static double render_func_eval(uint_t func, float *args)
+static double render_func_eval(uint_t func, float *args)
 {
-    // Evaluate a number of time based periodic functions
-    double x  = (shadertime + args[2]) * args[3];
-	x -= floor(x);
+	// Evaluate a number of time based periodic functions
+	if (func == SHADER_FUNC_SIN)
+		return (sin(args[2]*TWOPI + shadertime*args[3]) * args[1] + args[0]);
+	else 
+	{
+		double x = args[2] + shadertime * args[3];
+		x -= floor(x);
 
-    switch (func)
-    {
-		case SHADER_FUNC_SIN:
-			return sin(x * TWOPI) * args[1] + args[0];
-			
-		case SHADER_FUNC_TRIANGLE:
-			return (x < 0.5) ? (2.0 * x - 1.0) * args[1] + args[0] : 
-				(-2.0 * x + 2.0) * args[1] + args[0];
-			
-		case SHADER_FUNC_SQUARE:
-			return (x < 0.5) ? args[1] + args[0] : args[0] - args[1];
-			
-		case SHADER_FUNC_SAWTOOTH:
-			return x * args[1] + args[0];
-			
-		case SHADER_FUNC_INVERSESAWTOOTH:
-			return (1.0 - x) * args[1] + args[0];
-    }
+		switch (func)
+		{
+			case SHADER_FUNC_TRIANGLE:
+				return (x < 0.5) ? (2.0 * x - 1.0) * args[1] + args[0] : 
+					(-2.0 * x + 2.0) * args[1] + args[0];
+				
+			case SHADER_FUNC_SQUARE:
+				return (x < 0.5) ? args[1] + args[0] : args[0] - args[1];
+				
+			case SHADER_FUNC_SAWTOOTH:
+				return x * args[1] + args[0];
+				
+			case SHADER_FUNC_INVERSESAWTOOTH:
+				return (1.0 - x) * args[1] + args[0];
+		}
+	}
 
     return 0.0;
 }
@@ -138,7 +140,6 @@ void Render_Backend_Shutdown(void)
 
 	free (arrays.stage_tex_st);
 }
-
 
 void R_Push_Quad (quad_t *q)
 {
@@ -478,6 +479,7 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 	float rot;
 	float cost;
 	float sint;
+	mat4_t	trans, dest;
 
 	switch (pass->tc_gen)
 	{
@@ -511,13 +513,23 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 				Matrix_Multiply_Vec3(transform_ref.inv_matrix, pos, pos);
 			}
 
+			Matrix4_Transponse (transform_ref.world_matrix, trans);
+			Matrix4_Multiply (transform_ref.world_matrix, transform_ref.obj_matrix, dest);
+
 			for (j = 0; j < arrays.numverts; j++)
 			{
+#if 1
 				VectorSubtract(pos, arrays.verts[j], dir);
 				VectorNormalizeFast(dir);
-															
+
 				in[j][0] = dir[0] + arrays.norms[j][0];
 				in[j][1] = dir[1] + arrays.norms[j][1];
+#else
+				Matrix_Multiply_Vec3 (dest, arrays.norms[j], dir);
+
+				in[j][0] = dir[0];
+				in[j][1] = dir[1];
+#endif
 			}
 
 			break;
@@ -556,8 +568,8 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 				{
 					rot = pass->tc_mod[n].args[0] * shadertime * DEG2RAD;
 					
-					sint = (float)sin(rot);
-					cost = (float)cos(rot);
+					sint = sin(rot);
+					cost = cos(rot);
 					p1 = 0.5f * (1 - cost + sint);
 					p2 = 0.5f * (1 - sint - cost);
 					
@@ -587,10 +599,10 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 
 					for (j = 0; j < arrays.numverts; j++)
 					{
-						k = (((arrays.verts[j][0] + arrays.verts[j][2]) / 1024.f + pos) * 1024.f) * DEG2RAD;
+						k = (arrays.verts[j][0] + arrays.verts[j][2]) / 1024.f + pos;
 						out[j][0] = txmod[j][0] + pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
 
-						k = (((arrays.verts[j][1]) / 1024.f + pos) * 1024.f) * DEG2RAD;
+						k = (arrays.verts[j][1]) / 1024.f + pos;
 						out[j][1] = txmod[j][1] + pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
 					}
 				}
@@ -676,8 +688,11 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 			break;
 
 		case RGB_GEN_WAVE:
-			c = FloatToByte(255.0f * (float)render_func_eval(pass->rgbgen_func.func,
-							pass->rgbgen_func.args));
+			color = 255.0f * (float)render_func_eval(pass->rgbgen_func.func,
+							pass->rgbgen_func.args);
+			color = bound (0.0f, color, 255.0f);
+			c = FloatToByte(color);
+
 			for (i = 0; i < arrays.numverts;i++) 
 			{
 				arrays.mod_colour[i][0] = c;
@@ -978,6 +993,7 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 	Render_Backend_Make_Vertices(s);
 
 	glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
+	glNormalPointer(GL_FLOAT, 0, arrays.norms);
 
 	if (glLockArraysEXT)
 		glLockArraysEXT(0, arrays.numverts);
@@ -1010,7 +1026,7 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 			if (!pass->anim_numframes || pass->anim_numframes > SHADER_ANIM_FRAMES_MAX)
 				return;
 
-			frame = (int)(shadertime * pass->anim_fps) % pass->anim_numframes;
+			frame = FloatToIntRet(shadertime * pass->anim_fps) % pass->anim_numframes;
 			
 			texture = pass->anim_frames[frame];
 		}
@@ -1151,7 +1167,7 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 		if (!pass->anim_numframes || pass->anim_numframes > SHADER_ANIM_FRAMES_MAX) 
 			return;
 
-		frame = (int)(shadertime * pass->anim_fps) % pass->anim_numframes;
+		frame = FloatToIntRet(shadertime * pass->anim_fps) % pass->anim_numframes;
 		texture = pass->anim_frames[frame];
 	}
 	else

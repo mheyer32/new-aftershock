@@ -31,6 +31,29 @@ void Matrix3_Identity (vec3_t mat[3])
 	mat[0][0] = mat[1][1] = mat[2][2] = 1.0f;
 }
 
+// Took this from the OpenGL man pages for glRotate
+void Matrix4_Rotate(mat4_t a, float angle, float x, float y, float z, mat4_t ret)
+{
+	mat4_t m;
+	float c = cos(angle * DEG2RAD);
+	float s = sin(angle * DEG2RAD);
+	float mc = 1 - c;
+	
+	Matrix4_Identity (m);
+
+	m[0] = (x * x * mc) + c;
+	m[1] = (y * x * mc) + (z * s);
+	m[2] = (x * z * mc) - (y * s);
+	m[4] = (x * y * mc) - (z * s);
+	m[5] = (y * y * mc) + c;
+	m[6] = (y * z * mc) + (x * s);
+	m[8] = (x * z * mc) + (y * s);
+	m[9] = (y * z * mc) - (x * s);
+	m[10] = (z * z * mc) + c;
+	
+	Matrix4_Multiply (a, m, ret);
+}
+
 void Matrix4_Multiply(mat4_t a, mat4_t b, mat4_t product)
 {
 	product[0]  = a[0] * b[0] + a[4] * b[1] + a[8] * b[2] + a[12] * b[3];

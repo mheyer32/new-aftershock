@@ -242,6 +242,9 @@ typedef struct {
 // used for everything which has its own coordinate system
 typedef struct 
 {
+	mat4_t world_matrix;
+	mat4_t obj_matrix;
+
 	mat4_t matrix;
 	mat4_t inv_matrix;
 	
