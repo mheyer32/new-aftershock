@@ -38,7 +38,8 @@ void Sys_Keyboard_Event ( unsigned int Vkey ,aboolean down )
 			key=K_ENTER;
 			break;
 		case VK_ESCAPE:
-			key=K_ESCAPE; 
+			key=K_ESCAPE;
+			break;			// Vic: ESCAPE = SPACE?
 		case VK_SPACE:	
 			key=K_SPACE;
 			break;
@@ -132,7 +133,10 @@ void Sys_Keyboard_Event ( unsigned int Vkey ,aboolean down )
 		case VK_NUMLOCK:
 			key=K_KP_NUMLOCK;
 			break;
-		case 220: // TILDE :
+
+//		case 220: // TILDE :
+		case 192: // TILDE : Vic : was 220 (?)
+
 			key=K_TILDE;
 			break;
 	//K_KP_STAR,
