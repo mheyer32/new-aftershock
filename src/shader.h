@@ -230,7 +230,6 @@ typedef struct
 typedef struct
 {
 	int Flags;
-	int id;
     char name[MAX_APATH];
 } texture_t;
 

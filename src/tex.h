@@ -21,13 +21,7 @@
 #define TEX_MISSING ((uint_t)-1)
 #define MAX_TEX 1024
 
-
-
-extern uint_t *r_textures;
-
 extern int num_dynamic_tex;
-
-
 
 int R_Load_Texture (const char * name,int flags);
 int Tex_Init (void );

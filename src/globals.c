@@ -47,8 +47,6 @@ float r_tanfov;
 int r_eyecluster;
 float g_frametime;
 
-uint_t *r_textures;
-
 uint_t *r_lightmaptex;
 int r_numlightmaptex;
 

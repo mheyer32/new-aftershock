@@ -36,6 +36,7 @@ int *ids = NULL;
 static byte img_buf[IMG_BUFSIZE];
 static int r_num_textures = 0;
 static texture_t textures[MAX_TEXTURES];
+static uint_t r_textures_id[MAX_TEX];
 
 typedef struct
 {
@@ -143,15 +144,15 @@ int Tex_Init (void)
 {
 	r_num_textures = 0;
 	memset (textures, 0, MAX_TEXTURES * sizeof(texture_t));
+
+	glGenTextures (MAX_TEXTURES, r_textures_id);
+
 	return 1;
 }
 
 int Tex_Shutdown (void)
 {
-	int i;
-
-	for (i = 0; i < r_num_textures; i++)
-		glDeleteTextures (1, &textures[i].id);
+	glDeleteTextures (MAX_TEXTURES, r_textures_id);
 
 	r_num_textures = 0;
 	memset (textures, 0, MAX_TEXTURES * sizeof(texture_t));
@@ -482,9 +483,7 @@ int Tex_UploadTexture (byte **data, int width, int height, int format, int flags
 			return 0;
 	}
 
-	glGenTextures (1, &textures[r_num_textures].id);
-
-	GL_BindTexture(GL_TEXTURE_2D, textures[r_num_textures].id);
+	GL_BindTexture(GL_TEXTURE_2D, r_textures_id[r_num_textures]);
 	
 	if ((w != width) || (h != height))
 	{
@@ -554,13 +553,13 @@ int R_Load_Texture (const char *name, int flags)
 	if (!name[0] || !name)
 		return -1;
 
-	strcpy (fname, name);
+	A_strncpyz (fname, name, MAX_APATH);
 
 	// Check if already loaded 
 	for (i = 0; i < r_num_textures; i++)
 	{
-		if (!strcmp(textures[i].name, name))
-			return textures[i].id;
+		if (!strcmp(textures[i].name, fname))
+			return r_textures_id[i];
 	}
 
 	if (r_num_textures == MAX_TEX) 
@@ -669,10 +668,10 @@ int R_Load_Texture (const char *name, int flags)
 		return -1;
 	}
 
-	strcpy (textures[r_num_textures].name, name);
+	A_strncpyz (textures[r_num_textures].name, name, MAX_APATH);
 
 	free (data);
 
 	// Success !
-	return textures[r_num_textures++].id;
+	return r_textures_id[r_num_textures++];
 }
