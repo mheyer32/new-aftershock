@@ -18,7 +18,7 @@
 #ifndef __SHADER_H__
 #define __SHADER_H__
 
-#define SHADERPASS_MAX 5
+#define SHADERPASS_MAX 8
 #define SHADER_ANIM_FRAMES_MAX 8
 #define SHADERBUF_SIZE  (1024*1024-8)
 #define MAX_TC_MOD  8
@@ -33,13 +33,12 @@ enum
     SHADER_DEPTHWRITE    = 1 << 2,  /* Also used for pass flag */
     SHADER_SKY           = 1 << 3,
     SHADER_NOMIPMAPS     = 1 << 4,
-    SHADER_NEEDCOLOURS   = 1 << 5,
     SHADER_DEFORMVERTS   = 1 << 6,
 	SHADER_POLYGONOFFSET = 1 << 7,
 	SHADER_FOG           = 1 << 8,
-	SHADER_MULTITEXTURE  = 1 << 9,
-	SHADER_NOPICMIP      = 1 << 10,
-	SHADER_CLAMP         = 1 << 11  // will just be used for texture loading 
+	SHADER_NOPICMIP      = 1 << 9,
+	SHADER_CLAMP         = 1 << 10,  // will just be used for texture loading 
+	SHADER_MULTITEXTURE_LIGHTMAPPED =1 << 11
 };
 
 /* Shaderpass flags */
@@ -171,8 +170,8 @@ typedef struct
     int   rgbgen;             
     shaderfunc_t rgbgen_func;
 	int tc_gen ;
-	float tc_gen_args [6]; // if tc_gen == VECTOR ;
-
+	vec3_t tc_gen_s;
+	vec3_t tc_gen_t;
     int  num_tc_mod;               
 	tc_mod_t tc_mod [ MAX_TC_MOD];
 	shaderfunc_t tc_mod_stretch;
@@ -187,11 +186,11 @@ typedef struct
 /* Shader info */
 typedef struct
 {	
-	char name [64];
+	char name [67];
+	byte sortkey ;  // a precalculated sortkey which is added to the shaderkey ; (TODO )
     uint_t flags;
-	int contents;
+//	int contents;
     int numpasses;
-	int portalstate ; // TEST 
 	int sort ;
 	int deform_vertices;
     shaderpass_t pass[SHADERPASS_MAX];
@@ -201,13 +200,7 @@ typedef struct
     shaderfunc_t deformv_wavefunc;
 } shader_t;
 
-/* Special texture loading requirements */
-enum
-{
-    TEXFILE_NOMIPMAPS  = 1 << 0,
-    TEXFILE_CLAMP      = 1 << 1,
-	TEXFILE_NOSCALEDOWN= 1 << 2
-};
+
 
 typedef struct
 {

@@ -268,37 +268,6 @@ int jpg_read_extern(const char *fname, byte **rgb, int *w, int *h, int *format,v
  
 
 
-void  tex_init (void)
-{
-
-	r_dynamic_tex=malloc(MAX_TEX *sizeof(texture_t));
-	memset(r_dynamic_tex ,0,MAX_TEX *sizeof (texture_t ));
-	
-
-
-	imgbuf=malloc (IMG_BUFSIZE);
-
-	ids=malloc(MAX_TEX *sizeof(int));
-		
-	glGenTextures(MAX_TEX, ids);
-	num_dynamic_tex=0;
-
-}
-
-
-void tex_shutdown (void )
-{
-	glDeleteTextures(MAX_TEX, ids);
-
-	free (r_dynamic_tex);
-	free (imgbuf);
-	free (ids);
-
-	num_dynamic_tex=0;
-
-}
-
-
 static char * Find_Texture ( const char * filename )
 {
 	char path[MAX_APATH];
@@ -810,7 +779,7 @@ int R_Load_Texture ( const char * name , int flags )
 		}
 
 		
-		if (!strcmp (ext,"tga"))
+		if (!stricmp (ext,"tga"))
 		{
 			data =Tex_Load_TGA (tex_name,&img_width,&img_height,&format);
 			
@@ -823,7 +792,7 @@ int R_Load_Texture ( const char * name , int flags )
 
 
 		}
-		else if (!strcmp (ext,"jpg"))
+		else if (!stricmp (ext,"jpg"))
 		{
 			data =Tex_Load_JPG (tex_name,&img_width,&img_height,&format);
 			

@@ -775,7 +775,6 @@ void R_render_model (const refEntity_t *re)
 
 	glLoadMatrixf (model_view_mat);
 
-	glTranslatef (re->origin[0],  re->origin[1],  re->origin[2]);
 
     //glRotatef (e->angles[1],  0, 0, 1);
     //glRotatef (-e->angles[0],  0, 1, 0);
@@ -791,8 +790,12 @@ void R_render_model (const refEntity_t *re)
 	}
 */
 
-	Matrix4_Identity(mat);
+	Matrix4_Identity (tmpmat);
+	tmpmat[12]=re->origin[0];
+	tmpmat[13]=re->origin[1];
+	tmpmat[14]=re->origin[2];
 
+	Matrix4_Identity(mat);
 	mat[0]=re->axis[0][0];
 	mat[1]=re->axis[0][1];
 	mat[2]=re->axis[0][2];
@@ -805,19 +808,15 @@ void R_render_model (const refEntity_t *re)
 	mat[9]=re->axis[2][1];
 	mat[10]=re->axis[2][2];
 
+	
+	Matrix4_Multiply(tmpmat,mat,loadmat);
+
+	glMultMatrixf(loadmat);
 
 
-	// To keep Vertex or TC-mod right 
-	VectorCopy (re->axis[0],transform_ref.matrix[0]);
-	VectorCopy (re->axis[1],transform_ref.matrix[1]);
-	VectorCopy (re->axis[2],transform_ref.matrix[2]);
-
-	transform_ref.matrix_identity=afalse;
-	transform_ref.inv_matrix_calculated=afalse;
-	VectorCopy (re->origin,transform_ref.pos);
-	transform_ref.pos_identity=afalse;
-
-	glMultMatrixf(mat);
+	memcpy(transform_ref.matrix,loadmat,sizeof (mat4_t));
+	transform_ref.inv_matrix_calculated=0;
+	transform_ref.matrix_identity=0;
 
 
 	// Set the shader time :
@@ -927,11 +926,9 @@ void R_render_model (const refEntity_t *re)
 	g_frametime = saved_time;
 
 	// Revert :
-	Matrix3_Identity(transform_ref.matrix);
-	transform_ref.matrix_identity=atrue;
-	transform_ref.inv_matrix_calculated=afalse;
-	VectorClear(transform_ref.pos);
-	transform_ref.pos_identity=atrue;
+	Matrix4_Identity(transform_ref.matrix);
+	transform_ref.matrix_identity=1;
+	transform_ref.inv_matrix_calculated=0;
 
 
 
@@ -1056,12 +1053,11 @@ void R_RenderScene( const refdef_t *fd )
 	VectorCopy (fd->vieworg,r_eyepos);
 	
 // Reset the reference :
-	Matrix3_Identity (transform_ref.matrix);
+	Matrix4_Identity (transform_ref.matrix);
 	transform_ref.matrix_identity = atrue;
 	transform_ref.inv_matrix_calculated = afalse ;
 	
-	VectorClear(transform_ref.pos);
-	transform_ref.pos_identity=atrue;
+
 
 // Make Clipplanes :
 	R_Setup_Clipplanes (fd);
@@ -1352,9 +1348,9 @@ unsigned int SortKey (cface_t * face )
 {
 
 	return (r_shaders[map.shadernums[face->shadernum]].sort << 27 ) + // Needs 4 Bits 
-		((r_shaders[map.shadernums[face->shadernum]].flags & SHADER_MULTITEXTURE) << 25 ) + // 1 Bit
-		(face->shadernum << 15 ) + // 9 Bits 
-		(face->lm_texnum + 1) ;
+		(r_shaders[map.shadernums[face->shadernum]].sortkey << 21) + // 5 Bits
+		(face->shadernum << 7 ) + // 9 Bits 
+		(face->lm_texnum + 1) ;  // 6 Bits
 }
 
 static int

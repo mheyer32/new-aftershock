@@ -240,12 +240,10 @@ typedef struct {
 // used for everything which has its own coordinate system :
 typedef struct 
 {
-	vec3_t matrix[3];
-	vec3_t inv_matrix [3];
-	vec3_t pos;
+	mat4_t matrix;
+	mat4_t inv_matrix;
 	
 	aboolean matrix_identity;
-	aboolean pos_identity;
 	aboolean inv_matrix_calculated;
 }reference_t;
 

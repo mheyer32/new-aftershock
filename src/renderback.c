@@ -73,10 +73,7 @@ void Render_Backend_Flush_Generic (int shadernum ,int lmtex );
 
 static void render_pushface(cface_t *face);
 static void render_pushmesh(mesh_t *mesh);
- void render_flush(int shader, int lmtex);
 static double render_func_eval(uint_t func, float *args);
-static int render_setstate(shaderpass_t *pass, uint_t lmtex);
-static void render_clearstate(shaderpass_t *pass);
 static void render_pushface_deformed(int shadernum, cface_t *face);
 static void render_stripmine(int numelems, int *elems);
 static int render_setstate(shaderpass_t *pass, uint_t lmtex);
@@ -291,56 +288,6 @@ colour_t * R_Make_Rgba (shaderpass_t * pass )
 }
 
 
-void R_Make_Vertices (shader_t *s )
-{
-	int i;
-
-	if (s->flags   & SHADER_DEFORMVERTS )
-	{
-		float deflect ;
-		vec3_t v;
-		switch (s->deform_vertices)
-		{
-
-		case DEFORMV_NONE:
-			break;
-		case DEFORMV_WAVE:
-
-			for (i=0;i<arrays.numverts;i++)
-			{
-			deflect = render_func_eval(s->deformv_wavefunc.func, s->deformv_wavefunc.args);
-			deflect *= s->deform_params[0];
-			VectorCopy(arrays.norms[i], v);
-			VectorScale(v, deflect, v);
-			VectorAdd(v, arrays.verts[i], arrays.verts[i]);
-			}
-			break;
-		case DEFORMV_NORMAL:
-			break;
-		case DEFORMV_BULGE:
-			break;
-		case DEFORMV_MOVE:
-			break;
-		case DEFORMV_AUTOSPRITE:
-			break;
-		case DEFORMV_AUTOSPRITE2:
-			break;
-
-
-
-		default :
-			break;
-		}
-
-	}
-
-
-
-
-
-
-}
-
 
 
 
@@ -499,8 +446,7 @@ render_pushface(cface_t *face)
 
 	vec2_copy(vert->tex_st, arrays.tex_st[arrays.numverts]);
 	vec2_copy(vert->lm_st, arrays.lm_st[arrays.numverts]);
-	if (r_shaders[face->shadernum].flags & SHADER_NEEDCOLOURS)
-	    colour_copy(vert->colour, arrays.colour[arrays.numverts]);
+	colour_copy(vert->colour, arrays.colour[arrays.numverts]);
 	vert++;
 	arrays.numverts++;
     }	    
@@ -618,69 +564,6 @@ render_stripmine(int numelems, int *elems)
     }
 }
 
-static void
-render_flush(int shadernum, int lmtex)
-{
-    int p;
-    shader_t *shader = &r_shaders[shadernum];
-    
-    if (arrays.numverts == 0 || shadernum<0) return;
-
-    /* Face culling */
-    if (shader->flags & SHADER_NOCULL)
-	GL_Disable(GL_CULL_FACE);
-    else
-	GL_Enable(GL_CULL_FACE);
-
-
-	if (shader->flags & SHADER_POLYGONOFFSET)
-		GL_Enable (GL_POLYGON_OFFSET);
-	else
-		GL_Disable (GL_POLYGON_OFFSET);
-
-	R_Make_Vertices (shader );
-    /* FIXME: if compiled vertex arrays supported, lock vertex array here */
-    glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
-
-	if (gl_ext_info._CompiledVertex_Arrays)
-    glLockArraysEXT(0,arrays.numverts);
-	
-    if (shader->flags & SHADER_NEEDCOLOURS)
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, arrays.colour);
-
-    /* FIXME: Multitexturing, if supported...
-     * Multitexturing can be handled by examining the number of passes
-     * for this shader, and spreading them amongst available texture
-     * units.  E.g. if there are 3 passes and 2 tex units, we do 2 at
-     * once and then one -- glDrawElements() is called twice.
-     */
-   
-		
-		
-    for (p=0; p < shader->numpasses; p++)
-    {
-	/* Set rendering state for this pass */
-	if (!render_setstate(&shader->pass[p], lmtex))
-	    continue;
-	
-	if (gl_ext_info._CompiledVertex_Arrays)
-	glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
-		       arrays.elems);
-	else
-	/* We don't have compiled vertex arrays (locking) so find tristrips */
-	render_stripmine(arrays.numelems, arrays.elems);
-	
-	/* Clear certain rendering state variables */
-	render_clearstate(&shader->pass[p]);
-    }
-	
-	if(gl_ext_info._CompiledVertex_Arrays)
-    glUnlockArraysEXT();
-
-    /* Clear arrays */
-    arrays.numverts = arrays.numelems = 0; 
-}
-
 static double
 render_func_eval(uint_t func, float *args)
 {
@@ -723,14 +606,14 @@ render_func_eval(uint_t func, float *args)
 
     return y * args[1] + args[0];
 }
-
+/*
 static int
 render_setstate(shaderpass_t *pass, uint_t lmtex)
 {// TODO !!!!!
     if (pass->flags & SHADER_LIGHTMAP)
     {
 	/* Select lightmap texture */
-	GL_BindTexture(GL_TEXTURE_2D, map.lightmaps[lmtex]);
+/*	GL_BindTexture(GL_TEXTURE_2D, map.lightmaps[lmtex]);
     }
     else if (pass->flags & SHADER_ANIMMAP)
     {
@@ -738,7 +621,7 @@ render_setstate(shaderpass_t *pass, uint_t lmtex)
 	int frame;
 
 	/* Animation: get frame for current time */
-	if (!pass->anim_numframes || pass->anim_numframes > 8) return 0;
+/*	if (!pass->anim_numframes || pass->anim_numframes > 8) return 0;
 	frame = (int)(g_frametime * pass->anim_fps) % pass->anim_numframes;
 	texobj = pass->anim_frames[frame];
 	if (texobj < 0) return 0;
@@ -749,7 +632,7 @@ render_setstate(shaderpass_t *pass, uint_t lmtex)
 	uint_t texobj;
 
 	/* Set normal texture */
-	if (pass->texref < 0) return 0;
+/*	if (pass->texref < 0) return 0;
 	texobj = pass->texref;
 	GL_BindTexture(GL_TEXTURE_2D, texobj);
     }
@@ -783,22 +666,51 @@ render_setstate(shaderpass_t *pass, uint_t lmtex)
   
     return 1;
 }
+*/
 
-static void
-render_clearstate(shaderpass_t *pass)
-{
-  
-}
-
+// TODO !!!
 void Render_Backend_Make_Vertices (shader_t *s )
 {
+	int i;
+
+	if (s->flags   & SHADER_DEFORMVERTS )
+	{
+		float deflect ;
+		vec3_t v;
+		switch (s->deform_vertices)
+		{
+
+		case DEFORMV_NONE:
+			break;
+		case DEFORMV_WAVE:
+
+			for (i=0;i<arrays.numverts;i++)
+			{
+			deflect = render_func_eval(s->deformv_wavefunc.func, s->deformv_wavefunc.args);
+			deflect *= s->deform_params[0];
+			VectorCopy(arrays.norms[i], v);
+			VectorScale(v, deflect, v);
+			VectorAdd(v, arrays.verts[i], arrays.verts[i]);
+			}
+			break;
+		case DEFORMV_NORMAL:
+			break;
+		case DEFORMV_BULGE:
+			break;
+		case DEFORMV_MOVE:
+			break;
+		case DEFORMV_AUTOSPRITE:
+			break;
+		case DEFORMV_AUTOSPRITE2:
+			break;
 
 
 
+		default :
+			break;
+		}
 
-
-
-
+	}
 
 
 }
@@ -824,7 +736,6 @@ float * Render_Backend_Make_TexCoords (shaderpass_t * pass ,int stage )
 
 	case TC_GEN_ENVIRONMENT:
 		{
-
 			// TODO !!!
 		vec3_t pos ,v,n;
 		vec3_t dir;
@@ -834,20 +745,16 @@ float * Render_Backend_Make_TexCoords (shaderpass_t * pass ,int stage )
 		
 		// FIXME !!!
 		VectorCopy (r_eyepos ,pos );
-
-		if (!transform_ref.pos_identity)
-		{
-			VectorSubtract (pos,transform_ref.pos,pos);
-		}
-		
 		if (!transform_ref.matrix_identity)
 		{
 			if (!transform_ref.inv_matrix_calculated)	
 			{
-				Matrix3_Transponse (transform_ref.matrix,transform_ref.inv_matrix);
+				if (!Matrix4_Inverse(transform_ref.inv_matrix,transform_ref.matrix))
+					Matrix4_Identity(transform_ref.inv_matrix);
+
 				transform_ref.inv_matrix_calculated=atrue;	
 			}
-			Matrix3_Multiply_Vec3(transform_ref.inv_matrix,pos,pos);
+			Matrix_Multiply_Vec3(transform_ref.inv_matrix,pos,pos);
 		}
 
 		for(j=0; j<arrays.numverts; j++)
@@ -873,18 +780,20 @@ float * Render_Backend_Make_TexCoords (shaderpass_t * pass ,int stage )
 		break;
 
 	case TC_GEN_VECTOR :
+		{
+			int j;
+			// Is this right ?
+			in=arrays.stage_tex_st[stage];
 
-		// TODO !!!
-		in=arrays.tex_st;
-
-
-		break;
-
-
+			for (j=0;j<arrays.numverts;j++)
+			{
+				in[j][0]=DotProduct(pass->tc_gen_s,arrays.verts[j]);
+				in[j][1]=DotProduct(pass->tc_gen_t,arrays.verts[j]);
+			}
+			break;
+		}
 	default :
-
 		in=arrays.tex_st;
-
 	}
 
 	if (pass->num_tc_mod >0)
@@ -1124,7 +1033,10 @@ void Render_Backend_Flush_Generic (int shadernum ,int lmtex )
 	int i,texture;
 
 	if (shadernum<0 || !arrays.numverts)
+	{
+		arrays.numverts=arrays.numelems=0;
 		return ;
+	}
 
 	s=&r_shaders[shadernum];
 
@@ -1179,7 +1091,10 @@ void Render_Backend_Flush_Generic (int shadernum ,int lmtex )
 		}
 
 		if ( !texture || texture< 0 )
+		{
+			arrays.numverts=arrays.numelems=0;
 			return ;
+		}
 
 		GL_BindTexture(GL_TEXTURE_2D, texture);	
 
@@ -1236,12 +1151,17 @@ void Render_Backend_Flush_Multitexture_Lightmapped (int shadernum ,int lmtex )
 
 
 	if (shadernum < 0 )
+	{
+		arrays.numverts=arrays.numelems=0;
 		return ;
+	}
 
 	s=&r_shaders[shadernum];
 
 	if (s->numpasses != 2 )
 		return ;
+
+	Render_Backend_Make_Vertices (s);
 
 	// Set the main states :
 	if (s->flags & SHADER_NOCULL )
@@ -1280,7 +1200,10 @@ void Render_Backend_Flush_Multitexture_Lightmapped (int shadernum ,int lmtex )
 	GL_TexEnvf (GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
 	
 	if (!lmtex || lmtex < 0)
+	{
+		arrays.numverts=arrays.numelems=0;
 		return ;
+	}
 
 	glTexCoordPointer(2, GL_FLOAT, 0,Render_Backend_Make_TexCoords(pass,0));
 
@@ -1314,7 +1237,10 @@ void Render_Backend_Flush_Multitexture_Lightmapped (int shadernum ,int lmtex )
 	}
 
 	if (!texture || texture<0 )
+	{
+		arrays.numverts=arrays.numelems=0;
 		return ;
+	}
 
 	GL_BindTexture(GL_TEXTURE_2D,texture);
 
@@ -1337,5 +1263,15 @@ void Render_Backend_Flush_Multitexture_Lightmapped (int shadernum ,int lmtex )
 		glUnlockArraysEXT();
 
 	arrays.numverts=arrays.numelems=0;
+
+}
+
+
+// TODO !!!
+void Render_Backend_Flush_Vertex_Lit (int shadernum , int lmtex )
+{
+
+
+
 
 }

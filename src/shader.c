@@ -79,17 +79,18 @@ shader_surfaceparm(shader_t *shader, shaderpass_t *pass, int numargs,
 {
     if (!strcmp(args[0], "trans"))
 	{
-	shader->flags |= SHADER_TRANSPARENT;
-	shader->contents |=CONTENTS_TRANSLUCENT;
+		shader->flags |= SHADER_TRANSPARENT;
+//	shader->contents |=CONTENTS_TRANSLUCENT;
 	}
     else if (!strcmp(args[0], "sky"))
 	{
-	shader->flags |= SHADER_SKY;
-	shader->contents |= SURF_SKY;
+		shader->flags |= SHADER_SKY;
+//	shader->contents |= SURF_SKY;
 	}
 	else if (!strcmp(args[0], "nomipmaps"))
 	{
-	shader->contents|=SURF_NOMIPMAP;
+		shader->flags |= SHADER_NOMIPMAPS;
+//	shader->contents|=SURF_NOMIPMAP;
 	}
 	// Is this needed ??
 	/*
@@ -333,6 +334,30 @@ shaderpass_map(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 }
 
 static void
+shaderpass_animmap(shader_t *shader, shaderpass_t *pass, int numargs,
+		   char **args)
+{
+    int i;
+	pass->tc_gen= TC_GEN_BASE;
+    pass->flags |= SHADER_ANIMMAP;
+    pass->anim_fps = atof(args[0]);
+    pass->anim_numframes = numargs - 1;
+    for (i=1; i < numargs; ++i)
+	{
+
+		pass->anim_frames[i-1]=R_Load_Texture(args[i],shader->flags );
+	}
+}
+
+static void
+shaderpass_clampmap(shader_t *shader, shaderpass_t *pass, int numargs,
+		    char **args)
+{
+	pass->tc_gen= TC_GEN_BASE;
+    pass->texref = R_Load_Texture(args[0],shader->flags | SHADER_CLAMP);
+}
+
+static void
 shaderpass_rgbgen(shader_t *shader, shaderpass_t *pass, int numargs,
 		  char **args)
 {
@@ -568,29 +593,6 @@ shaderpass_tcmod(shader_t *shader, shaderpass_t *pass, int numargs,
 	pass->num_tc_mod++ ;
 }
 
-static void
-shaderpass_animmap(shader_t *shader, shaderpass_t *pass, int numargs,
-		   char **args)
-{
-    int i;
-	pass->tc_gen= TC_GEN_BASE;
-    pass->flags |= SHADER_ANIMMAP;
-    pass->anim_fps = atof(args[0]);
-    pass->anim_numframes = numargs - 1;
-    for (i=1; i < numargs; ++i)
-	{
-
-		pass->anim_frames[i-1]=R_Load_Texture(args[i],shader->flags );
-	}
-}
-
-static void
-shaderpass_clampmap(shader_t *shader, shaderpass_t *pass, int numargs,
-		    char **args)
-{
-	pass->tc_gen= TC_GEN_BASE;
-    pass->texref = R_Load_Texture(args[0],shader->flags | SHADER_CLAMP);
-}
 
 static void
 shaderpass_tcgen(shader_t *shader, shaderpass_t *pass, int numargs,
@@ -613,12 +615,12 @@ shaderpass_tcgen(shader_t *shader, shaderpass_t *pass, int numargs,
 	{
 		pass->tc_gen=TC_GEN_VECTOR ;
 
-		pass->tc_gen_args[0] = atof(args[1]);
-		pass->tc_gen_args[1] = atof(args[2]);
-		pass->tc_gen_args[2] = atof(args[3]);
-		pass->tc_gen_args[3] = atof(args[4]);
-		pass->tc_gen_args[4] = atof(args[5]);
-		pass->tc_gen_args[5] = atof(args[6]);
+		pass->tc_gen_s[0] = atof(args[1]);
+		pass->tc_gen_s[1] = atof(args[2]);
+		pass->tc_gen_s[2] = atof(args[3]);
+		pass->tc_gen_t[0] = atof(args[4]);
+		pass->tc_gen_t[1] = atof(args[5]);
+		pass->tc_gen_t[2] = atof(args[6]);
 	}
 	else
 	{
@@ -979,61 +981,42 @@ Shader_Parsetok(shader_t *shader, shaderpass_t *pass, shaderkey_t *keys,
 }
 
 
-
-
-
-
-
-static void shader_check_multitexture (shader_t *s )
+void Shader_Finish (shader_t *s )
 {
-	int i;
+	byte sort;
+	// check if we can use Render_Backend_Flush_Multitexture_Lightmapped :
 
-	if (s->numpasses==1)
-		return;
-
-	if (!r_allowExtensions->integer)
-		return ;
-
-	if (glconfig.maxActiveTextures<2 )
-		return ;
-
-
-	if (1)
+	if (r_allowExtensions->integer && gl_ext_info._ARB_Multitexture)
 	{
-		for (i=1;i<s->numpasses;i++)
+		if (s->numpasses == 2 )
 		{
-
-			if (s->pass[i].blendsrc == GL_DST_COLOR && s->pass[i].blenddst== GL_ZERO )
-				continue;
-
-			if (s->pass[i].blendsrc == GL_ZERO && s->pass[i].blenddst == GL_SRC_COLOR )
-				continue;
-
-			if (glconfig.textureEnvAddAvailable)
-				if (s->pass[i].blendsrc== GL_ONE  && s->pass[i].blenddst == GL_ONE )
-					continue;
-
-
-			break;
-
-		}
-
-		if (i== s->numpasses )
-		{
-			// supported !
-			s->flags |= SHADER_MULTITEXTURE ;
+			if ( !(s->pass[0].flags & SHADER_BLEND ) && s->pass[1].flags & SHADER_BLEND )
+			{
+				if (s->pass[0].flags & SHADER_LIGHTMAP && ((s->pass[1].blendsrc == GL_DST_COLOR && s->pass[1].blenddst== GL_ZERO) || 
+					(s->pass[1].blendsrc == GL_ZERO && s->pass[1].blenddst == GL_SRC_COLOR)))
+				{
+					if (! (s->pass[1].flags & SHADER_LIGHTMAP ))
+					{
+						// OK !
+						s->flags |=SHADER_MULTITEXTURE_LIGHTMAPPED;
+					}
+				}
+			}
 		}
 
 	}
-	else 
-	{
-		// testing for TEX_ENV_COMBINE should be placed here :
-	}
 
+	
+	sort =  (s->flags &  SHADER_NOCULL ) + ((s->flags & SHADER_POLYGONOFFSET ) << 1) 
+	         + ((s->flags & SHADER_MULTITEXTURE_LIGHTMAPPED ) << 2); 
 
-
+	s->sortkey =sort;
 
 }
+
+
+
+
 
 int R_LoadShader ( const char * name ,int type )
 {
@@ -1061,8 +1044,7 @@ int R_LoadShader ( const char * name ,int type )
 		ptr = shaderbuf + offset;
 
 
-		// set defaults ;
-		s->contents=0;
+		// set defaults :
 		s->flags=0;
 		s->sort=0;
 		s->numpasses=0;
@@ -1112,7 +1094,7 @@ int R_LoadShader ( const char * name ,int type )
 		switch (type )
 		{
 		case SHADER_2D :
-			s->flags = SHADER_NOCULL | SHADER_NEEDCOLOURS | SHADER_NOPICMIP;
+			s->flags = SHADER_NOCULL  | SHADER_NOPICMIP;
 			s->numpasses = 1;
 			s->pass[0].flags =  SHADER_BLEND ;
 			s->pass[0].blendsrc=GL_SRC_ALPHA;
@@ -1125,7 +1107,7 @@ int R_LoadShader ( const char * name ,int type )
 			break;
 
 		case SHADER_BSP :
-			 s->flags = SHADER_NOCULL | SHADER_NEEDCOLOURS;
+			 s->flags = SHADER_NOCULL ;
 			 s->numpasses = 1;
 			 s->pass[0].flags = SHADER_DEPTHWRITE;
 			 s->pass[0].texref =R_Load_Texture (name ,0); 

@@ -126,3 +126,113 @@ void Matrix_Multiply_Vec2 (mat4_t a, vec2_t b, vec2_t product)
 
 
 }
+
+
+static float Matrix3_Det (float *mat)
+{
+	float det;
+
+    det = mat[0] * ( mat[4]*mat[8] - mat[7]*mat[5] )
+         - mat[1] * ( mat[3]*mat[8] - mat[6]*mat[5] )
+         + mat[2] * ( mat[3]*mat[7] - mat[6]*mat[4] );
+
+    return( det );
+      
+
+}
+
+
+
+static void Matrix3_Inverse( float *mr, float *ma )
+{
+     float det =Matrix3_Det ( ma );
+
+     if ( fabs( det ) < 0.0005 )
+       {
+			Matrix3_Identity( ma );
+			return;
+       }
+
+     mr[0] =    ma[4]*ma[8] - ma[5]*ma[7]   / det;
+     mr[1] = -( ma[1]*ma[8] - ma[7]*ma[2] ) / det;
+     mr[2] =    ma[1]*ma[5] - ma[4]*ma[2]   / det;
+
+     mr[3] = -( ma[3]*ma[8] - ma[5]*ma[6] ) / det;
+     mr[4] =    ma[0]*ma[8] - ma[6]*ma[2]   / det;
+     mr[5] = -( ma[0]*ma[5] - ma[3]*ma[2] ) / det;
+
+     mr[6] =    ma[3]*ma[7] - ma[6]*ma[4]   / det;
+     mr[7] = -( ma[0]*ma[7] - ma[6]*ma[1] ) / det;
+     mr[8] =    ma[0]*ma[4] - ma[1]*ma[3]   / det;
+}
+
+static void Matrix4_Submat( mat4_t mr, float * mb, int i, int j )
+{
+    int ti, tj, idst, jdst;
+
+    for ( ti = 0; ti < 4; ti++ )
+        {
+			if ( ti < i )
+				idst = ti;
+			else
+			if ( ti > i )
+				idst = ti-1;
+
+			for ( tj = 0; tj < 4; tj++ )
+			{
+				if ( tj < j )
+					jdst = tj;
+				else
+				if ( tj > j )
+					jdst = tj-1;
+
+				if ( ti != i && tj != j )
+					 mb[idst*3 + jdst] = mr[ti*4 + tj ];
+			}
+        }
+}
+
+static float Matrix4_Det( mat4_t mr )
+{
+     float   det, result = 0, i = 1;
+     float msub3[9];
+     int     n;
+
+     for ( n = 0; n < 4; n++, i *= -1 )
+        {
+			Matrix4_Submat( mr, msub3, 0, n );
+
+			det     = Matrix3_Det( msub3 );
+			result += mr[n] * det * i;
+        }
+
+      return( result );
+}
+
+
+
+int Matrix4_Inverse( mat4_t mr, mat4_t ma )
+{
+    float  mdet = Matrix4_Det( ma );
+    float  mtemp[9];
+      int     i, j, sign;
+
+      if ( fabs( mdet ) < 0.0005 )
+        return( 0 );
+
+      for ( i = 0; i < 4; i++ )
+			for ( j = 0; j < 4; j++ )
+			{
+				sign = 1 - ( (i +j) % 2 ) * 2;
+
+				Matrix4_Submat( ma, mtemp, i, j );
+
+				mr[i+j*4] = ( Matrix3_Det( mtemp ) * sign ) / mdet;
+			}
+
+      return( 1 );
+}
+
+
+
+
