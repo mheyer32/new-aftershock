@@ -1038,6 +1038,14 @@ void Shader_Finish (shader_t *s )
 	// check if we can use Render_Backend_Flush_Multitexture_Combine :
 	// TODO :
 
+	/* Explicit depth write for first pass */
+	/* FIXME: is this how we handle transparent ? */
+	if (! (s->flags & SHADER_DEPTHWRITE) &&
+	! (s->flags & SHADER_TRANSPARENT) &&
+	! (s->flags & SHADER_SKY) && s->numpasses > 0)
+	{
+		s->pass[0].flags |= SHADER_DEPTHWRITE;
+	}
 
 
 
