@@ -66,5 +66,3 @@ char *copystring(const char *s)
 
 	return b;
 }
-
-

@@ -32,67 +32,57 @@ char UI_name[] = "uix86.dll";
 
 EntryFunc *UI_entry;
 MainFunc *UI_main;
-extern void * UI_inst;
+extern void *UI_inst;
+
+static aboolean uiLoaded = afalse;
 
 
-static int uiLoaded=0;
-
-
-int LoadUI (void )
+aboolean LoadUI (void )
 {
+	if (uiLoaded) 
+		return atrue;
 
-	if (uiLoaded) return 1;
+	UI_inst = LoadLibrary(FS_Add_Basedir(UI_name));
 
-		UI_inst= LoadLibrary(FS_Add_Basedir(UI_name) );
-	if (!UI_inst) return 0;
+	if (!UI_inst) 
+		return 0;
 
-	UI_entry=(EntryFunc*) GetProcAddress(
-			UI_inst,   
-            "dllEntry"   
-	);
-	if (!UI_entry) return 0;
+	UI_entry = (EntryFunc *)GetProcAddress(UI_inst, "dllEntry");
+
+	if (!UI_entry) 
+		return afalse;
  
+	UI_main = (MainFunc *)GetProcAddress(UI_inst, "vmMain");
 
-	UI_main=(MainFunc*) GetProcAddress(
-			UI_inst,    
-            "vmMain"   
-	);
-
-	if (!UI_main) return 0;
+	if (!UI_main)
+		return afalse;
 	
 	UI_entry(UI_syscall);
 	
-	uiLoaded=1;
-	return 1;
+	uiLoaded = atrue;
 
+	return atrue;
 }
 
-
-int UnLoadUI (void )
+aboolean UnLoadUI (void)
 {
-
 	if (!uiLoaded)
-		return 0;
+		return afalse;
 
-	if (!UI_inst )
-		return 0;
-
-
+	if (!UI_inst)
+		return afalse;
 
 	FreeLibrary(UI_inst);
 	
-	uiLoaded=0;
+	uiLoaded = afalse;
 
-	return 1;
+	return atrue;
 }
-
 
 void UI_KeyEvent (int Key )
 {
 	UI_main(UI_KEY_EVENT,Key,0,0,0,0,0,0);
-
 }
-
 
 void UI_MouseEvent (int x, int y )
 {
@@ -101,7 +91,7 @@ void UI_MouseEvent (int x, int y )
 
 void UI_Refresh (void )
 {
-	UI_main(UI_REFRESH,(int)(g_frametime*1000.0),0,0,0,0,0,0 );
+	UI_main(UI_REFRESH,(int)(cl_frametime*1000.0),0,0,0,0,0,0 );
 }
 
 void UI_Restart (void)

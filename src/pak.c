@@ -26,50 +26,40 @@
  * unzip extensions to zlib (source included with distribution).
  */
 
-
-
-
 #define MAX_PAKFILES 64
 
 
-static unzFile pakfiles [MAX_PAKFILES] ;
+static unzFile pakfiles[MAX_PAKFILES];
 static unzFile actfile;
-static int pak_numfiles=0;
+static int pak_numfiles = 0;
 
-int Pak_Init (void )
+void Pak_Init (void)
 {
-	pak_numfiles=0;
-	memset (pakfiles,0,MAX_PAKFILES*sizeof (unzFile));
-
-	return 1;
+	pak_numfiles = 0;
+	memset (pakfiles, 0, MAX_PAKFILES * sizeof (unzFile));
 }
 
-int Pak_Shutdown (void )
+void Pak_Shutdown (void)
 {
 	int i;
 
-	for (i=0;i<pak_numfiles;i++)
-	{
+	for (i = 0;i < pak_numfiles; i++)
 		unzClose (pakfiles[i]);
-	}
 
-
-	pak_numfiles=0;
-
-	return 1;
+	pak_numfiles = 0;
 }
 
-
-int Pak_OpenPak (const char * path )
+int Pak_OpenPak (const char *path)
 {
-
 	if (!path || !path[0])
 		return 0;
 
-	if (pak_numfiles==MAX_PAKFILES)
-		Error ( "pak overflow !");
+	if (pak_numfiles == MAX_PAKFILES) {
+		Error ("Pak overflow!");
+		return 0;
+	}
 
-	pakfiles[pak_numfiles]=unzOpen(path);
+	pakfiles[pak_numfiles] = unzOpen(path);
 
 	if (!pakfiles[pak_numfiles])
 		return 0;
@@ -79,30 +69,27 @@ int Pak_OpenPak (const char * path )
 	return 1;
 }
 
-
-int Pak_OpenFile (const char * path )
+int Pak_OpenFile (const char *path)
 {
 	int i;
 
-	for (i=0;i<pak_numfiles;i++)
+	for (i = 0; i < pak_numfiles; i++)
 	{
-
 		if (unzLocateFile(pakfiles[i], path, 2) == UNZ_OK)
+		{
+			if (unzOpenCurrentFile(pakfiles[i]) == UNZ_OK)
 			{
-				if (unzOpenCurrentFile(pakfiles[i]) == UNZ_OK)
-				{
-					actfile=pakfiles[i];
-					return 1;
-				}
+				actfile = pakfiles[i];
+				return 1;
 			}
+		}
 	}
 
 	return 0;
 }
 
-int Pak_GetFileLen (const char * path )
+int Pak_GetFileLen (const char *path)
 {
-
 	unz_file_info info;
 
 	if (!Pak_OpenFile (path))
@@ -114,61 +101,52 @@ int Pak_GetFileLen (const char * path )
 	unzCloseCurrentFile(actfile);
 
     return info.uncompressed_size;
-
-
-
 }
 
-
-
-
-int Pak_ReadFile (const char * path ,int len ,void * buf )
+int Pak_ReadFile (const char *path, int len, void *buf)
 {
-	int read ;
+	int read;
 	
 	if (!Pak_OpenFile (path))
 		return 0;
-
 
 	read = unzReadCurrentFile(actfile, buf, len);
 
 	unzCloseCurrentFile(actfile);
 
-	return ( len == read );
-
+	return (len == read);
 }
 
 
-int Pak_GetFileList (const char * dir,const char * extension,char *str,int bufsize )
+int Pak_GetFileList (const char *dir, const char *extension, char *str, int bufsize)
 {
-	int len=0,alllen=0;
-	int i,state=0;
-	int found=0,allfound=0;
+	int len = 0, alllen = 0;
+	int i, state = 0;
+	int found = 0, allfound = 0;
 	
-	for (i=0;i<pak_numfiles;i++)
+	for (i = 0;i < pak_numfiles; i++)
 	{
-	
-		found=Unz_GetStringForDir(pakfiles[i],dir,extension,str+alllen,bufsize-alllen,&len);
+		found = Unz_GetStringForDir(pakfiles[i], dir, extension, str + alllen, bufsize - alllen, &len);
+
 		if (found)
-			{
-				allfound+=found;
-				state=1;
-				alllen+=len+1;	
-			}
+		{
+			allfound += found;
+			state = 1;
+			alllen += len + 1;	
+		}
 	}
+
 	return allfound;
 }
 
-
-int Pak_FileExists (const char * file )
+aboolean Pak_FileExists (const char *file)
 {
-
 	int i;
-	for (i=0;i<pak_numfiles;i++)
-		if (Unz_FileExists(pakfiles[i],file))
-			return 1;
 
+	for (i = 0; i < pak_numfiles; i++)
+		if (Unz_FileExists(pakfiles[i], file))
+			return atrue;
 
-	return 0;
+	return afalse;
 }
 

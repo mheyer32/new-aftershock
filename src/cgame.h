@@ -19,11 +19,8 @@
 #ifndef CGAME_H__
 #define CGAME_H__
 
-
-
 #include "a_shared.h"
 #include <windows.h>
-
 
 #define	MAX_ENTITIES_IN_SNAPSHOT	256
 
@@ -48,8 +45,6 @@ typedef struct {
 	int				numServerCommands;		// text based server commands to execute when this
 	int				serverCommandSequence;	// snapshot becomes current
 } snapshot_t;
-
-
 
 
 typedef enum {
@@ -164,33 +159,16 @@ typedef enum {
 } cgameExport_t;
 
 
-
-
 typedef void EntryFunc ( int (__cdecl *syscallptr)( int arg,... ) ); 
 typedef int MainFunc( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6 );
 
-
-
 extern MainFunc *CGAME_main;
-
-
 extern HINSTANCE CGAME_inst;
-
-
-
 extern EntryFunc *CGAME_entry;
-
-
 extern char  CGAME_name[];
-
 extern int (__cdecl *CGAME_syscall)( int arg, ... );
 
-
-
-int LoadCGAME (void );
-int UnLoadCGAME (void );
-
-
-
+aboolean LoadCGAME (void );
+aboolean UnLoadCGAME (void );
 
 #endif

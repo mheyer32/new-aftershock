@@ -652,10 +652,10 @@ void R_render_model (refEntity_t *re)
 	transform_ref.matrix_identity = 0;
 
 	// Set the shader time
-	saved_time = g_frametime;
+	saved_time = cl_frametime;
 
 	// is this right?
-	g_frametime = saved_time - (float)re->shaderTime / 1000.0f;
+	cl_frametime = saved_time - (float)re->shaderTime / 1000.0f;
 
 	for (j = 0; j < model->nummeshes; j++)
 	{
@@ -742,7 +742,7 @@ void R_render_model (refEntity_t *re)
 		Render_Backend_Flush(shaderref, 0);
 	}
 
-	g_frametime = saved_time;
+	cl_frametime = saved_time;
 
 	// Revert
 	Matrix4_Identity(transform_ref.matrix);
@@ -943,7 +943,7 @@ void R_Update_Screen (void )
 
 static void R_Upload_Lightmaps (void )
 {
-	int i ,texsize = 128 * 128 * 3;
+	int i, texsize = 128 * 128 * 3;
 	
 	r_numLightmaps = cm.lightmapdata_size / texsize;
 

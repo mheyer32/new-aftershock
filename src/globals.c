@@ -30,12 +30,6 @@
 #include "md3.h"
 #include "mapent.h"
 
-int r_nummodels, r_numverts, r_numplanes, r_numleafs, r_numnodes;
-int r_numshaders, r_numfaces, r_numlfaces, r_numelems;
-int r_lightmapsize;
-int r_addshaderstart;
-
-
 vec3_t r_eyepos = {0, 0, 0};
 vec3_t r_eyedir;
 float r_eye_az, r_eye_el;
@@ -45,7 +39,9 @@ float r_sinfov2;
 float r_cosfov2;
 float r_tanfov;
 int r_eyecluster;
-float g_frametime;
+
+double sv_frametime = 0.0;
+double cl_frametime = 0.0;
 
 uint_t *r_lightmaptex;
 int r_numlightmaptex;
@@ -65,4 +61,5 @@ int r_numbrushes;
 int actLeaf = 0;
 float r_sinfov;
 float r_cosfov;
+
 

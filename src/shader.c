@@ -691,27 +691,28 @@ int Shader_Init (void )
 
 	Con_Printf ("Initializing Shaders:\n");
 
-	r_shaders = (shader_t * )malloc(MAXSHADERS * sizeof(shader_t ));
+	r_shaders = (shader_t *)malloc(MAXSHADERS * sizeof(shader_t ));
 
 	numdirs = FS_GetFileList ("scripts", "shader", dirlist, 256 * MAX_APATH);
 
-	if (!numdirs )
-		Error ("Could not find any shaders !");
+	if (!numdirs)
+		Error ("Could not find any shaders!");
 
-	/* find the size of all shader scripts */
+	// find the size of all shader scripts
 	dirptr = dirlist;
 	for (i=0; i<numdirs; i++, dirptr += dirlen+1) {
 		dirlen = strlen(dirptr);
+
 		Com_sprintf(filename, sizeof(filename), "scripts/%s", dirptr);
 
 		size += FS_FileSize(filename) + 1;
 	}
 
-	/* space for the terminator */
+	// space for the terminator
 	size++;
 
-	/* allocate the memory */
-	pscripts = shaderbuf = (char * ) malloc (size);
+	// allocate the memory
+	pscripts = shaderbuf = (char * )malloc (size);
 
 	/* now load all the scripts */
 	dirptr = dirlist;

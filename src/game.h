@@ -19,7 +19,6 @@
 #ifndef GAME_H__
 #define GAME_H__
 
-
 #include "util.h"
 #include "a_shared.h"
 #include <windows.h>
@@ -70,18 +69,11 @@ typedef struct {
 	int			ownerNum;
 } entityShared_t;
 
-
-
 // the server looks at a sharedEntity, which is the start of the game's gentity_t structure
 typedef struct {
 	entityState_t	s;				// communicated by server to clients
 	entityShared_t	r;				// shared by both the server system and game
 } sharedEntity_t;
-
-
-
-
-
 
 typedef enum {
 	//============== general Quake services ==================
@@ -391,30 +383,16 @@ typedef enum {
 	BOTAI_START_FRAME				// ( int time );
 } gameExport_t;
 
-
-
 typedef void EntryFunc ( int (__cdecl *syscallptr)( int arg,... ) ); 
 typedef int MainFunc( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6 );
 
-
-
 extern MainFunc *GAME_main;
-
-
 extern HINSTANCE GAME_inst;
-
-
-
 extern EntryFunc *GAME_entry;
-
-
 extern char  GAME_name[];
-
 extern int (__cdecl *GAME_syscall)( int arg, ... );
 
-
-
-int LoadGame (void );
-int UnLoadGame (void );
+aboolean LoadGame (void);
+aboolean UnLoadGame (void);
 
 #endif

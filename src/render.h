@@ -26,7 +26,8 @@ extern float r_cosfov;
 extern float r_tanfov;
 extern float r_aspect;
 extern int r_eyecluster;     /* Current PVS cluster */
-extern float g_frametime;   /* Current time */
+extern double cl_frametime;   /* Current time */
+extern double sv_frametime;   /* Current time */
 
 #include "c_var.h"
 

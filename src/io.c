@@ -198,10 +198,9 @@ void FS_Init (const char *dir)
 
 	Con_Printf("------- FS_INIT: -------\n");
 
-	if (!Pak_Init ())
-		return ;
+	Pak_Init ();
 
-	strcpy (basedir,dir );
+	strcpy (basedir, dir);
 
 	// Find all pk3 files in the base-directory :
 	sprintf (buf, "%s/*.pk3", dir);

@@ -140,7 +140,7 @@ static char *Find_Texture (const char *filename)
 	return 0;
 }
 
-int Tex_Init (void)
+void Tex_Init (void)
 {
 	int i = 0;
 
@@ -151,18 +151,14 @@ int Tex_Init (void)
 
 	for (i = 0; i < TEX_PREGEN_LAST; i++)
 		r_textures_id[i] = -1;
-
-	return 1;
 }
 
-int Tex_Shutdown (void)
+void Tex_Shutdown (void)
 {
 	glDeleteTextures (MAX_TEXTURES, r_textures_id);
 
 	r_num_textures = 0;
 	memset (textures, 0, MAX_TEXTURES * sizeof(texture_t));
-
-	return 1;
 }
 
 ////////////////////////////////////////////

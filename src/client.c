@@ -156,7 +156,12 @@ void CL_Startup (void)
 		return;
 	}
 
-	LoadCGAME ();
+	if (!LoadCGAME ())
+	{
+		Error ("Couldn't load cgame");
+		return;
+	}
+
 	CGAME_main(CG_INIT, 0, 0, 0, 0, 0, 0, 0);
 
 	Cvar_Set ("cl_running", "1");
@@ -204,7 +209,7 @@ void CL_Run_Frame (void)
 
 		case CA_CONNECTED:
 			{
-				realtime += (g_frametime * 1000);
+				realtime += (cl_frametime * 1000);
 				CGAME_main (CG_DRAW_ACTIVE_FRAME, realtime, 0, 0, 0, 0, 0, 0);
 			}
 			break;

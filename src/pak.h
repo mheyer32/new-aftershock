@@ -18,14 +18,15 @@
 #ifndef __PAK_H__
 #define __PAK_H__
 
-int Pak_Init (void );
-int Pak_Shutdown (void );
+void Pak_Init (void);
+void Pak_Shutdown (void);
 
-int Pak_OpenPak (const char * path );
-int Pak_OpenFile (const char * path );
-int Pak_GetFileLen (const char * path );
-int Pak_ReadFile (const char * path ,int len ,void * buf );
-int Pak_GetFileList (const char * dir,const char * extension,char *str,int bufsize );
-int Pak_FileExists (const char * file );
+int Pak_OpenPak (const char *path);
+int Pak_OpenFile (const char *path);
+int Pak_GetFileLen (const char *path);
+int Pak_ReadFile (const char *path, int len, void *buf);
+int Pak_GetFileList (const char *dir, const char *extension, char *str, int bufsize );
+
+aboolean Pak_FileExists (const char *file);
 
 #endif /*__PAK_H__*/

@@ -16,37 +16,11 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-
-
 #ifndef ENGINE_H__
 #define ENGINE_H__
 
-
-
-int Engine_Init (void );
-void Engine_Render_Next_Frame ( void );
+aboolean Engine_Init (void);
+void Engine_Render_Next_Frame (void);
 void Engine_Shutdown(void);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #endif 

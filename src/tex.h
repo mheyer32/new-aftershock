@@ -31,8 +31,8 @@ enum
 	TEX_PREGEN_LAST
 };
 
-int R_Load_Texture (const char * name,int flags);
-int Tex_Init (void );
-int Tex_Shutdown (void );
+int R_Load_Texture (const char *name, int flags);
+void Tex_Init (void);
+void Tex_Shutdown (void);
 
 #endif /*__TEX_H__*/

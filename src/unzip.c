@@ -605,16 +605,11 @@ extern int ZEXPORT unzClose (unzFile file)
 
 	fclose(s->file);
 
-	
-
-
 	for (i=0;i<HASHSIZE;i++)
-
 	{
 		free(s->cache[i]);
-
-
 	}
+
 	free(s->cache);
 
 	TRYFREE(s);

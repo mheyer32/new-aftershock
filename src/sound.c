@@ -20,8 +20,7 @@
 #include "c_var.h"
 #include "io.h"
 #include "console.h"
-#include <fmod.h>
-//#include "Fmod/fmod_errors.h"
+#include "fmod/fmod.h"
 #include "sound.h"
 
 #define MAX_SAMPLES 256 
@@ -113,6 +112,12 @@ int S_Init (void)
 
 	S_GetCvars();
 
+	if (FSOUND_GetVersion() < FMOD_VERSION)
+	{
+		Con_Printf("WARNING: You are using the wrong FMOD DLL version!  You should be using FMOD %.02f\n", FMOD_VERSION);
+		return 0;
+	}
+
 	memset (samples, 0, MAX_SAMPLES * sizeof (sample_t));
 	s_num_samples = 0;
 	
@@ -121,7 +126,7 @@ int S_Init (void)
 
 	if (!FSOUND_Init(khz, NUM_CHANNELS, 0))
 	{
-		Con_Printf ("WARNING: Could not initialize Sound !\n");
+		Con_Printf ("WARNING: Could not initialize Sound!\n");
 		return 0;
 	}
 
@@ -229,7 +234,7 @@ sfxHandle_t	S_RegisterSound ( const char *sample )		// returns buzz if not found
 	// check overflow
 	if (s_num_samples == MAX_SAMPLES )
 	{
-		Con_Printf ("WARNING : Out of sample-space ! Could not register %s ! \n",sample);
+		Con_Printf ("WARNING: Out of sample-space! Could not register %s!\n", sample);
 		return -1;
 	}
 
@@ -237,7 +242,7 @@ sfxHandle_t	S_RegisterSound ( const char *sample )		// returns buzz if not found
 
 	if (!file || !f_len )
 	{
-		Con_Printf ("WARNING : Could not register sound %s \n",sample);
+		Con_Printf ("WARNING: Could not register sound %s\n",sample);
 		return 0;
 	}
 
@@ -253,7 +258,7 @@ sfxHandle_t	S_RegisterSound ( const char *sample )		// returns buzz if not found
 	if (s_loadas8bit->integer)
 		sound_mode |= FSOUND_8BITS;
 	else
-		sound_mode |= FSOUND_16BITS ;
+		sound_mode |= FSOUND_16BITS;
 
 	handle = FSOUND_Sample_Load (FSOUND_UNMANAGED, f_data, sound_mode, f_len);
 
@@ -271,10 +276,9 @@ sfxHandle_t	S_RegisterSound ( const char *sample )		// returns buzz if not found
 	VectorClear (samples[s_num_samples].origin);
 	
 	return s_num_samples++;
-
 }
 
-void		S_StartBackgroundTrack( const char *intro, const char *loop )	// empty name stops music
+void S_StartBackgroundTrack( const char *intro, const char *loop )	// empty name stops music
 {
 }
 

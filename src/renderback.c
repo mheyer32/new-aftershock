@@ -370,7 +370,7 @@ render_stripmine(int numelems, int *elems)
 static double render_func_eval(uint_t func, float *args)
 {
     // Evaluate a number of time based periodic functions
-    double x = (g_frametime + args[2]) * args[3];
+    double x = (cl_frametime + args[2]) * args[3];
 	x -= floor(x);
 
     switch (func)
@@ -544,7 +544,7 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 			{
 				case SHADER_TCMOD_ROTATE:
 				{
-					rot = pass->tc_mod[n].args[0] * g_frametime * DEG2RAD;
+					rot = pass->tc_mod[n].args[0] * cl_frametime * DEG2RAD;
 					
 					sint = sin (rot);
 					cost = cos (rot);
@@ -579,7 +579,7 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 				{
 					double k;
 
-					pos = pass->tc_mod[n].args[2] + g_frametime * pass->tc_mod[n].args[3];
+					pos = pass->tc_mod[n].args[2] + cl_frametime * pass->tc_mod[n].args[3];
 
 					for (j = 0; j < arrays.numverts; j++)
 					{
@@ -609,11 +609,11 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 					
 				case SHADER_TCMOD_SCROLL:
 				{
-					pos = pass->tc_mod[n].args[0] * g_frametime;
+					pos = pass->tc_mod[n].args[0] * cl_frametime;
 					pos -= floor( pos );
 					t1 = (float)pos;
 
-					pos = pass->tc_mod[n].args[1] * g_frametime;
+					pos = pass->tc_mod[n].args[1] * cl_frametime;
 					pos -= floor( pos );
 					t2 = (float)pos;
 
@@ -983,7 +983,7 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 			int frame ;
 
 			if (!pass->anim_numframes || pass->anim_numframes > 8) return ;
-			frame = (int)(g_frametime * pass->anim_fps) % pass->anim_numframes;
+			frame = (int)(cl_frametime * pass->anim_fps) % pass->anim_numframes;
 			
 			texture =pass->anim_frames[frame];
 		}
@@ -1155,7 +1155,7 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 		int frame ;
 
 		if (!pass->anim_numframes || pass->anim_numframes > 8) return ;
-		frame = (int)(g_frametime * pass->anim_fps) % pass->anim_numframes;
+		frame = (int)(cl_frametime * pass->anim_fps) % pass->anim_numframes;
 			
 		texture =pass->anim_frames[frame];
 	}

@@ -70,7 +70,7 @@ void Engine_Shutdown (void)
 	Cbuf_AddText("writeconfig \n");
 	Cbuf_Execute();
 */
-	
+	SV_Shutdown ();
 	CL_Shutdown ();
 	Net_Shutdown();
 	Cbuf_Free();
@@ -80,7 +80,6 @@ void Engine_Shutdown (void)
 	Key_Shutdown ();
 	FS_Shutdown();
 }
-
 
 static void Cmd_Quit (void)
 {
@@ -154,7 +153,7 @@ void Engine_Render_Next_Frame (void)
 	if (Diff > (uint_t )(1000.0 / (float)com_maxfps->integer))
 	{
 		LastTime = Now;
-		g_frametime = (double)Now / 1000.0;
+		cl_frametime = (double)Now / 1000.0;
 
 		numframes++;
 		Cbuf_Execute();

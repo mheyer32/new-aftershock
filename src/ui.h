@@ -19,7 +19,6 @@
 #ifndef UI_H__
 #define UI_H__
 
-
 typedef enum {
 	UI_ERROR,
 	UI_PRINT,
@@ -138,24 +137,17 @@ typedef enum {
 	UIMENU_BAD_CD_KEY
 } uiMenuCodes_t;
 
-
-
-
 typedef void EntryFunc ( int (__cdecl *syscallptr)( int arg,... ) ); 
 typedef int MainFunc( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6 );
-
 
 extern EntryFunc *UI_entry;
 extern MainFunc *UI_main;
 extern void* UI_inst;
-
-
 extern char  UI_name[];
-
 extern int (__cdecl *UI_syscall)( int arg, ... );
 
-int LoadUI (void);
-int UnLoadUI (void);
+aboolean LoadUI (void);
+aboolean UnLoadUI (void);
 void UI_KeyEvent (int Key);
 void UI_MouseEvent (int x, int y);
 void UI_Refresh (void);

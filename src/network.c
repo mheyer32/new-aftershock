@@ -18,10 +18,6 @@
  */
 
 // From GOLK :www.digital-phenomenon.de 
-
-
-
-
 #include "a_shared.h"
 #include "console.h"	/* Con_Printf */
 #include "c_var.h"		/* Cvar_Get */
@@ -129,7 +125,7 @@ aboolean Net_Resolve( const char *hostname, net_address_t *addr )
 
 	Con_Printf( "Couldn't resolve address\n" );
 
-	return( afalse );
+	return afalse;
 }
 
 /*
@@ -148,10 +144,10 @@ aboolean Net_SendPacket( const char *buffer, int size, const net_address_t *addr
 	sent = sendto( local_socket, buffer, size, 0, (struct sockaddr *) address, sizeof(net_address_t) );
 	if( sent == NET_SOCKET_ERROR ) {
 		Con_Printf( "ERROR: Net_SendPacket: %s\n", Net_GetErrorString() );
-		return( afalse );
+		return afalse;
 	}
 
-	return( sent==size );
+	return (sent == size);
 }
 
 /*
@@ -178,12 +174,12 @@ aboolean Net_GetPacket( char *buffer, int *size, net_address_t *address )
 			Con_Printf( "ERROR: Net_GetPacket: %s\n", Net_GetErrorString() );
 		}
 		*size = 0;
-		return( afalse );
+		return afalse;
 	}
 
 	*size = len;
 
-	return( atrue );
+	return atrue;
 }
 
 int NET_CompareAddr( const net_address_t *addr1, const net_address_t *addr2 )
@@ -195,7 +191,7 @@ int NET_CompareAddr( const net_address_t *addr1, const net_address_t *addr2 )
 			return( UDP_CompareAddr( addr1, addr2 ) );
 		default:
 			Con_Printf( "NET_CompareAddr: bad address type\n" );
-			return( -1 );
+			return -1;
 	}
 }
 
@@ -208,7 +204,7 @@ int NET_CompareBaseAddr( const net_address_t *addr1, const net_address_t *addr2 
 			return( UDP_CompareBaseAddr( addr1, addr2 ) );
 		default:
 			Con_Printf( "NET_CompareBaseAddr: bad address type\n" );
-			return( -1 );
+			return -1;
 	}
 }
 
@@ -222,13 +218,13 @@ aboolean Net_Init( void )
 	char buf[1024];
 
 	if (SocksReady)
-		return (1);
+		return atrue;
 
 #ifdef _WIN32
 	failed = WSAStartup( WINSOCK_VERSION, &wsaData );
 	if( failed ) {
 		Con_Printf( "WARNING: Winsock initialization failed, returned %d\n", failed );
-		return( afalse );
+		return afalse;
 	} else {
 		Con_Printf( "Winsock initialized\n" );
 	}
@@ -270,7 +266,7 @@ aboolean Net_Init( void )
 
 	MSG_Alloc( &net_message, NET_MAXMESSAGE );
 
-	return (atrue);
+	return atrue;
 }
 
 aboolean Net_Shutdown(void)
@@ -285,12 +281,12 @@ aboolean Net_Shutdown(void)
 
 #ifdef _WIN32
 	if (WSACleanup())
-		return (afalse);
+		return afalse;
 #endif
 
 	SocksReady = afalse;
 
 	MSG_Free( &net_message );
 
-	return (atrue);
+	return atrue;
 }

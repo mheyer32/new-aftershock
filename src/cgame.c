@@ -30,50 +30,46 @@ int (__cdecl *CGAME_syscall)( int arg, ... ) = CGAME_Call;
 char CGAME_name[] = "cgamex86.dll";
 HINSTANCE UI_inst, GAME_inst, CGAME_inst;
 
-static int cgameLoaded = 0;
+static aboolean cgameLoaded = afalse;
 
-
-int LoadCGAME (void )
+aboolean LoadCGAME (void)
 {
-	if (cgameLoaded) return 1;
+	if (cgameLoaded) 
+		return atrue;
 
 	CGAME_inst = LoadLibrary(FS_Add_Basedir(CGAME_name));
 
 	if (!CGAME_inst) 
-		return 0;
+		return afalse;
 
-	CGAME_entry = (EntryFunc *) GetProcAddress(
-			CGAME_inst,   
-            "dllEntry"   
-	);
+	CGAME_entry = (EntryFunc *)GetProcAddress(CGAME_inst, "dllEntry");
 
 	if (!CGAME_entry)
-		return 0;
+		return afalse;
 
-	CGAME_main = (MainFunc*) GetProcAddress(
-			CGAME_inst,    
-            "vmMain"   
-	);
+	CGAME_main = (MainFunc *)GetProcAddress(CGAME_inst, "vmMain");
 
 	if (!CGAME_main) 
-		return 0;
+		return afalse;
 	
 	CGAME_entry(CGAME_syscall);
 	
-	cgameLoaded = 1;
-	return 1;
+	cgameLoaded = atrue;
+
+	return atrue;
 }
 
-int UnLoadCGAME (void)
+aboolean UnLoadCGAME (void)
 {
 	if (!cgameLoaded) 
-		return 0;
+		return afalse;
 
 	if (!CGAME_inst)
-		return 0;
+		return afalse;
 
 	FreeLibrary(CGAME_inst);
 
-	cgameLoaded = 0;
-	return 1;
+	cgameLoaded = afalse;
+
+	return atrue;
 }
