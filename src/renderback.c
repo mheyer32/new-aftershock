@@ -219,9 +219,6 @@ void render_backend_sky(int numsky, int *skylist)
     skyheight = r_shaders[shader].skyheight;
     arrays.numverts = arrays.numelems = 0;
 
-   // glEnableClientState(GL_VERTEX_ARRAY);
-   // glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
     /* Center skybox on camera to give the illusion of a larger space */
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -251,8 +248,7 @@ void render_backend_sky(int numsky, int *skylist)
 }
 
 
-static void
-render_pushface(cface_t *face)
+static void render_pushface(cface_t *face)
 {
     int *elem = face->elems;
     cvertex_t *vert = face->verts;
@@ -274,8 +270,6 @@ render_pushface(cface_t *face)
     }	    
 }
 
-
-
 void R_Push_raw (vec3_t *v,vec2_t *tc, colour_t *c, int *elems, int numverts, int numelems)
 {
 	int i;
@@ -295,9 +289,7 @@ void R_Push_raw (vec3_t *v,vec2_t *tc, colour_t *c, int *elems, int numverts, in
 	}
 }
 
-
-static void
-render_pushmesh(mesh_t *mesh)
+static void render_pushmesh(mesh_t *mesh)
 {
     int  i,*elem;
 
@@ -308,12 +300,11 @@ render_pushmesh(mesh_t *mesh)
     elem = mesh->elems;
     for (i = 0; i < mesh->numelems/3; ++i)
     {
-	arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
-	arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
-	arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
+		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
+		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
+		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
     }
 	
-
 	for (i=0;i<mesh->size[1]*mesh->size[0];i++)
 	{
 	    vec_copy(mesh->points[i], arrays.verts[arrays.numverts]);
@@ -665,13 +656,21 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 {
 	int i;
-	byte rgb;
+	byte c;
 	colour_t *col = NULL;
 
 	switch (pass->rgbgen)
 	{
 		case RGB_GEN_IDENTITY_LIGHTING:
-			memset (arrays.mod_colour, r_overBrightBits->integer ? 128 : 255, arrays.numverts * 4);
+			c = (r_overBrightBits->integer) ? 255 : 127;
+
+			for (i = 0; i < arrays.numverts;i++) 
+			{
+				arrays.mod_colour[i][0] = c;
+				arrays.mod_colour[i][1] = c;
+				arrays.mod_colour[i][2] = c;
+			}
+
 			col = arrays.mod_colour;
 			break;
 
@@ -681,12 +680,14 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 			break;
 
 		case RGB_GEN_WAVE:
-			rgb = (byte)(255*(float)render_func_eval(pass->rgbgen_func.func,
+			c = (byte)(255.0f * (float)render_func_eval(pass->rgbgen_func.func,
 							pass->rgbgen_func.args));
-			memset (arrays.mod_colour, rgb, arrays.numverts * 4);
-
-			for (i = 0; i < arrays.numverts;i++)
-				arrays.mod_colour[i][3] = 255;
+			for (i = 0; i < arrays.numverts;i++) 
+			{
+				arrays.mod_colour[i][0] = c;
+				arrays.mod_colour[i][1] = c;
+				arrays.mod_colour[i][2] = c;
+			}
 
 			col = arrays.mod_colour;
 			break;
@@ -732,6 +733,15 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 	// TODO !!!!
 	switch (pass->alpha_gen)
 	{
+		case ALPHA_GEN_WAVE:
+			c = (byte)(255.0f * (float)render_func_eval(pass->alphagen_func.func,
+							pass->alphagen_func.args));
+
+			for (i = 0; i < arrays.numverts;i++) 
+				col[i][3] = c;
+
+			break;
+
 		case ALPHA_GEN_PORTAL:
 			for (i = 0; i < arrays.numverts; i++)
 			{
@@ -741,13 +751,30 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 			}
 			break;
 
-		case ALPHA_GEN_DEFAULT:
 		case ALPHA_GEN_VERTEX:
+			if (pass->rgbgen != RGB_GEN_VERTEX)
+			{
+				for (i = 0; i < arrays.numverts; i++)
+					col[i][3] = arrays.colour[i][3];
+			}
+			break;
+
 		case ALPHA_GEN_ENTITY:
-		case ALPHA_GEN_LIGHTINGSPECULAR:
-		default:
 			for (i = 0; i < arrays.numverts; i++)
 				col[i][3] = arrays.colour[i][3];
+			break;
+
+		case ALPHA_GEN_LIGHTINGSPECULAR:
+			break;
+
+		case ALPHA_GEN_DEFAULT:
+		default:
+			if ((pass->rgbgen != RGB_GEN_VERTEX) && (pass->rgbgen != RGB_GEN_IDENTITY))
+			{
+				for (i = 0; i < arrays.numverts; i++)
+					col[i][3] = arrays.colour[i][3];
+			}
+
 			break;
 	}
 

@@ -24,22 +24,23 @@
 #define MAX_TC_MOD  8
 
 
-#define SHADER_DOCULL 1<<1
-/* Shader flags */
+#define SHADER_DOCULL 1 << 1
+
+// Shader flags
 enum
 {
     SHADER_TRANSPARENT   = 1 << 1,
-    SHADER_DEPTHWRITE    = 1 << 2,  /* Also used for pass flag */
+    SHADER_DEPTHWRITE    = 1 << 2,		// Also used for pass flag
     SHADER_SKY           = 1 << 3,
     SHADER_NOMIPMAPS     = 1 << 4,
     SHADER_DEFORMVERTS   = 1 << 6,
 	SHADER_POLYGONOFFSET = 1 << 7,
 	SHADER_FOG           = 1 << 8,
 	SHADER_NOPICMIP      = 1 << 9,
-	SHADER_CLAMP         = 1 << 10,  // will just be used for texture loading 
+	SHADER_CLAMP         = 1 << 10,		// will just be used for texture loading 
 };
 
-/* Shaderpass flags */
+// Shaderpass flags
 enum
 {
     SHADER_LIGHTMAP   = 1 << 0,
@@ -49,7 +50,7 @@ enum
     SHADER_ANIMMAP    = 1 << 5,
 };	
 
-/* Transform functions */
+// Transform functions
 enum
 {
     SHADER_FUNC_SIN             = 1,
@@ -60,10 +61,10 @@ enum
 
 };
 
-/* tcmod functions */
+// tcmod functions
 enum 
 {
-	SHADER_TCMOD_NONE ,
+	SHADER_TCMOD_NONE,
 	SHADER_TCMOD_SCALE,
 	SHADER_TCMOD_SCROLL,
 	SHADER_TCMOD_ROTATE,
@@ -72,8 +73,7 @@ enum
 	SHADER_TCMOD_STRETCH
 };
 
-
-// SORTING 
+// sorting
 enum {
 	SHADER_SORT_NONE = 0,
 	SHADER_SORT_PORTAL = 1,
@@ -83,48 +83,43 @@ enum {
 	SHADER_SORT_UNDERWATER = 8,
 	SHADER_SORT_ADDITIVE = 9,
 	SHADER_SORT_NEAREST = 16
-} ;
+};
 
 
-// RGB_Gen :
-
+// RedBlueGreen pal generation
 enum {
-	RGB_GEN_NONE ,
-	RGB_GEN_IDENTITY_LIGHTING ,
+	RGB_GEN_NONE,
+	RGB_GEN_IDENTITY_LIGHTING,
 	RGB_GEN_IDENTITY,
-	RGB_GEN_WAVE ,
-	RGB_GEN_ENTITY ,
+	RGB_GEN_WAVE,
+	RGB_GEN_ENTITY,
 	RGB_GEN_ONE_MINUS_ENTITY,
 	RGB_GEN_VERTEX,
 	RGB_GEN_ONE_MINUS_VERTEX,
-	RGB_GEN_LIGHTING_DIFFUSE ,
+	RGB_GEN_LIGHTING_DIFFUSE,
 	RGB_GEN_EXACT_VERTEX 
 };
 
 
-// ALPHA_GEN :
-
+// alpha channel generation
 enum {
-	ALPHA_GEN_DEFAULT =0,
-	ALPHA_GEN_PORTAL =1,
-	ALPHA_GEN_VERTEX ,
+	ALPHA_GEN_DEFAULT,
+	ALPHA_GEN_PORTAL,
+	ALPHA_GEN_VERTEX,
 	ALPHA_GEN_ENTITY,
 	ALPHA_GEN_LIGHTINGSPECULAR,
-	ALPHA_GEN_WAVE // TODO !
+	ALPHA_GEN_WAVE
 };
 
-
-// TC_GEN :
-
+// texture coordinates generation
 enum {
-	TC_GEN_BASE =0,
-	TC_GEN_LIGHTMAP =1,
-	TC_GEN_ENVIRONMENT =2,
-	TC_GEN_VECTOR =3,
+	TC_GEN_BASE,
+	TC_GEN_LIGHTMAP,
+	TC_GEN_ENVIRONMENT,
+	TC_GEN_VECTOR,
 };
 
-// Deform_Vertices :
-
+// vertices deformation
 enum {
 	DEFORMV_NONE,
 	DEFORMV_WAVE,
@@ -135,17 +130,15 @@ enum {
 	DEFORMV_AUTOSPRITE2
 };
 
-
-// The flushing functions :
+// The flushing functions
 enum {
-	SHADER_FLUSH_GENERIC ,
-	SHADER_FLUSH_MULTITEXTURE_LIGHTMAP ,
-	SHADER_FLUSH_MULTITEXTURE_COMBINE ,
+	SHADER_FLUSH_GENERIC,
+	SHADER_FLUSH_MULTITEXTURE_LIGHTMAP,
+	SHADER_FLUSH_MULTITEXTURE_COMBINE,
 	SHADER_FLUSH_VERTEX_LIT
 };
 
-
-// Culling :
+// Culling
 enum {
 	SHADER_CULL_DISABLE,
 	SHADER_CULL_FRONT,
@@ -156,15 +149,11 @@ enum {
 #define SHADER_MD3 1
 #define SHADER_2D  2
 
-
-
-
-
-/* Periodic functions */
+// Periodic functions
 typedef struct
 {
-    unsigned int  func;     /* SHADER_FUNC enum */
-    float args[4];   /* offset, amplitude, phase_offset, rate */
+    unsigned int func;		/* SHADER_FUNC enum */
+    float args[4];			/* offset, amplitude, phase_offset, rate */
 } shaderfunc_t;
 
 typedef struct {
@@ -183,14 +172,15 @@ typedef struct
     float alphafuncref;         /* glAlphaFunc arg2 */
     int   rgbgen;             
     shaderfunc_t rgbgen_func;
-	int tc_gen ;
+	int tc_gen;
 	vec3_t tc_gen_s;
 	vec3_t tc_gen_t;
     int  num_tc_mod;               
-	tc_mod_t tc_mod [ MAX_TC_MOD];
+	tc_mod_t tc_mod [MAX_TC_MOD];
 	shaderfunc_t tc_mod_stretch;
 
-	int alpha_gen ;
+	int alpha_gen;
+    shaderfunc_t alphagen_func;
 
     float anim_fps;             /* Animation frames per sec */
     int anim_numframes;
@@ -200,22 +190,21 @@ typedef struct
 /* Shader info */
 typedef struct
 {	
-	char name [65];
-	byte sortkey ;  // a precalculated sortkey which is added to the shaderkey ; (TODO )
+	char name[65];
+	byte sortkey;  // a precalculated sortkey which is added to the shaderkey ; (TODO )
 	byte flush;      // FLUSH_ENUM
 	byte cull;
     unsigned int  flags;
 //	int contents;
     int numpasses;
-	int sort ;
+	int sort;
 	int deform_vertices;
     shaderpass_t pass[SHADERPASS_MAX];
     float skyheight;          /* Height for skybox */
     float deform_params[4];
-	float fog_params [4];
+	float fog_params[4];
     shaderfunc_t deformv_wavefunc;
 } shader_t;
-
 
 
 typedef struct
@@ -225,7 +214,6 @@ typedef struct
     void (* func)(shader_t *shader, shaderpass_t *pass,
 		  int numargs, char **args);
 } shaderkey_t;
-
 
 #define MAX_NUM_TEXTURES 512
 #define SHADER_ARGS_MAX (SHADER_ANIM_FRAMES_MAX+1)
@@ -247,25 +235,24 @@ typedef struct
 } texture_t;
 
 
-extern texture_t * r_dynamic_tex;
+extern texture_t *r_dynamic_tex;
 
 extern int r_numtextures;
 extern shader_t *r_shaders;
 extern texfile_t *r_texfiles;
 
 
-extern int shader_white ;
-extern int shader_text ;
-extern int shader_console ;
+extern int shader_white;
+extern int shader_text;
+extern int shader_console;
 
 int Shader_Init (void);
 int Shader_Shutdown (void);
 
 
+int  R_RegisterShaderNoMip(const char *name);
+int R_RegisterShader (const char *name);
 
-int  R_RegisterShaderNoMip( const char *name ) ;
-int R_RegisterShader ( const char * name );
-
-int R_LoadShader ( const char * name ,int type );
+int R_LoadShader (const char *name, int type);
 
 #endif /*__SHADER_H__*/

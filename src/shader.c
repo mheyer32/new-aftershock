@@ -635,6 +635,15 @@ static void shaderpass_alphagen (shader_t *shader, shaderpass_t *pass, int numar
 	{
 		pass->alpha_gen = ALPHA_GEN_ENTITY;
 	}
+	else if (!stricmp (args[0], "wave"))
+	{
+		if (numargs != 6)
+			Syntax();
+
+		shader_parsefunc(&args[1], &pass->alphagen_func);
+
+		pass->alpha_gen = ALPHA_GEN_WAVE;
+	}
 	else if (!stricmp (args[0], "lightingspecular"))
 	{
 		pass->alpha_gen = ALPHA_GEN_LIGHTINGSPECULAR;

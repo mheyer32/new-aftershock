@@ -2244,7 +2244,7 @@ int WIN_Reset_DisplaySettings (void )
 	return (res==DISP_CHANGE_SUCCESSFUL);
 }
 
-
+static POINT mpos;
 
 // put somewhere else 
 
@@ -2376,7 +2376,11 @@ int WIN_CreateWindow ( HINSTANCE inst ,int nCmdShow)
 
    ShowWindow( hWnd, nCmdShow );
    UpdateWindow( hWnd );
+
+	GetCursorPos (&mpos);
+
 	ShowCursor (FALSE);		// Vic: hide mouse
+
    return 1;
 
 
@@ -2411,6 +2415,7 @@ int WIN_Destroy_Window (void )
 		
 		DestroyWindow ( hWnd);
 
+		SetCursorPos (mpos.x, mpos.y);
 	ShowCursor (TRUE);		// Vic: hide mouse
 
 		hWnd=NULL;
