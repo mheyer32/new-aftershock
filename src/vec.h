@@ -35,7 +35,8 @@
 #define vec2_copy(s,d) {d[0]=s[0];d[1]=s[1];}
 #define vec2_avg(a,b,c) {c[0]=(a[0]+b[0])*0.5f;c[1]=(a[1]+b[1])*0.5f;}
 
-#define colour_copy(s,d) *(uint_t*)d = *(uint_t*)s
+#define colour_copy(s,d) (d[0]=s[0],d[1]=s[1],d[2]=s[2],d[3]=s[3])
+//#define colour_copy(s,d) *(uint_t*)d = *(uint_t*)s
 //#define colour_copy(s,d)  { d[0]=s[0] ;d[1]=s[1];d[2]=s[2];d[3]=s[3];}
 #define colour_avg(a,b,c) {c[0]=((int)a[0]+(int)b[0])/2;c[1]=((int)a[1]+(int)b[1])/2;c[2]=((int)a[2]+(int)b[2])/2;c[3]=((int)a[3]+(int)b[3])/2;}
 

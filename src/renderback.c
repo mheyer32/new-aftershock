@@ -71,206 +71,72 @@ extern reference_t transform_ref;
 void
 R_backend_init(void)
 {
-    
-    arrays.verts = (vec3_t*)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
-	arrays.norms = (vec3_t*)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
-    arrays.tex_st = (texcoord_t*)malloc(MAX_ARRAYS_VERTS * sizeof(texcoord_t));
-	arrays.lm_st = (texcoord_t*)malloc(MAX_ARRAYS_VERTS * sizeof(texcoord_t));
-	
-	arrays.elems = (int*)malloc(MAX_ARRAYS_ELEMS * sizeof(int));
-    arrays.colour = (colour_t*)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));
-	arrays.mod_colour= (colour_t*)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));
-	arrays.entity_colour = 	(colour_t*)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));	
+    arrays.verts = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
+	arrays.norms = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
+    arrays.tex_st = (texcoord_t *)malloc(MAX_ARRAYS_VERTS * sizeof(texcoord_t));
+	arrays.lm_st = (texcoord_t *)malloc(MAX_ARRAYS_VERTS * sizeof(texcoord_t));
+	arrays.elems = (int *)malloc(MAX_ARRAYS_ELEMS * sizeof(int));
+    arrays.colour = (colour_t *)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));
+	arrays.mod_colour= (colour_t *)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));
+	arrays.entity_colour = 	(colour_t *)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));	
 
 	if (!r_allowExtensions->integer)
 	{
-
-		arrays.stage_tex_st = (vec2_t ** ) malloc (1 * sizeof(vec2_t*));
-		arrays.stage_tex_st[0] =  (vec2_t * ) malloc (MAX_ARRAYS_VERTS * sizeof(vec2_t));
+		arrays.stage_tex_st = (vec2_t **)malloc (sizeof(vec2_t *));
+		arrays.stage_tex_st[0] =  (vec2_t *)malloc (MAX_ARRAYS_VERTS * sizeof(vec2_t));
 	}
 	else 
 	{
 		int i;
-		arrays.stage_tex_st = (vec2_t ** ) malloc (glconfig.maxActiveTextures * sizeof(vec2_t*));
+		arrays.stage_tex_st = (vec2_t **)malloc (glconfig.maxActiveTextures * sizeof(vec2_t *));
 		
-		for (i=0;i<glconfig.maxActiveTextures;i++)
-		{	
-			arrays.stage_tex_st[i] =  (vec2_t * ) malloc (MAX_ARRAYS_VERTS * sizeof(vec2_t));
-		}
-
+		for (i = 0; i < glconfig.maxActiveTextures; i++)
+			arrays.stage_tex_st[i] =  (vec2_t *)malloc (MAX_ARRAYS_VERTS * sizeof(vec2_t));
 	}
-
-
-
 }
 
 void R_backend_shutdown(void )
 {
-
 	free(arrays.verts);
     free(arrays.tex_st);
     free(arrays.lm_st);
-	free (arrays.norms);
+	free(arrays.norms);
     free(arrays.elems);
     free(arrays.colour);
-	free (arrays.mod_colour);
+	free(arrays.mod_colour);
 
-
-	if (!r_allowExtensions->integer)
-	{
+	if (!r_allowExtensions->integer) {
 		free (arrays.stage_tex_st[0]);
 	}
 	else 
 	{
 		int i;
-		for (i=0;i<glconfig.maxActiveTextures;i++)
-		{
+
+		for (i = 0; i < glconfig.maxActiveTextures; i++)
 			free (arrays.stage_tex_st[i]);
-
-		}
-
 	}
 
 	free (arrays.stage_tex_st);
-
-
 }
 
 
 static void R_Push_Quad ( quad_t * q )
 {
-
 	int i;
-	//int * elem=elems;
 
-	for (i=0;i<6;i++)
+	for (i = 0; i < 6; i++)
 	{
-	arrays.elems[arrays.numelems++] = arrays.numverts + q->elems[i];
+		arrays.elems[arrays.numelems++] = arrays.numverts + q->elems[i];
 	}
 
-
-	for (i=0;i<4;i++)
+	for (i = 0; i < 4; i++)
 	{
 		vec_copy(q->verts[i], arrays.verts[arrays.numverts]);
 		vec2_copy(q->tc[i], arrays.tex_st[arrays.numverts]);
 		colour_copy(q->color[i], arrays.colour[arrays.numverts]);
-
 		arrays.numverts++;
 	}
-
-	
 }
-
-
-colour_t * R_Make_Rgba (shaderpass_t * pass )
-{
-	int i;
-	byte rgb;
-	colour_t * col;
-	switch (pass->rgbgen)
-	{
-	case RGB_GEN_NONE:  // should not happen !!
-		break;
-
-	case RGB_GEN_IDENTITY_LIGHTING :
-		memset (arrays.mod_colour,r_overBrightBits->integer ? 128 : 255 ,arrays.numverts *4 );
-		col= arrays.mod_colour;
-		break;
-	case RGB_GEN_IDENTITY:
-		memset (arrays.mod_colour,255 ,arrays.numverts *4 );
-		col= arrays.mod_colour;
-		break;
-	case RGB_GEN_WAVE :
-		rgb = (byte)255 * (float)render_func_eval(pass->rgbgen_func.func,
-					    pass->rgbgen_func.args);
-		memset (arrays.mod_colour,rgb,arrays.numverts * 4 );
-		for (i=0;i< arrays.numverts;i++)
-			arrays.mod_colour[i][3] =255;
-
-		col= arrays.mod_colour;
-		break;
-	case RGB_GEN_ENTITY :
-		col= arrays.entity_colour;
-		break;
-	case RGB_GEN_ONE_MINUS_ENTITY:
-		for (i=0;i<arrays.numverts;i++)
-		{
-			arrays.mod_colour[i][0] = 255 - arrays.entity_colour[i][0];
-			arrays.mod_colour[i][1] = 255 - arrays.entity_colour[i][1];
-			arrays.mod_colour[i][2] = 255 - arrays.entity_colour[i][2];
-			arrays.mod_colour[i][2] = 255 ;
-		}
-		break;
-	case RGB_GEN_VERTEX:
-		col= arrays.colour;
-		break;
-	case RGB_GEN_ONE_MINUS_VERTEX:
-		for (i=0;i<arrays.numverts;i++)
-		{
-			arrays.mod_colour[i][0] = 255 - arrays.colour[i][0];
-			arrays.mod_colour[i][1] = 255 - arrays.colour[i][1];
-			arrays.mod_colour[i][2] = 255 - arrays.colour[i][2];
-		}
-		col= arrays.mod_colour;
-		break;
-	case RGB_GEN_LIGHTING_DIFFUSE :
-		// TODO 
-		memset (arrays.mod_colour,255 ,arrays.numverts *4 );
-		col= arrays.mod_colour;
-		break;
-
-
-
-
-	default :
-		col= arrays.colour;
-
-		break;
-
-	}
-
-
-		// TODO !!!!
-	switch (pass->alpha_gen)
-	{
-
-	case  ALPHA_GEN_PORTAL :
-		
-		for (i=0;i<arrays.numverts;i++)
-		{
-			// TODO 
-			int alpha;
-			alpha = 255.0 * 1.0 /Distance (r_eyepos,arrays.verts[i]);	
-			
-			if (alpha>255 )
-				alpha = 255;
-
-			col[i][3] = alpha;
-		}
-		// TODO
-		break;	// Vic
-
-	case ALPHA_GEN_DEFAULT :
-	case ALPHA_GEN_VERTEX :
-	case ALPHA_GEN_ENTITY:
-	case ALPHA_GEN_LIGHTINGSPECULAR:
-	default :
-		for (i=0;i<arrays.numverts;i++)
-			col[i][3]=arrays.colour[i][3];
-		
-	break;
-
-	}
-
-
-	return col;
-
-}
-
-
-
-
-
 
 void Render_backend_Overlay ( quad_t * q,int numquads )
 {
@@ -540,109 +406,33 @@ render_stripmine(int numelems, int *elems)
     }
 }
 
-static double
-render_func_eval(uint_t func, float *args)
+static double render_func_eval(uint_t func, float *args)
 {
-    double x, y;
-
-    /* Evaluate a number of time based periodic functions */
-    /* y = args[0] + args[1] * func( (time + arg[3]) * arg[2] ) */
-    
-    x = (g_frametime + args[2]) * args[3];
-    x -= floor(x);
+    // Evaluate a number of time based periodic functions
+    double x = (g_frametime + args[2]) * args[3];
+	x -= floor(x);
 
     switch (func)
     {
-	case SHADER_FUNC_SIN:
-	    y = sin(x * TWOPI);
-	    break;
-	    
-	case SHADER_FUNC_TRIANGLE:
-	    if (x < 0.5)
-		y = 2.0 * x - 1.0;
-	    else
-		y = -2.0 * x + 2.0;
-	    break;
-	    
-	case SHADER_FUNC_SQUARE:
-	    if (x < 0.5)
-		y = 1.0;
-	    else
-		y = -1.0;
-	    break;
-	    
-	case SHADER_FUNC_SAWTOOTH:
-	    y = x;
-	    break;
-	    
-	case SHADER_FUNC_INVERSESAWTOOTH:
-	    y = 1.0 - x;
-	    break;
+		case SHADER_FUNC_SIN:
+			return sin(x * TWOPI) * args[1] + args[0];
+			
+		case SHADER_FUNC_TRIANGLE:
+			return (x < 0.5) ? (2.0f * x - 1.0f) * args[1] + args[0] : 
+				(-2.0f * x + 2.0f) * args[1] + args[0];
+			
+		case SHADER_FUNC_SQUARE:
+			return (x < 0.5f) ? args[1] + args[0] : args[0] - args[1];
+			
+		case SHADER_FUNC_SAWTOOTH:
+			return x * args[1] + args[0];
+			
+		case SHADER_FUNC_INVERSESAWTOOTH:
+			return (1.0f - x) * args[1] + args[0];
     }
 
-    return y * args[1] + args[0];
+    return 0;
 }
-/*
-static int
-render_setstate(shaderpass_t *pass, uint_t lmtex)
-{// TODO !!!!!
-    if (pass->flags & SHADER_LIGHTMAP)
-    {
-	/* Select lightmap texture */
-/*	GL_BindTexture(GL_TEXTURE_2D, map.lightmaps[lmtex]);
-    }
-    else if (pass->flags & SHADER_ANIMMAP)
-    {
-	uint_t texobj;
-	int frame;
-
-	/* Animation: get frame for current time */
-/*	if (!pass->anim_numframes || pass->anim_numframes > 8) return 0;
-	frame = (int)(g_frametime * pass->anim_fps) % pass->anim_numframes;
-	texobj = pass->anim_frames[frame];
-	if (texobj < 0) return 0;
-	GL_BindTexture(GL_TEXTURE_2D, texobj);
-    }
-    else
-    {
-	uint_t texobj;
-
-	/* Set normal texture */
-/*	if (pass->texref < 0) return 0;
-	texobj = pass->texref;
-	GL_BindTexture(GL_TEXTURE_2D, texobj);
-    }
-
-	glTexCoordPointer(2, GL_FLOAT, 0, R_Make_TexCoords(pass,0));
-
-    if (pass->flags & SHADER_BLEND)
-    {
-	GL_Enable(GL_BLEND);
-	GL_BlendFunc(pass->blendsrc, pass->blenddst);
-    }
-    else
-	GL_Disable(GL_BLEND);
-
-    if (pass->flags & SHADER_ALPHAFUNC)
-    {
-	GL_Enable(GL_ALPHA_TEST);
-	GL_AlphaFunc(pass->alphafunc, pass->alphafuncref);
-    }
-    else
-	GL_Disable(GL_ALPHA_TEST);
-    
-    GL_DepthFunc(pass->depthfunc);
-    if (pass->flags & SHADER_DEPTHWRITE)
-	GL_DepthMask(GL_TRUE);
-    else
-	GL_DepthMask(GL_FALSE);
-
-    GL_EnableClientState(GL_COLOR_ARRAY);
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, R_Make_Rgba (pass));
-  
-    return 1;
-}
-*/
 
 // TODO !!!
 static void Render_Backend_Make_Vertices (shader_t *s )
@@ -651,356 +441,323 @@ static void Render_Backend_Make_Vertices (shader_t *s )
 
 	if (s->flags & SHADER_DEFORMVERTS )
 	{
-		float deflect ;
+		float deflect;
 		vec3_t v;
+
 		switch (s->deform_vertices)
 		{
+			case DEFORMV_NONE:
+				break;
 
-		case DEFORMV_NONE:
-			break;
-		case DEFORMV_WAVE:
+			case DEFORMV_WAVE:
+				for (i = 0; i < arrays.numverts; i++)
+				{
+					deflect = render_func_eval(s->deformv_wavefunc.func, s->deformv_wavefunc.args);
+					deflect *= s->deform_params[0];
+					VectorCopy(arrays.norms[i], v);
+					VectorScale(v, deflect, v);
+					VectorAdd(v, arrays.verts[i], arrays.verts[i]);
+				}
+				break;
 
-			for (i=0;i<arrays.numverts;i++)
-			{
-			deflect = render_func_eval(s->deformv_wavefunc.func, s->deformv_wavefunc.args);
-			deflect *= s->deform_params[0];
-			VectorCopy(arrays.norms[i], v);
-			VectorScale(v, deflect, v);
-			VectorAdd(v, arrays.verts[i], arrays.verts[i]);
-			}
-			break;
-		case DEFORMV_NORMAL:
-			break;
-		case DEFORMV_BULGE:
-			break;
-		case DEFORMV_MOVE:
-			break;
-		case DEFORMV_AUTOSPRITE:
-			break;
-		case DEFORMV_AUTOSPRITE2:
-			break;
+			case DEFORMV_NORMAL:
+				break;
 
+			case DEFORMV_BULGE:
+				break;
 
+			case DEFORMV_MOVE:
+				break;
 
-		default :
-			break;
+			case DEFORMV_AUTOSPRITE:
+				break;
+
+			case DEFORMV_AUTOSPRITE2:
+				break;
+
+			default:
+				break;
 		}
-
 	}
-
-
 }
 
 static float * Render_Backend_Make_TexCoords (shaderpass_t * pass ,int stage )
 {
-
-	int i=arrays.numverts,n=0;
-	mat4_t mat,mat2; 
-	vec2_t * in = arrays.tex_st;
-	vec2_t * out ;
+	int i = arrays.numverts, n = 0;
+	mat4_t mat, mat2; 
+	vec2_t *in = arrays.tex_st;
+	vec2_t *out;
+	vec3_t pos, v, tv;
+	vec3_t dir;
+	int j;
+	float rot;
+	float cost;
+	float sint;
+	float scale[2];
+	double x, y1, y2;
+	float factor;
+	vec2_t scroll;
 
 	Matrix4_Identity(mat);
 
-
 	switch (pass->tc_gen)
 	{
-	case TC_GEN_BASE :
-		in =arrays.tex_st;
-		break;
-	case TC_GEN_LIGHTMAP:
-		in = arrays.lm_st;
-
-	case TC_GEN_ENVIRONMENT:
-		{
+		case TC_GEN_BASE:
+			in = arrays.tex_st;
+			break;
+			
+		case TC_GEN_LIGHTMAP:
+			in = arrays.lm_st;
+			break;
+			
+		case TC_GEN_ENVIRONMENT:
 			// TODO !!!
-		vec3_t pos ,v,n;
-		vec3_t dir;
-		int j;
-		in= arrays.stage_tex_st[stage];
+			in = arrays.stage_tex_st[stage];
+				
+				
+			// FIXME !!!
+			// this is not cube-mapping !
 
-		
-		// FIXME !!!
-		// this is not cube-mapping !
-		VectorCopy (r_eyepos ,pos );
-		if (!transform_ref.matrix_identity)
-		{
-			if (!transform_ref.inv_matrix_calculated)	
+			VectorCopy (r_eyepos, pos);
+
+			if (!transform_ref.matrix_identity)
 			{
-				if (!Matrix4_Inverse(transform_ref.inv_matrix,transform_ref.matrix))
-					Matrix4_Identity(transform_ref.inv_matrix);
-
-				transform_ref.inv_matrix_calculated=atrue;	
+				if (!transform_ref.inv_matrix_calculated)	
+				{
+					if (!Matrix4_Inverse(transform_ref.inv_matrix,transform_ref.matrix))
+						Matrix4_Identity(transform_ref.inv_matrix);
+					
+					transform_ref.inv_matrix_calculated = atrue;	
+				}
+				
+				Matrix_Multiply_Vec3(transform_ref.inv_matrix,pos,pos);
 			}
-			Matrix_Multiply_Vec3(transform_ref.inv_matrix,pos,pos);
-		}
-
-		for(j=0; j<arrays.numverts; j++)
+				
+			for (j = 0; j < arrays.numverts; j++)
 			{
-			
-				VectorCopy (arrays.verts[j],v);
-			
+				VectorCopy (arrays.verts[j], v);
 				VectorSubtract(v, pos, dir);
 				VectorNormalize(dir);
-
-				VectorCopy (arrays.norms[j],n);
-
-				dir[0]+=n[0];
-				dir[1]+=n[1];
-
-				in[j][0]=dir[0];
-				in[j][1]=dir[1];
+					
+				VectorCopy (arrays.norms[j], tv);
+					
+				dir[0] += tv[0];
+				dir[1] += tv[1];
+					
+				in[j][0] = dir[0];
+				in[j][1] = dir[1];
 			}
+				
+			break;
 			
-			
-		}
-
-		break;
-
-	case TC_GEN_VECTOR :
-		{
-			int j;
+		case TC_GEN_VECTOR:
 			// Is this right ?
-			in=arrays.stage_tex_st[stage];
-
+			in = arrays.stage_tex_st[stage];
+				
 			for (j=0;j<arrays.numverts;j++)
 			{
-				in[j][0]=DotProduct(pass->tc_gen_s,arrays.verts[j]);
-				in[j][1]=DotProduct(pass->tc_gen_t,arrays.verts[j]);
+				in[j][0] = DotProduct(pass->tc_gen_s, arrays.verts[j]);
+				in[j][1] = DotProduct(pass->tc_gen_t, arrays.verts[j]);
 			}
 			break;
-		}
-	default :
-		in=arrays.tex_st;
+
+		default:
+			in = arrays.tex_st;
+			break;
 	}
-
-	if (pass->num_tc_mod >0)
+	
+	if (pass->num_tc_mod > 0)
 	{
-		Matrix4_Identity ( mat2);
-
-		out=arrays.stage_tex_st[stage];
-
-		mat2[12] =0.5f;
-		mat2[13] =0.5f;
-
-		Matrix4_Multiply (mat,mat2,mat);
+		Matrix4_Identity (mat2);
 		
-		for (n=0;n<pass->num_tc_mod;n++)
+		out = arrays.stage_tex_st[stage];
+		
+		mat2[12] = 0.5f;
+		mat2[13] = 0.5f;
+		
+		Matrix4_Multiply (mat, mat2, mat);
+		
+		for (n = 0; n < pass->num_tc_mod; n++)
 		{
 			switch (pass->tc_mod[n].type)
 			{
 				case SHADER_TCMOD_ROTATE:
-				{
-					float rot=pass->tc_mod[n].args[0] * g_frametime * DEG2RAD ;
-					float cost=cos(rot);
-					float sint=sin(rot);
-
+					rot = pass->tc_mod[n].args[0] * g_frametime * DEG2RAD ;
+					cost = cos(rot);
+					sint = sin(rot);
 					Matrix4_Identity (mat2);
 					mat2[0] = cost;
 					mat2[1] = sint;
-					mat2[4] = -sint;
-					mat2[5] = cost;
-			
+					mat2[4] = -mat2[1];
+					mat2[5] = mat2[0];
+					Matrix4_Multiply (mat, mat2, mat);
+					break;
 
-					Matrix4_Multiply  (mat,mat2,mat);
-				
-				}
-				break;
-	
 				case SHADER_TCMOD_SCALE:
-				{
 					Matrix4_Identity (mat2);
-					mat2[0] =pass->tc_mod[n].args[0];
+					mat2[0] = pass->tc_mod[n].args[0];
 					mat2[5] = pass->tc_mod[n].args[1];
-			
 					Matrix4_Multiply  (mat,mat2,mat);
-				}
-				break;
+					break;
+
 				case SHADER_TCMOD_TURB:
-				{
 					// TODO 
-					float scale[2];
-					double x, y1, y2;
 					x = (g_frametime + pass->tc_mod[n].args[2]) * pass->tc_mod[n].args[3];
 					x -= floor(x);
 					y1 = sin(x * TWOPI) * pass->tc_mod[n].args[1] + pass->tc_mod[n].args[0];
 					y2 = sin((x+0.25) * TWOPI) * pass->tc_mod[n].args[1] +
-					pass->tc_mod[n].args[0];
-	    
-
-					scale[0]= 1.0+y1*TURB_SCALE ;
-					scale[1]= 1.0+y2*TURB_SCALE;
-
-			
+						pass->tc_mod[n].args[0];
+					
+					scale[0] = 1.0 + y1 * TURB_SCALE;
+					scale[1] = 1.0 + y2 * TURB_SCALE;
+					
 					Matrix4_Identity (mat2);
-					mat2[0] =scale[0];
+					mat2[0] = scale[0];
 					mat2[5] = scale[1];
-			
+					
 					Matrix4_Multiply  (mat,mat2,mat);
-				}
-				break;
-
+					break;
+				
 				case SHADER_TCMOD_STRETCH:
-				{
-	     
-					float factor=1.0f/(float)render_func_eval(pass->tc_mod_stretch.func,
-					pass->tc_mod_stretch.args);
-
+					factor = 1.0f / (float)render_func_eval(pass->tc_mod_stretch.func,
+						pass->tc_mod_stretch.args);
+					
 					Matrix4_Identity (mat2);
-					mat2[0] =factor;
+					mat2[0] = factor;
 					mat2[5] = factor;
-			
-					Matrix4_Multiply  (mat,mat2,mat);
-		
-				}
-				break;
+					
+					Matrix4_Multiply (mat, mat2, mat);
+					break;
+
 				case SHADER_TCMOD_SCROLL:
-				{
-					vec2_t scroll;
 					scroll[0] = pass->tc_mod[n].args[0] * g_frametime;
 					scroll[1] = pass->tc_mod[n].args[1] * g_frametime;
-			
-
+					
+					
 					Matrix4_Identity (mat2);
-
+					
 					mat2[12] = scroll[0];
 					mat2[13] = scroll[1];
-
+					
 					Matrix4_Multiply  (mat,mat2,mat);
-				}
-				break;
-				case SHADER_TCMOD_NONE:
+					break;
+
 				default:
 					break;
 			}
 		}
-
-		Matrix4_Identity ( mat2);
-		mat2[12] =-0.5f;
-		mat2[13] =-0.5f;
-
-		Matrix4_Multiply  (mat,mat2,mat);
-
+		
+		Matrix4_Identity (mat2);
+		mat2[12] = -0.5f;
+		mat2[13] = -0.5f;
+		
+		Matrix4_Multiply  (mat, mat2, mat);
+		
 		do {
-			Matrix_Multiply_Vec2(mat,*in++,*out++);
-		}while ( --i>0 );
-
-		out=arrays.stage_tex_st[stage];
+			Matrix_Multiply_Vec2(mat, *in++, *out++);
+		} while (--i > 0);
+		
+		out = arrays.stage_tex_st[stage];
 	}
-	
 	else 
 	{
-		out=arrays.stage_tex_st[stage];
-		memcpy (out,in,arrays.numverts * sizeof ( vec2_t ));
+		out = arrays.stage_tex_st[stage];
+		memcpy (out, in, arrays.numverts * sizeof (vec2_t));
 	}
-
-	return *(float**)&out;
-
-
+	
+	return *(float **)&out;
 }
 
 static byte * Render_Backend_Make_Colors ( shaderpass_t * pass )
 {
 	int i;
 	byte rgb;
-	colour_t * col=NULL;
-
+	colour_t *col = NULL;
 
 	switch (pass->rgbgen)
 	{
+		case RGB_GEN_IDENTITY_LIGHTING:
+			memset (arrays.mod_colour, r_overBrightBits->integer ? 128 : 255, arrays.numverts * 4);
+			col = arrays.mod_colour;
+			break;
 
-	case RGB_GEN_IDENTITY_LIGHTING :
-		memset (arrays.mod_colour,r_overBrightBits->integer ? 128 : 255 ,arrays.numverts *4 );
-		col= arrays.mod_colour;
-		break;
-	case RGB_GEN_IDENTITY:
-		memset (arrays.mod_colour,255 ,arrays.numverts *4 );
-		col= arrays.mod_colour;
-		break;
-	case RGB_GEN_WAVE :
-		rgb = (byte)255 * (float)render_func_eval(pass->rgbgen_func.func,
-					    pass->rgbgen_func.args);
-		memset (arrays.mod_colour,rgb,arrays.numverts * 4 );
-		for (i=0;i< arrays.numverts;i++)
-			arrays.mod_colour[i][3] =255;
+		case RGB_GEN_IDENTITY:
+			memset (arrays.mod_colour, 255, arrays.numverts * 4);
+			col = arrays.mod_colour;
+			break;
 
-		col= arrays.mod_colour;
-		break;
-	case RGB_GEN_ENTITY :
-		col= arrays.entity_colour;
-		break;
-	case RGB_GEN_ONE_MINUS_ENTITY:
-		for (i=0;i<arrays.numverts;i++)
-		{
-			arrays.mod_colour[i][0] = 255 - arrays.entity_colour[i][0];
-			arrays.mod_colour[i][1] = 255 - arrays.entity_colour[i][1];
-			arrays.mod_colour[i][2] = 255 - arrays.entity_colour[i][2];
-			arrays.mod_colour[i][2] = 255 ;
-		}
-		break;
-	case RGB_GEN_VERTEX:
-		col= arrays.colour;
-		break;
-	case RGB_GEN_ONE_MINUS_VERTEX:
-		for (i=0;i<arrays.numverts;i++)
-		{
-			arrays.mod_colour[i][0] = 255 - arrays.colour[i][0];
-			arrays.mod_colour[i][1] = 255 - arrays.colour[i][1];
-			arrays.mod_colour[i][2] = 255 - arrays.colour[i][2];
-		}
-		col= arrays.mod_colour;
-		break;
-	case RGB_GEN_LIGHTING_DIFFUSE :
-		// TODO 
-		memset (arrays.mod_colour,255 ,arrays.numverts *4 );
-		col= arrays.mod_colour;
-		break;
+		case RGB_GEN_WAVE:
+			rgb = (byte)(255*(float)render_func_eval(pass->rgbgen_func.func,
+							pass->rgbgen_func.args));
+			memset (arrays.mod_colour, rgb, arrays.numverts * 4);
 
+			for (i = 0; i < arrays.numverts;i++)
+				arrays.mod_colour[i][3] = 255;
 
+			col = arrays.mod_colour;
+			break;
 
+		case RGB_GEN_ENTITY:
+			col = arrays.entity_colour;
+			break;
 
-	default :
-		col= arrays.colour;
+		case RGB_GEN_ONE_MINUS_ENTITY:
+			for (i = 0;i<arrays.numverts;i++)
+			{
+				arrays.mod_colour[i][0] = 255 - arrays.entity_colour[i][0];
+				arrays.mod_colour[i][1] = 255 - arrays.entity_colour[i][1];
+				arrays.mod_colour[i][2] = 255 - arrays.entity_colour[i][2];
+				arrays.mod_colour[i][2] = 255;
+			}
+			break;
 
-		break;
+		case RGB_GEN_VERTEX:
+			col = arrays.colour;
+			break;
 
+		case RGB_GEN_ONE_MINUS_VERTEX:
+			for (i = 0; i < arrays.numverts; i++)
+			{
+				arrays.mod_colour[i][0] = 255 - arrays.colour[i][0];
+				arrays.mod_colour[i][1] = 255 - arrays.colour[i][1];
+				arrays.mod_colour[i][2] = 255 - arrays.colour[i][2];
+			}
+			col = arrays.mod_colour;
+			break;
+
+		case RGB_GEN_LIGHTING_DIFFUSE:	// TODO
+			memset (arrays.mod_colour, 255, arrays.numverts * 4);
+			col = arrays.mod_colour;
+			break;
+
+		default:
+			col = arrays.colour;
+			break;
 	}
 
-
-		// TODO !!!!
+	// TODO !!!!
 	switch (pass->alpha_gen)
 	{
+		case ALPHA_GEN_PORTAL:
+			for (i = 0; i < arrays.numverts; i++)
+			{
+				// TODO 
+				int alpha = (byte)(255.0 / Distance (r_eyepos, arrays.verts[i]));
+				col[i][3] = (byte)(min (alpha, 255));
+			}
+			break;
 
-	case  ALPHA_GEN_PORTAL :
-		
-		for (i=0;i<arrays.numverts;i++)
-		{
-			// TODO 
-			int alpha;
-			alpha = 255.0 * 1.0 /Distance (r_eyepos,arrays.verts[i]);	
-			
-			if (alpha>255 )
-				alpha = 255;
-
-			col[i][3] = alpha;
-		}
-		// TODO
-		break;		// Vic
-
-	case ALPHA_GEN_DEFAULT :
-	case ALPHA_GEN_VERTEX :
-	case ALPHA_GEN_ENTITY:
-	case ALPHA_GEN_LIGHTINGSPECULAR:
-	default :
-		for (i=0;i<arrays.numverts;i++)
-			col[i][3]=arrays.colour[i][3];
-		
-	break;
-
+		case ALPHA_GEN_DEFAULT:
+		case ALPHA_GEN_VERTEX:
+		case ALPHA_GEN_ENTITY:
+		case ALPHA_GEN_LIGHTINGSPECULAR:
+		default:
+			for (i = 0; i < arrays.numverts; i++)
+				col[i][3] = arrays.colour[i][3];
+			break;
 	}
 
-
-	return *(byte**)&col;
-
+	return *(byte **)&col;
 }
 
 
@@ -1301,8 +1058,8 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 // TODO !!!
 static void Render_Backend_Flush_Multitexture_Combine (shader_t *s,int lmtex )
 {
-	shaderpass_t * pass;
-	int texture  ;
+//	shaderpass_t * pass;
+//	int texture  ;
 
 	if (s->numpasses != 2 )
 		return ;
