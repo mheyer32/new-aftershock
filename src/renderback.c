@@ -65,7 +65,8 @@ static void render_pushmesh_deformed(mesh_t *mesh,cface_t *face);
 arrays_t arrays;
 
 static aboolean r_overlay = afalse;
-
+static aboolean r_reflection = afalse;
+static aboolean r_reflection_ = afalse;
 
 extern reference_t transform_ref;
 
@@ -275,18 +276,16 @@ render_pushface(cface_t *face)
 
 
 
-void R_Push_raw (vec3_t * v,vec2_t *tc ,colour_t *c,int * elems ,int numverts ,int numelems )
+void R_Push_raw (vec3_t *v,vec2_t *tc, colour_t *c, int *elems, int numverts, int numelems)
 {
 	int i;
-	//int * elem=elems;
 
-	for (i=0;i<numelems;i++)
+	for (i = 0; i < numelems; i++)
 	{
-	arrays.elems[arrays.numelems++] = arrays.numverts + *elems++;
+		arrays.elems[arrays.numelems++] = arrays.numverts + *elems++;
 	}
 
-
-	for (i=0;i<numverts;i++)
+	for (i = 0;i < numverts; i++)
 	{
 		vec_copy(v[i], arrays.verts[arrays.numverts]);
 		vec2_copy(tc[i], arrays.tex_st[arrays.numverts]);
@@ -294,8 +293,6 @@ void R_Push_raw (vec3_t * v,vec2_t *tc ,colour_t *c,int * elems ,int numverts ,i
 
 		arrays.numverts++;
 	}
-
-
 }
 
 
@@ -319,17 +316,12 @@ render_pushmesh(mesh_t *mesh)
 
 	for (i=0;i<mesh->size[1]*mesh->size[0];i++)
 	{
-
-		
-
 	    vec_copy(mesh->points[i], arrays.verts[arrays.numverts]);
 	    //arrays.verts[arrays.numverts][3] = 1.0f;
 	    vec2_copy(mesh->tex_st[i],  arrays.tex_st[arrays.numverts]);
 	    vec2_copy(mesh->lm_st[i], arrays.lm_st[arrays.numverts]);
 	    arrays.numverts++;
-	   
 	}
-  
 }
 
 static void
@@ -462,7 +454,6 @@ void Render_Backend_Make_Vertices (shader_t *s )
 float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 {
 	int i = arrays.numverts, n = 0;
-	mat4_t mat, mat2; 
 	vec2_t *in = arrays.tex_st;
 	vec2_t *out;
 	vec3_t pos, v, tv;
@@ -471,12 +462,8 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 	float rot;
 	float cost;
 	float sint;
-	float scale[2];
-	double x, y1, y2;
-	float factor;
-	vec2_t scroll;
 
-	Matrix4_Identity(mat);
+	r_reflection = afalse;
 
 	switch (pass->tc_gen)
 	{
@@ -489,43 +476,54 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 			break;
 			
 		case TC_GEN_ENVIRONMENT:
-			// TODO !!!
-			in = arrays.stage_tex_st[stage];
-				
-				
-			// FIXME !!!
-			// this is not cube-mapping !
-
-			VectorCopy (r_eyepos, pos);
-
-			if (!transform_ref.matrix_identity)
+			if (!r_allowExtensions->integer || !gl_ext_info._GL_NV_texgen_reflection)
 			{
-				if (!transform_ref.inv_matrix_calculated)	
+				// TODO !!!
+				in = arrays.stage_tex_st[stage];
+					
+				// FIXME !!!
+				// this is not cube-mapping !
+
+				VectorCopy (r_eyepos, pos);
+
+				if (!transform_ref.matrix_identity)
 				{
-					if (!Matrix4_Inverse(transform_ref.inv_matrix,transform_ref.matrix))
-						Matrix4_Identity(transform_ref.inv_matrix);
+					if (!transform_ref.inv_matrix_calculated)	
+					{
+						if (!Matrix4_Inverse(transform_ref.inv_matrix,transform_ref.matrix))
+							Matrix4_Identity(transform_ref.inv_matrix);
+						
+						transform_ref.inv_matrix_calculated = atrue;	
+					}
 					
-					transform_ref.inv_matrix_calculated = atrue;	
+					Matrix_Multiply_Vec3(transform_ref.inv_matrix,pos,pos);
 				}
-				
-				Matrix_Multiply_Vec3(transform_ref.inv_matrix,pos,pos);
+					
+				for (j = 0; j < arrays.numverts; j++)
+				{
+					VectorCopy (arrays.verts[j], v);
+					VectorSubtract(v, pos, dir);
+					VectorNormalize(dir);
+						
+					VectorCopy (arrays.norms[j], tv);
+						
+					dir[0] += tv[0];
+					dir[1] += tv[1];
+						
+					in[j][0] = dir[0];
+					in[j][1] = dir[1];
+				}
+
+				r_reflection = afalse;
 			}
-				
-			for (j = 0; j < arrays.numverts; j++)
+			else
 			{
-				VectorCopy (arrays.verts[j], v);
-				VectorSubtract(v, pos, dir);
-				VectorNormalize(dir);
-					
-				VectorCopy (arrays.norms[j], tv);
-					
-				dir[0] += tv[0];
-				dir[1] += tv[1];
-					
-				in[j][0] = dir[0];
-				in[j][1] = dir[1];
+				// TODO !!!
+				in = arrays.stage_tex_st[stage];
+
+				r_reflection = atrue;
 			}
-				
+
 			break;
 			
 		case TC_GEN_VECTOR:
@@ -543,104 +541,122 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 			in = arrays.tex_st;
 			break;
 	}
-	
+
 	if (pass->num_tc_mod > 0)
 	{
-		Matrix4_Identity (mat2);
-		
-		out = arrays.stage_tex_st[stage];
-		
-		mat2[12] = 0.5f;
-		mat2[13] = 0.5f;
-		
-		Matrix4_Multiply (mat, mat2, mat);
-		
+		float t1, t2, p1, p2;
+		double pos;
+
 		for (n = 0; n < pass->num_tc_mod; n++)
 		{
 			switch (pass->tc_mod[n].type)
 			{
 				case SHADER_TCMOD_ROTATE:
-					rot = pass->tc_mod[n].args[0] * g_frametime * DEG2RAD ;
-					cost = cos(rot);
-					sint = sin(rot);
-					Matrix4_Identity (mat2);
-					mat2[0] = cost;
-					mat2[1] = sint;
-					mat2[4] = -mat2[1];
-					mat2[5] = mat2[0];
-					Matrix4_Multiply (mat, mat2, mat);
-					break;
-
-				case SHADER_TCMOD_SCALE:
-					Matrix4_Identity (mat2);
-					mat2[0] = pass->tc_mod[n].args[0];
-					mat2[5] = pass->tc_mod[n].args[1];
-					Matrix4_Multiply  (mat,mat2,mat);
-					break;
-
-				case SHADER_TCMOD_TURB:
-					// TODO 
-					x = (g_frametime + pass->tc_mod[n].args[2]) * pass->tc_mod[n].args[3];
-					x -= floor(x);
-					y1 = sin(x * TWOPI) * pass->tc_mod[n].args[1] + pass->tc_mod[n].args[0];
-					y2 = sin((x+0.25) * TWOPI) * pass->tc_mod[n].args[1] +
-						pass->tc_mod[n].args[0];
+				{
+					rot = pass->tc_mod[n].args[0] * g_frametime * DEG2RAD;
 					
-					scale[0] = 1.0 + y1 * TURB_SCALE;
-					scale[1] = 1.0 + y2 * TURB_SCALE;
+					sint = sin (rot);
+					cost = cos (rot);
+					p1 = 0.5f - cost * 0.5f + sint * 0.5f;
+					p2 = 0.5f - sint * 0.5f - cost * 0.5f;
 					
-					Matrix4_Identity (mat2);
-					mat2[0] = scale[0];
-					mat2[5] = scale[1];
-					
-					Matrix4_Multiply  (mat,mat2,mat);
-					break;
+					for (j = 0; j < arrays.numverts; j++)
+					{
+						t1 = in[j][0];
+						t2 = in[j][1];
+						
+						in[j][0] = t1 * cost - t2 * sint + p1;
+						in[j][1] = t2 * cost + t1 * sint + p2;
+					}
+				}
+				break;
 				
+				case SHADER_TCMOD_SCALE:
+				{
+					t1 = pass->tc_mod[n].args[0];
+					t2 = pass->tc_mod[n].args[1];
+
+					for (j = 0; j < arrays.numverts; j++)
+					{
+						in[j][0] *=	t1;
+						in[j][1] *=	t2;
+					}
+				}
+				break;
+					
+				case SHADER_TCMOD_TURB:
+				{
+					double k;
+
+					pos = pass->tc_mod[n].args[2] + g_frametime * pass->tc_mod[n].args[3];
+
+					for (j = 0; j < arrays.numverts; j++)
+					{
+						k = ( ( ( arrays.verts[j][0] + arrays.verts[j][2] ) / 1024.f + pos ) * 1024.f ) * DEG2RAD;
+						in[j][0] += pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
+
+						k = ( ( ( arrays.verts[j][1] ) / 1024.f + pos ) * 1024.f ) * DEG2RAD;
+						in[j][1] += pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
+					}
+				}
+				
+				break;
+					
 				case SHADER_TCMOD_STRETCH:
-					factor = 1.0f / (float)render_func_eval(pass->tc_mod_stretch.func,
+				{
+					t1 = 1.0f / (float)render_func_eval(pass->tc_mod_stretch.func,
 						pass->tc_mod_stretch.args);
-					
-					Matrix4_Identity (mat2);
-					mat2[0] = factor;
-					mat2[5] = factor;
-					
-					Matrix4_Multiply (mat, mat2, mat);
-					break;
+					t2 = 0.5f - t1 * 0.5f;
 
+					for (j = 0; j < arrays.numverts; j++) {
+						in[j][0] = in[j][0] * t1 + t2;
+						in[j][1] = in[j][1] * t1 + t2;
+					}
+				}
+
+				break;
+					
 				case SHADER_TCMOD_SCROLL:
-					scroll[0] = pass->tc_mod[n].args[0] * g_frametime;
-					scroll[1] = pass->tc_mod[n].args[1] * g_frametime;
-					
-					
-					Matrix4_Identity (mat2);
-					
-					mat2[12] = scroll[0];
-					mat2[13] = scroll[1];
-					
-					Matrix4_Multiply  (mat,mat2,mat);
-					break;
+				{
+					pos = pass->tc_mod[n].args[0] * g_frametime;
+					pos -= floor( pos );
+					t1 = (float)pos;
 
+					pos = pass->tc_mod[n].args[1] * g_frametime;
+					pos -= floor( pos );
+					t2 = (float)pos;
+
+					for (j = 0; j < arrays.numverts; j++) {
+						in[j][0] += t1;
+						in[j][1] += t2;
+					}
+				}
+				
+				break;
+				
+				case SHADER_TCMOD_TRANSFORM:
+				{
+					for (j = 0; j < arrays.numverts; j++) 
+					{
+						t1 = in[j][0];
+						t2 = in[j][1];
+						in[j][0] = t1 * pass->tc_mod[n].args[0] + t2 * pass->tc_mod[n].args[2] + pass->tc_mod[n].args[4];
+						in[j][1] = t2 * pass->tc_mod[n].args[1] + t1 * pass->tc_mod[n].args[3] + pass->tc_mod[n].args[5];
+					}
+				}
+				break;
+	
 				default:
 					break;
 			}
 		}
-		
-		Matrix4_Identity (mat2);
-		mat2[12] = -0.5f;
-		mat2[13] = -0.5f;
-		
-		Matrix4_Multiply  (mat, mat2, mat);
-		
-		do {
-			Matrix_Multiply_Vec2(mat, *in++, *out++);
-		} while (--i > 0);
-		
-		out = arrays.stage_tex_st[stage];
+
+		out = in;
 	}
-	else 
+	else
 	{
 		out = arrays.stage_tex_st[stage];
-		memcpy (out, in, arrays.numverts * sizeof (vec2_t));
+		memcpy (out, in, arrays.numverts * sizeof(vec2_t));
 	}
 	
 	return *(float **)&out;
@@ -744,14 +760,17 @@ void R_Begin2d (void)
 		return;
 
 	glViewport(0, 0, winX, winY);
+	glScissor(0, 0, winX, winY);
 
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
-	glOrtho(0, winX, winY, 0, -999.000000, 999.000000);
+	glOrtho(0, winX, winY, 0, 0.000000, 1.000000);
+
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
+	GL_Enable (GL_SCISSOR_TEST);
 	GL_Disable (GL_CULL_FACE);
 	GL_DepthFunc (GL_ALWAYS);
 	GL_DepthMask (GL_FALSE);
@@ -769,6 +788,7 @@ void R_End2d (void)
 	GL_Disable (GL_BLEND);
 	GL_DepthMask(GL_TRUE);
 	GL_Enable (GL_CULL_FACE);
+	GL_Disable (GL_SCISSOR_TEST);
 
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();   
@@ -832,41 +852,41 @@ void R_DrawStretchPic (float x, float y, float w, float h, float s1, float t1, f
 	R_End2d ();
 }
 
-void Render_Backend_Flush (int shadernum ,int lmtex )
+void Render_Backend_Flush (int shadernum, int lmtex)
 {
 	shader_t *s;
 
 	if (shadernum < 0)
 	{
-		arrays.numverts=arrays.numelems=0;
-		return ;
+		arrays.numverts = arrays.numelems = 0;
+		return;
 	}
 
-	s=&r_shaders [shadernum];
-
-	Render_Backend_Flush_Generic(s,lmtex);
-	return;
+	s = &r_shaders [shadernum];
 
 	switch (s->flush)
 	{
-	case SHADER_FLUSH_GENERIC:
-		Render_Backend_Flush_Generic(s,lmtex);
-		break;
-	case SHADER_FLUSH_MULTITEXTURE_LIGHTMAP:
-		Render_Backend_Flush_Multitexture_Lightmapped(s,lmtex);
-		break;
-	case SHADER_FLUSH_MULTITEXTURE_COMBINE :
-		Render_Backend_Flush_Multitexture_Combine(s,lmtex);
-		break;
-	case SHADER_FLUSH_VERTEX_LIT:
-		Render_Backend_Flush_Vertex_Lit(s,lmtex);
-		break;
-	default :
-		arrays.numverts=arrays.numelems=0;
-		return ;
+		case SHADER_FLUSH_GENERIC:
+			Render_Backend_Flush_Generic(s, lmtex);
+			break;
+
+		case SHADER_FLUSH_MULTITEXTURE_LIGHTMAP:
+			Render_Backend_Flush_Multitexture_Lightmapped(s, lmtex);
+			break;
+
+		case SHADER_FLUSH_MULTITEXTURE_COMBINE :
+			Render_Backend_Flush_Multitexture_Combine(s, lmtex);
+			break;
+
+		case SHADER_FLUSH_VERTEX_LIT:
+			Render_Backend_Flush_Vertex_Lit(s, lmtex);
+			break;
+
+		default:
+			break;
 	}
 
-
+	arrays.numverts = arrays.numelems = 0;
 }
 
 
@@ -946,7 +966,6 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 
 		if ( !texture || texture< 0 )
 		{
-			arrays.numverts=arrays.numelems=0;
 			return ;
 		}
 
@@ -980,19 +999,39 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 				GL_DepthMask(GL_FALSE);
 		}
 
+		if (r_reflection != r_reflection_)
+		{
+			if (r_reflection)
+			{
+				GL_Enable(GL_NORMALIZE);
+				GL_Enable(GL_TEXTURE_GEN_S);
+				GL_Enable(GL_TEXTURE_GEN_T);
+			}
+			else
+			{
+				GL_Disable(GL_NORMALIZE);
+				GL_Disable(GL_TEXTURE_GEN_S);
+				GL_Disable(GL_TEXTURE_GEN_T);
+				r_reflection = 0;
+			}
+
+			r_reflection_ = r_reflection;
+		}
+
+		if (r_reflection) {
+			// here is all we have to do to work our magic, pretty simple huh?
+			glTexGenf(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+			glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+		}
+
 		// Draw it :
 		glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
 		       arrays.elems);
-
 	}
 
 	
 	if (glUnlockArraysEXT)
 		glUnlockArraysEXT();
-
-
-	arrays.numverts=arrays.numelems=0;
-
 }
 
 // assumes a 2 pass shader 
@@ -1063,7 +1102,6 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 	
 	if (!lmtex || lmtex < 0)
 	{
-		arrays.numverts=arrays.numelems=0;
 		return ;
 	}
 
@@ -1100,12 +1138,35 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 
 	if (!texture || texture<0 )
 	{
-		arrays.numverts=arrays.numelems=0;
 		return ;
 	}
 
 	GL_BindTexture(GL_TEXTURE_2D,texture);
 
+	if (r_reflection != r_reflection_)
+	{
+		if (r_reflection)
+		{
+			GL_Enable(GL_NORMALIZE);
+			GL_Enable(GL_TEXTURE_GEN_S);
+			GL_Enable(GL_TEXTURE_GEN_T);
+		}
+		else
+		{
+			GL_Disable(GL_NORMALIZE);
+			GL_Disable(GL_TEXTURE_GEN_S);
+			GL_Disable(GL_TEXTURE_GEN_T);
+			r_reflection = 0;
+		}
+		
+		r_reflection_ = r_reflection;
+	}
+	
+	if (r_reflection) {
+		// here is all we have to do to work our magic, pretty simple huh?
+		glTexGenf(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+		glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+	}
 
 	// Draw it :
 		glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
@@ -1123,9 +1184,6 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 
 	if (glUnlockArraysEXT)
 		glUnlockArraysEXT();
-
-	arrays.numverts=arrays.numelems=0;
-
 }
 
 // assumes  2 Passes 
@@ -1174,28 +1232,10 @@ static void Render_Backend_Flush_Multitexture_Combine (shader_t *s,int lmtex )
 
 	if (glLockArraysEXT)
 		glLockArraysEXT(0,arrays.numverts);
-
-	
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 
 // TODO !!!
 static void Render_Backend_Flush_Vertex_Lit (shader_t *s, int lmtex )
 {
-
-
-
-
 }

@@ -429,7 +429,7 @@ int Key_StringToKeynum(const char *a)
 
 void Key_GetBindingBuf( int keynum, char *buf, int buflen ) 
 {
-	A_strncpyz(buf,key_bindings[keynum].command,buflen);
+	A_strncpyz(buf, key_bindings[keynum].command, buflen);
 }
 
 void Key_SetBinding( int keynum, const char *binding ) 
@@ -441,11 +441,7 @@ void Key_SetBinding( int keynum, const char *binding )
 
 	bind = &key_bindings [keynum];
 
-	A_strncpyz (bind->command , binding , MAX_APATH);
-
-
-	
-
+	A_strncpyz (bind->command, binding, MAX_APATH);
 }
 
 static void  Cmd_Bind (void )
@@ -454,35 +450,26 @@ static void  Cmd_Bind (void )
 	char command [MAX_STRING_CHARS];
 	int keynum;
 
-
-	
 	if (Cmd_Argc()>=2)
 	{
-		Cmd_Argv(1,key,MAX_STRING_CHARS);
-		Cmd_Argv(2,command,MAX_STRING_CHARS);
+		Cmd_Argv(1, key, MAX_STRING_CHARS);
+		Cmd_Argv(2, command, MAX_STRING_CHARS);
 
 		
-		keynum=Key_StringToKeynum(key);
+		keynum = Key_StringToKeynum(key);
 
-
-		if (keynum<0 || keynum >255 )
+		if (keynum < 0 || keynum > 255 )
 		{
-			Con_Printf(" unknown key : %s ",key);
+			Con_Printf("unknown key: %s ", key);
 			return;
 		}
 			
-
-
-		A_strncpyz( key_bindings[keynum].keyname,key,MAX_APATH);
-		A_strncpyz( key_bindings[keynum].command,command,MAX_APATH);
-
-
+		A_strncpyz( key_bindings[keynum].keyname, key, MAX_APATH);
+		A_strncpyz( key_bindings[keynum].command, command, MAX_APATH);
 	}
 	else {
 		Con_Printf("usage : bind key command ");
 	}
-
-
 }
 
 static void Cmd_Unbindall (void )
@@ -495,12 +482,7 @@ static void Cmd_Unbindall (void )
 		A_strncpyz(key_bindings[i].command," ",256);
 
 	}
-
-
-
-
 }
-
 
 
 void Key_WriteBindings( int file )
@@ -515,17 +497,4 @@ void Key_WriteBindings( int file )
 		}
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 

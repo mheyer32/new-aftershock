@@ -10,8 +10,8 @@ HWND hWnd;
 HGLRC hRC;
 int nCmdShow;
 
-int winX = 800;
-int winY = 600;
+int winX = 640;
+int winY = 480;
 
 int WIN_GetRemaining_Memory(void)
 {

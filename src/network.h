@@ -41,6 +41,4 @@ aboolean	Net_GetPacket(char *, int *, net_address_t *);
 int			NET_CompareAddr( const net_address_t *addr1, const net_address_t *addr2 );
 int			NET_CompareBaseAddr( const net_address_t *addr1, const net_address_t *addr2 );
 
-
-
 #endif

@@ -19,8 +19,6 @@
 #ifndef IO_H__
 #define IO_H__
 
-
-
 #define MAX_FILES 128 
 
 # define OPEN_READONLY			0
@@ -28,23 +26,16 @@
 # define OPEN_READWRITE			2
 # define OPEN_APPEND			3
 
-
-
-
-
 typedef enum {
 	FILE_NORMAL,
 	FILE_IN_PAK
-}filetype_t;
+} filetype_t;
 
 typedef struct {
-	char name [MAX_OSPATH];
+	char name[MAX_OSPATH];
 	filetype_t type;
-	void * fhandle ;
-}file_t;
-
-
-
+	void *fhandle;
+} file_t;
 
 int FS_OpenFile(const char *path, int  *handle,fsMode_t mode) ;
 void FS_Read(void *buffer,int len,int  handle) ;
@@ -57,6 +48,8 @@ int FS_FileSize (const char * name );
 
 void FS_Init (const char *dir );
 void FS_Shutdown(void);
+
+void FS_Restart(void);
 
 char *FS_Add_Basedir (const char * s);
 

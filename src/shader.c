@@ -33,32 +33,22 @@
 #define WHITE_SHADER_NAME "white"
 #define CONSOLE_SHADER_NAME "console"
 
-
-
-static int numshaders=0;
-int shadercount=0;
+static int numshaders = 0;
+int shadercount = 0;
 extern int *ids;
 
-
-int shader_white =-1;
-int shader_text =-1;
-int shader_console =-1;
+int shader_white = -1;
+int shader_text = -1;
+int shader_console = -1;
 
 typedef struct {
-	char name [MAX_APATH];
-	int offset ;
-}cache_t ;
+	char name[MAX_APATH];
+	int offset;
+} cache_t;
 
-//char *shaderfiles [MAX_APATH];
-cache_t * shadercache =NULL;
-
-
-
-
-
+cache_t *shadercache = NULL;
 
 /* Maps shader keywords to functions */
-
 static int shader_lookup(const char *name);
 void Shader_Skip ( char ** ptr );
 void Shader_Parsetok(shader_t *shader, shaderpass_t *pass, shaderkey_t *keys,
@@ -67,8 +57,8 @@ void Shader_MakeCache (void );
 
 static void shader_makedefaults(void);
 static int shader_gettexref(const char *fname);
-static char* nexttok(void);
-static char* nextarg(void);
+static char *nexttok(void);
+static char *nextarg(void);
 static void Syntax(void);
 static void shader_parsefunc(char **args, shaderfunc_t *func);
 
@@ -76,35 +66,23 @@ char *shaderbuf, *curpos, *endpos;
 
 /****************** shader keyword functions ************************/
 
-static void
-shader_cull(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
+static void shader_cull(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
-
-	if (!stricmp(args[0], "disable") || !stricmp(args[0], "none"))
-	{
-		shader->cull=SHADER_CULL_DISABLE;
+	if (!stricmp(args[0], "disable") || !stricmp(args[0], "none")) {
+		shader->cull = SHADER_CULL_DISABLE;
 	}
-	else if (numargs>1)
+	else if (numargs > 1)
 	{
-		if (!stricmp (args[1] ,"front"))
-		{
-			shader->cull=SHADER_CULL_FRONT;
-		}
-		else if (!stricmp (args[1] ,"back"))
-		{
-			shader->cull=SHADER_CULL_BACK;
-		}
-
+		if (!stricmp (args[1], "front"))
+			shader->cull = SHADER_CULL_FRONT;
+		else if (!stricmp (args[1], "back"))
+			shader->cull = SHADER_CULL_BACK;
 	}
 	else
-	{
-		shader->cull=SHADER_CULL_FRONT;
-	}
-
+		shader->cull = SHADER_CULL_FRONT;
 }
 
-static void
-shader_surfaceparm(shader_t *shader, shaderpass_t *pass, int numargs,
+static void shader_surfaceparm(shader_t *shader, shaderpass_t *pass, int numargs,
 		   char **args)
 {
     if (!strcmp(args[0], "trans"))
@@ -183,40 +161,38 @@ shader_nopicmip(shader_t *shader, shaderpass_t *pass, int numargs,
 		 char **args)
 {
     shader->flags |= SHADER_NOPICMIP;
-	 shader->flags |= SHADER_NOMIPMAPS;
+	shader->flags |= SHADER_NOMIPMAPS;
 }
 
 static void
 shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numargs,
 		      char **args)
 {
-   
 	if (!stricmp(args[0], "wave"))
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
-		shader->deform_params[0] =atof (args[1]);
+		shader->deform_params[0] = atof (args[1]);
 		shader_parsefunc(&args[2], &shader->deformv_wavefunc);
 		
-		shader->deform_vertices=DEFORMV_WAVE;
+		shader->deform_vertices = DEFORMV_WAVE;
 	}
-	else if (!stricmp(args[0],"normal"))
+	else if (!stricmp(args[0], "normal"))
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
-		shader->deform_vertices=DEFORMV_NORMAL;
-		shader->deform_params[0] =atof (args[1]); // Div
+		shader->deform_vertices = DEFORMV_NORMAL;
+		shader->deform_params[0] = atof (args[1]); // Div
 		shader_parsefunc(&args[2], &shader->deformv_wavefunc);
-		
 	}
-	else if (!stricmp(args[0],"bulge"))
+	else if (!stricmp(args[0], "bulge"))
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
-		shader->deform_vertices=DEFORMV_BULGE;
+		shader->deform_vertices = DEFORMV_BULGE;
 	
 		shader->deform_params[0] = atof (args[1]); // Width 
-		shader->deform_params[1] =atof (args[2]); // Height
+		shader->deform_params[1] = atof (args[2]); // Height
 		shader->deform_params[2] = atof (args[3]); // Speed 
 	}
-	else if (!stricmp (args[0] , "move"))
+	else if (!stricmp (args[0], "move"))
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
 		shader->deform_vertices=DEFORMV_MOVE;
@@ -227,44 +203,41 @@ shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numargs,
 		
 		shader_parsefunc(&args[4], &shader->deformv_wavefunc);
 	}
-	else if (!stricmp ( args[0] ,"autosprite"))
+	else if (!stricmp (args[0], "autosprite"))
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
-		shader->deform_vertices= DEFORMV_AUTOSPRITE;
+		shader->deform_vertices = DEFORMV_AUTOSPRITE;
 
 	}
-	else if (!stricmp (args[0],"autosprite2"))
+	else if (!stricmp (args[0], "autosprite2"))
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
-		shader->deform_vertices= DEFORMV_AUTOSPRITE2;
+		shader->deform_vertices = DEFORMV_AUTOSPRITE2;
 	}
 	else 
 	{
 		shader->flags |= SHADER_DEFORMVERTS;
-		shader->deform_vertices= DEFORMV_NONE;
-		Con_Printf ("WARNING: Unknown deformv param : %s \n",args[0]);
+		shader->deform_vertices = DEFORMV_NONE;
+		Con_Printf ("WARNING: Unknown deformv param: %s\n", args[0]);
 	}
-
-
 }
 
 static void shader_fogparams (shader_t *shader, shaderpass_t *pass, int numargs,
 		      char **args)
 {
 
-	shader->flags	|= SHADER_FOG ;
+	shader->flags |= SHADER_FOG;
 
-	shader->fog_params[0]=atof (args[0]); // R
-	shader->fog_params[1]=atof (args[1]); // G
-	shader->fog_params[2]=atof (args[2]); // B
-	shader->fog_params[3]=atof (args[3]); // Dist
-
+	shader->fog_params[0] = atof(args[0]); // R
+	shader->fog_params[1] = atof(args[1]); // G
+	shader->fog_params[2] = atof(args[2]); // B
+	shader->fog_params[3] = atof(args[3]); // Dist
 }
 
 static void shader_sort (shader_t *shader, shaderpass_t *pass, int numargs,
 		      char **args)
 {
-	if( !stricmp( args[0], "portal" ) ) {
+	if(!stricmp( args[0], "portal" ) ) {
 			shader->sort = SHADER_SORT_PORTAL;
 	} else if( !stricmp( args[0], "sky" ) ) {
 		shader->sort = SHADER_SORT_SKY;
@@ -281,7 +254,6 @@ static void shader_sort (shader_t *shader, shaderpass_t *pass, int numargs,
 	} else {
 		shader->sort = atoi(args[0]);
 	}
-
 }
 
 static void shader_q3map (shader_t *shader, shaderpass_t *pass, int numargs,
@@ -344,23 +316,20 @@ shaderpass_map(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 {
 	if (!stricmp(args[0], "$lightmap"))
 	{
-		pass->tc_gen=TC_GEN_LIGHTMAP;
+		pass->tc_gen = TC_GEN_LIGHTMAP;
 		pass->flags |= SHADER_LIGHTMAP;
 
 	}
-	else if (!stricmp (args[0],"$whiteimage"))
+	else if (!stricmp (args[0], "$whiteimage"))
 	{
-		pass->tc_gen=TC_GEN_BASE;
-		pass->texref=R_Load_Texture("white",shader->flags );
+		pass->tc_gen = TC_GEN_BASE;
+		pass->texref = R_Load_Texture("white", shader->flags );
 	}
 	else
     {
-			pass->tc_gen=TC_GEN_BASE;
-			pass->texref=R_Load_Texture(args[0],shader->flags );
+		pass->tc_gen = TC_GEN_BASE;
+		pass->texref = R_Load_Texture(args[0], shader->flags );
     }
-	
-
-
 }
 
 static void
@@ -368,14 +337,15 @@ shaderpass_animmap(shader_t *shader, shaderpass_t *pass, int numargs,
 		   char **args)
 {
     int i;
+
 	pass->tc_gen= TC_GEN_BASE;
     pass->flags |= SHADER_ANIMMAP;
     pass->anim_fps = atof(args[0]);
     pass->anim_numframes = numargs - 1;
+
     for (i=1; i < numargs; ++i)
 	{
-
-		pass->anim_frames[i-1]=R_Load_Texture(args[i],shader->flags );
+		pass->anim_frames[i-1] = R_Load_Texture(args[i],shader->flags );
 	}
 }
 
@@ -391,54 +361,49 @@ static void
 shaderpass_rgbgen(shader_t *shader, shaderpass_t *pass, int numargs,
 		  char **args)
 {
-
-
-	if (!stricmp(args[0] , "identitylighting"))
+	if (!stricmp(args[0], "identitylighting"))
 	{
-		pass->rgbgen=RGB_GEN_IDENTITY_LIGHTING;
-
+		pass->rgbgen = RGB_GEN_IDENTITY_LIGHTING;
 	}
-	else if (!stricmp(args[0] ,"identity"))
+	else if (!stricmp(args[0], "identity"))
 	{
-		pass->rgbgen=RGB_GEN_IDENTITY;
+		pass->rgbgen = RGB_GEN_IDENTITY;
 	}
-	else if (!stricmp (args[0],"wave"))
+	else if (!stricmp (args[0], "wave"))
 	{
-		if (numargs!=6)
+		if (numargs != 6)
 			Syntax();
 
 		shader_parsefunc(&args[1], &pass->rgbgen_func);
-		pass->rgbgen=RGB_GEN_WAVE;
+		pass->rgbgen = RGB_GEN_WAVE;
 	}
 	else if (!stricmp(args[0],"entity"))
 	{
-		pass->rgbgen=RGB_GEN_ENTITY;
+		pass->rgbgen = RGB_GEN_ENTITY;
 	}
 	else if (!stricmp(args[0],"oneMinusEntity"))
 	{
-		pass->rgbgen=RGB_GEN_ONE_MINUS_ENTITY;
+		pass->rgbgen = RGB_GEN_ONE_MINUS_ENTITY;
 	}
 	else if (!stricmp(args[0],"Vertex"))
 	{
-		pass->rgbgen=RGB_GEN_VERTEX;
+		pass->rgbgen = RGB_GEN_VERTEX;
 	}
 	else if (!stricmp(args[0],"oneMinusVertex"))
 	{
-		pass->rgbgen=RGB_GEN_ONE_MINUS_VERTEX;
+		pass->rgbgen = RGB_GEN_ONE_MINUS_VERTEX;
 	}
-	else if (!stricmp(args[0],"lightingDiffuse"))
+	else if (!stricmp(args[0], "lightingDiffuse"))
 	{
-		pass->rgbgen=RGB_GEN_LIGHTING_DIFFUSE ;
-
+		pass->rgbgen = RGB_GEN_LIGHTING_DIFFUSE;
 	}
-	else if (!stricmp (args[0],"exactvertex"))
+	else if (!stricmp (args[0], "exactvertex"))
 	{
-		pass->rgbgen=RGB_GEN_EXACT_VERTEX;
+		pass->rgbgen = RGB_GEN_EXACT_VERTEX;
 	}
 	else {
-		Con_Printf ("WARNING : Unknown rgb_gen param : % s \n",args[0]);
+		Con_Printf ("WARNING : Unknown rgb_gen param: % s \n",args[0]);
 	}
-
 }
 
 static void
@@ -468,34 +433,34 @@ shaderpass_blendfunc(shader_t *shader, shaderpass_t *pass, int numargs,
     }
     else
     {
-	int i;
-	uint_t *blend;
-	for (i=0; i < 2; ++i)
-	{
-	    blend = i == 0 ? &pass->blendsrc : &pass->blenddst;
-	    if (!strcmp(args[i], "gl_zero"))
-		*blend = GL_ZERO;
-	    else if (!strcmp(args[i], "gl_one"))
-		*blend = GL_ONE;
-	    else if (!strcmp(args[i], "gl_dst_color"))
-		*blend = GL_DST_COLOR;
-	    else if (!strcmp(args[i], "gl_one_minus_src_alpha"))
-		*blend = GL_ONE_MINUS_SRC_ALPHA;
-	    else if (!strcmp(args[i], "gl_src_alpha"))
-		*blend = GL_SRC_ALPHA;
-	    else if (!strcmp(args[i], "gl_src_color"))
-		*blend = GL_SRC_COLOR;
-	    else if (!strcmp(args[i], "gl_one_minus_dst_color"))
-		*blend = GL_ONE_MINUS_DST_COLOR;
-	    else if (!strcmp(args[i], "gl_one_minus_src_color"))
-		*blend = GL_ONE_MINUS_SRC_COLOR;
-	    else if (!strcmp(args[i], "gl_dst_alpha"))
-		*blend = GL_DST_ALPHA;
-	    else if (!strcmp(args[i], "gl_one_minus_dst_alpha"))
-		*blend = GL_ONE_MINUS_DST_ALPHA;
-	    else
-		Syntax();
-	}
+		int i;
+		uint_t *blend;
+		for (i=0; i < 2; ++i)
+		{
+			blend = i == 0 ? &pass->blendsrc : &pass->blenddst;
+			if (!strcmp(args[i], "gl_zero"))
+				*blend = GL_ZERO;
+			else if (!strcmp(args[i], "gl_one"))
+				*blend = GL_ONE;
+			else if (!strcmp(args[i], "gl_dst_color"))
+				*blend = GL_DST_COLOR;
+			else if (!strcmp(args[i], "gl_one_minus_src_alpha"))
+				*blend = GL_ONE_MINUS_SRC_ALPHA;
+			else if (!strcmp(args[i], "gl_src_alpha"))
+				*blend = GL_SRC_ALPHA;
+			else if (!strcmp(args[i], "gl_src_color"))
+				*blend = GL_SRC_COLOR;
+			else if (!strcmp(args[i], "gl_one_minus_dst_color"))
+				*blend = GL_ONE_MINUS_DST_COLOR;
+			else if (!strcmp(args[i], "gl_one_minus_src_color"))
+				*blend = GL_ONE_MINUS_SRC_COLOR;
+			else if (!strcmp(args[i], "gl_dst_alpha"))
+				*blend = GL_DST_ALPHA;
+			else if (!strcmp(args[i], "gl_one_minus_dst_alpha"))
+				*blend = GL_ONE_MINUS_DST_ALPHA;
+			else
+				Syntax();
+		}
     }
 }
 
@@ -504,9 +469,9 @@ shaderpass_depthfunc(shader_t *shader, shaderpass_t *pass, int numargs,
 		     char **args)
 {
     if (!strcmp(args[0], "equal"))
-	pass->depthfunc = GL_EQUAL;
+		pass->depthfunc = GL_EQUAL;
     else
-	Syntax();
+		Syntax();
 }
 
 static void
@@ -528,24 +493,22 @@ shaderpass_alphafunc(shader_t *shader, shaderpass_t *pass, int numargs,
     
     if (!stricmp(args[0], "gt0"))
     {
-	pass->alphafunc = GL_GREATER;
-	pass->alphafuncref = 0.0f;
+		pass->alphafunc = GL_GREATER;
+		pass->alphafuncref = 0.0f;
     }
 	else if (!stricmp (args[0],"lt128"))
 	{
-	pass->alphafunc = GL_LESS;
-	pass->alphafuncref = 0.5f;
-
+		pass->alphafunc = GL_LESS;
+		pass->alphafuncref = 0.5f;
 	}
     else if (!stricmp(args[0], "ge128"))
     {
-	pass->alphafunc = GL_GEQUAL;
-	pass->alphafuncref = 0.5f;
+		pass->alphafunc = GL_GEQUAL;
+		pass->alphafuncref = 0.5f;
     }
     else
 	{
 		Con_Printf ("WARNING: Unknown alphafunc param : %s \n",args[0]);
-
 	}
 }
 
@@ -555,9 +518,10 @@ shaderpass_tcmod(shader_t *shader, shaderpass_t *pass, int numargs,
 {
     pass->flags |= SHADER_TCMOD;
     
-	if (pass->num_tc_mod == MAX_TC_MOD )
-		Error ("MAX_TC_MOD exceeded !");
-	
+	if (pass->num_tc_mod == MAX_TC_MOD) {
+		Con_Printf ("MAX_TC_MOD exceeded!");
+		return;
+	}
 
 	if (!stricmp(args[0],"rotate"))
 	{
@@ -592,7 +556,7 @@ shaderpass_tcmod(shader_t *shader, shaderpass_t *pass, int numargs,
 	}
 	else if (!stricmp (args[0],"transform"))
 	{
-			int i;
+		int i;
 		if (numargs != 7) Syntax();
 		pass->tc_mod[pass->num_tc_mod].type= SHADER_TCMOD_TRANSFORM;
 		for (i=0; i < 6; ++i)
@@ -659,31 +623,27 @@ shaderpass_tcgen(shader_t *shader, shaderpass_t *pass, int numargs,
 static void shaderpass_alphagen (shader_t *shader, shaderpass_t *pass, int numargs,
 		 char **args)
 {
-
-	if (!stricmp (args[0],"portal"))
+	if (!stricmp (args[0], "portal"))
 	{
-		pass->alpha_gen=ALPHA_GEN_PORTAL;
+		pass->alpha_gen = ALPHA_GEN_PORTAL;
 	}
-	else if (!stricmp (args[0],"vertex"))
+	else if (!stricmp (args[0], "vertex"))
 	{
-		pass->alpha_gen=ALPHA_GEN_VERTEX ;
+		pass->alpha_gen = ALPHA_GEN_VERTEX;
 	}
-	else if (!stricmp (args[0],"entity"))
+	else if (!stricmp (args[0], "entity"))
 	{
-		pass->alpha_gen=ALPHA_GEN_ENTITY;
+		pass->alpha_gen = ALPHA_GEN_ENTITY;
 	}
-	else if (!stricmp (args[0],"lightingspecular"))
+	else if (!stricmp (args[0], "lightingspecular"))
 	{
-		pass->alpha_gen=ALPHA_GEN_LIGHTINGSPECULAR;
+		pass->alpha_gen = ALPHA_GEN_LIGHTINGSPECULAR;
 	}
 	else
 	{
-		pass->alpha_gen=ALPHA_GEN_DEFAULT;
-		Con_Printf ("unknown alphagen param : %s \n",args[0]);
+		pass->alpha_gen = ALPHA_GEN_DEFAULT;
+		Con_Printf ("Unknown alphagen param: %s\n", args[0]);
 	}
-
-
-
 }
 
 static shaderkey_t shaderpasskeys[] =
@@ -698,7 +658,7 @@ static shaderkey_t shaderpasskeys[] =
     {"animmap", 3, SHADER_ARGS_MAX, shaderpass_animmap},
     {"clampmap", 1, 1, shaderpass_clampmap},
     {"tcgen", 1, 10, shaderpass_tcgen},
-	{"alphagen",0,10,shaderpass_alphagen},
+	{"alphagen", 0, 10, shaderpass_alphagen},
 	
     {NULL, 0, 0, NULL}  /* Sentinel */
 };
@@ -708,29 +668,24 @@ static shaderkey_t shaderpasskeys[] =
 
 static void Load_Standard_Shaders (void)
 {
-
-	shader_white = R_LoadShader(WHITE_SHADER_NAME,SHADER_2D);
-	shader_text=R_LoadShader (DEFAULT_TEXT_SHADER_NAME,SHADER_2D);
-	shader_console =R_LoadShader (CONSOLE_SHADER_NAME,SHADER_2D);
-
+	shader_white = R_LoadShader(WHITE_SHADER_NAME, SHADER_2D);
+	shader_text = R_LoadShader (DEFAULT_TEXT_SHADER_NAME, SHADER_2D);
+	shader_console = R_LoadShader (CONSOLE_SHADER_NAME, SHADER_2D);
 }
-
-
 
 int Shader_Init (void )
 {
-	int i,size =0,dirlen,numdirs;
-	char dirlist [256 * MAX_APATH ];
-	char * dirptr,*pscripts;
+	int i,size = 0, dirlen, numdirs;
+	char dirlist [256 * MAX_APATH];
+	char *dirptr, *pscripts;
 	int file;
-	char filename [MAX_APATH];
+	char filename[MAX_APATH];
 
+	Con_Printf ("Initializing Shaders:\n");
 
-	Con_Printf ("Initializing Shaders :\n");
+	r_shaders = (shader_t * )malloc(MAXSHADERS * sizeof(shader_t ));
 
-	r_shaders=(shader_t * )malloc(MAXSHADERS*sizeof(shader_t ));
-
-	numdirs =FS_GetFileList ("scripts","shader",dirlist,256 * MAX_APATH);
+	numdirs = FS_GetFileList ("scripts", "shader", dirlist, 256 * MAX_APATH);
 
 	if (!numdirs )
 		Error ("Could not find any shaders !");
@@ -739,7 +694,7 @@ int Shader_Init (void )
 	dirptr = dirlist;
 	for (i=0; i<numdirs; i++, dirptr += dirlen+1) {
 		dirlen = strlen(dirptr);
-		Com_sprintf( filename, sizeof(filename), "scripts/%s", dirptr );
+		Com_sprintf(filename, sizeof(filename), "scripts/%s", dirptr);
 
 		size += FS_FileSize(filename) + 1;
 	}
@@ -748,7 +703,7 @@ int Shader_Init (void )
 	size++;
 
 	/* allocate the memory */
-	pscripts = shaderbuf = (char * ) malloc (size );
+	pscripts = shaderbuf = (char * ) malloc (size);
 
 	/* now load all the scripts */
 	dirptr = dirlist;
@@ -779,78 +734,61 @@ int Shader_Init (void )
 
 	Tex_Init ();
 
-
 	Load_Standard_Shaders ();	
 
-
-
 	return 1;
-
 }
 
-
-void Shader_MakeCache (void )
+void Shader_MakeCache (void)
 {
 	char *ptr;
-	char *token ;
+	char *token;
 	int i;
-	
 
-	ptr = shaderbuf ;
+	ptr = shaderbuf;
 
-	numshaders =0;
+	numshaders = 0;
 
 	COM_BeginParseSession ();
 
-	while (ptr )
+	while (ptr)
 	{
-		token =COM_ParseExt ( &ptr,1);
+		token = COM_ParseExt (&ptr, 1);
 		if (!token[0]) continue;
-		Shader_Skip (& ptr );
+		Shader_Skip (&ptr);
 		
-		numshaders ++;
-
+		numshaders++;
 	}
 
 	// John Clinton: fix memory overflow
-	numshaders ++;	
+	numshaders++;	
 	
-	shadercache =(cache_t *) malloc ( numshaders * sizeof (cache_t ));
-
+	shadercache = (cache_t *)malloc(numshaders * sizeof (cache_t));
 
 	ptr = shaderbuf;
-	i=0;
+	i = 0;
 
 	// John Clinton: added numshaders test
-	while( ptr && i < numshaders )
+	while (ptr && (i < numshaders))
 	{
-		token =COM_ParseExt ( &ptr,1);
-		shadercache[i].offset= ptr - shaderbuf ;
-
+		token = COM_ParseExt (&ptr, 1);
+		shadercache[i].offset = ptr - shaderbuf;
 
 		if (!token[0]) continue;
 
-		A_strncpyz (shadercache[i].name,token,MAX_APATH);
+		A_strncpyz (shadercache[i].name, token, MAX_APATH);
 
-		Shader_Skip (& ptr );	
+		Shader_Skip (&ptr);	
 		i++;
 	}
-
-
-
-
-
-
 }
 
-
-void Shader_Skip ( char ** ptr )
-{
-	
+void Shader_Skip (char **ptr)
+{	
 	char *tok,*tmp;
     int brace_count;
 
-    /* Opening brace */
+    // Opening brace
     tok = COM_ParseExt (ptr,1);
 	
 	if (!ptr) return ;
@@ -859,6 +797,7 @@ void Shader_Skip ( char ** ptr )
 	{
 		tok = COM_ParseExt(ptr,1);
 	}
+
 	tmp = *ptr;
 
     for (brace_count = 1; brace_count > 0 ; tmp++)
@@ -871,177 +810,141 @@ void Shader_Skip ( char ** ptr )
     }
 
 	*ptr = tmp;
-
 }
 
 int Shader_GetOffset (const char *name )
 {
-
 	int i;
+
 	// HASHTABLE !!!
-	
-	for (i=0;i<numshaders;i++)
+	for (i = 0; i < numshaders; i++)
 	{
-		if (!stricmp (shadercache[i].name,name))
+		if (!stricmp (shadercache[i].name, name))
 			return shadercache[i].offset;
 	}
 
 	return -1;
-
 }
 
 
-int Shader_Shutdown (void )
+int Shader_Shutdown (void)
 {
+	free (r_shaders);
+	free (shaderbuf);
 
-
-
-	free (r_shaders );
-	free (shaderbuf );
-
-	free (shadercache );
+	free (shadercache);
 
 	Tex_Shutdown();
 
 	return 0;
 }
 
-
-
-
-void
-Shader_Readpass(shader_t *shader, shaderpass_t *pass, char ** ptr)
+void Shader_Readpass(shader_t *shader, shaderpass_t *pass, char ** ptr)
 {
     char *token;
 
-    /* Set defaults */
+    // Set defaults
     pass->flags = 0;
     pass->texref = -1;
-	pass->anim_numframes=0;
+	pass->anim_numframes = 0;
     pass->depthfunc = GL_LEQUAL;
     pass->rgbgen = RGB_GEN_NONE;
     pass->num_tc_mod = 0;
-	pass->alpha_gen =ALPHA_GEN_DEFAULT ;
-	pass->tc_gen=TC_GEN_BASE;
-	pass->tc_mod[0].type=SHADER_TCMOD_NONE;
-	pass->num_tc_mod=0;
+	pass->alpha_gen =ALPHA_GEN_DEFAULT;
+	pass->tc_gen = TC_GEN_BASE;
+	pass->tc_mod[0].type = SHADER_TCMOD_NONE;
+	pass->num_tc_mod = 0;
 	
 	while (ptr)
 	{
-		token =COM_ParseExt (ptr,1);
+		token = COM_ParseExt (ptr, 1);
 		
 		if (!token[0]) continue;
 
 		if (token[0] == '}')
 			break;
 		else
-			Shader_Parsetok (shader,pass,shaderpasskeys,token,ptr);
+			Shader_Parsetok (shader, pass, shaderpasskeys,token,ptr);
 	}
-
 
 	// Check some things 
-
-	if (pass->rgbgen==RGB_GEN_NONE)
-	{
-		pass->rgbgen=RGB_GEN_IDENTITY;
-
-		;
+	if (pass->rgbgen == RGB_GEN_NONE) {
+		pass->rgbgen = RGB_GEN_IDENTITY;
 	}
-
-
-
-
-
 }
 
-void
-Shader_Parsetok(shader_t *shader, shaderpass_t *pass, shaderkey_t *keys,
-		char *token,char ** ptr)
+void Shader_Parsetok(shader_t *shader, shaderpass_t *pass, shaderkey_t *keys, char *token, char **ptr)
 {
     shaderkey_t *key;
     char *c, *args[SHADER_ARGS_MAX];
 	static char buf[SHADER_ARGS_MAX][128];
     int numargs;
 
-	for (key=keys; key->keyword != NULL ; key ++ )
+	for (key = keys; key->keyword != NULL; key++)
 	{
-		if (!stricmp (token , key->keyword))
+		if (!stricmp (token, key->keyword))
 		{
-			numargs=0;
-			while (ptr )
+			numargs = 0;
+
+			while (ptr)
 			{
 				c = COM_Parse (ptr);
 				
 				if (!c[0]) // NEW LINE 
 					break;
 
-
-				c =strlwr (c); // Lowercase ( FIXME !)
+				c = strlwr(c); // Lowercase ( FIXME !)
 				
-				strcpy(buf[numargs],c);
-				args[numargs]= buf[numargs];
-				numargs++;
+				strcpy(buf[numargs], c);
+				args[numargs] = buf[numargs++];
 			}
+
 			if (numargs < key->minargs || numargs > key->maxargs)
 				Syntax();
 
 			if (key->func)
 				key->func(shader, pass, numargs, args);
 				return;
-			
 		}
-
-
-
 	}
 
-	// we could not find the keyword :
-	Con_Printf ("Shader_Parsetok : Unknown keyword: %s \n",token);
+	// we could not find the keyword
+	Con_Printf ("Shader_Parsetok: Unknown keyword: %s\n", token);
    
-	// Next Line :
+	// Next Line
 	while (ptr)
 	{
 		token = COM_Parse (ptr);
 		if (!token[0])
 			break;
 	}
-
-
 }
 
-
-void Shader_Finish (shader_t *s )
+void Shader_Finish (shader_t *s)
 {
-	byte sort;
-	// check if we can use Render_Backend_Flush_Multitexture_Lightmapped :
-
+	// check if we can use Render_Backend_Flush_Multitexture_Lightmapped
 	if (r_allowExtensions->integer && gl_ext_info._ARB_Multitexture)
 	{
-		if (s->numpasses == 2 )
+		if (s->numpasses == 2)
 		{
-			if ( !(s->pass[0].flags & SHADER_BLEND ) && s->pass[1].flags & SHADER_BLEND )
+			if (!(s->pass[0].flags & SHADER_BLEND) && s->pass[1].flags & SHADER_BLEND)
 			{
-				if (s->pass[0].flags & SHADER_LIGHTMAP && ((s->pass[1].blendsrc == GL_DST_COLOR && s->pass[1].blenddst== GL_ZERO) || 
+				if (s->pass[0].flags & SHADER_LIGHTMAP && ((s->pass[1].blendsrc == GL_DST_COLOR && s->pass[1].blenddst == GL_ZERO) || 
 					(s->pass[1].blendsrc == GL_ZERO && s->pass[1].blenddst == GL_SRC_COLOR)))
 				{
 					if (! (s->pass[1].flags & SHADER_LIGHTMAP ))
-					{
-						// OK !
-						s->flush=SHADER_FLUSH_MULTITEXTURE_LIGHTMAP;
-					}
+						s->flush = SHADER_FLUSH_MULTITEXTURE_LIGHTMAP;
 				}
 			}
 		}
-
 	}
 
-	// check if we can use Render_Backend_Flush_Multitexture_Combine :
-	// TODO :
+	// TODO: check if we can use Render_Backend_Flush_Multitexture_Combine
 
-	/* FIXME: is this how we handle transparent ? */
+	// FIXME: is this how we handle transparent?
 	if (! (s->flags & SHADER_DEPTHWRITE) &&
 	! (s->flags & SHADER_TRANSPARENT) &&
-	! (s->flags & SHADER_SKY) && s->numpasses > 0)
+	! (s->flags & SHADER_SKY) && (s->numpasses > 0))
 	{
 		int i;
 		
@@ -1052,56 +955,50 @@ void Shader_Finish (shader_t *s )
 			}
 	}
 
-	sort = (s->flags & SHADER_POLYGONOFFSET) + (s->cull << 1 ) + ( s->flush << 4 );
-
-	s->sortkey =sort;
+	s->sortkey = (s->flags & SHADER_POLYGONOFFSET) + (s->cull << 1 ) + ( s->flush << 4 );
 }
 
-int R_LoadShader ( const char * name ,int type )
+int R_LoadShader (const char *name, int type)
 {
 	char *ptr;
-	int offset ,i ;
+	int offset, i;
 	shader_t *s = &r_shaders[shadercount];
 
-
-	if (strlen (name ) > MAX_APATH )
+	if (strlen (name) > MAX_APATH)
 		return -1;
 
-	// Test if already loaded :
-	for (i=0;i<shadercount;i++)
+	// Test if already loaded
+	for (i = 0; i < shadercount; i++)
 	{
-		if (!strcmp (name,r_shaders[i].name))
+		if (!strcmp (name, r_shaders[i].name))
 			return i;
 	}
 
+	offset = Shader_GetOffset(name);
 
-	offset =Shader_GetOffset (name);
-
-	// the shader is in the shader scripts :
-	if (offset > -1 )
+	// the shader is in the shader scripts
+	if (offset > -1)
 	{
-		char * token ;
+		char *token;
 		ptr = shaderbuf + offset;
 
+		// set defaults
+		s->flags = 0;
+		s->sort = 0;
+		s->numpasses = 0;
+		s->deform_vertices = DEFORMV_NONE;
+		s->skyheight = 512.0f;
+		s->flush = SHADER_FLUSH_GENERIC;
+		s->cull = SHADER_CULL_DISABLE;
 
-		// set defaults :
-		s->flags=0;
-		s->sort=0;
-		s->numpasses=0;
-		s->deform_vertices=DEFORMV_NONE;
-		s->skyheight=512.0f;
-		s->flush=SHADER_FLUSH_GENERIC;
-		s->cull=SHADER_CULL_DISABLE;
-
-		token = COM_ParseExt(&ptr,1);
+		token = COM_ParseExt(&ptr, 1);
 
 		if (!ptr || token[0] != '{')
 			return -1;
 
 		while (ptr)
 		{
-
-			token=COM_ParseExt (&ptr,1);
+			token = COM_ParseExt (&ptr, 1);
 
 			if (!token[0])
 				continue;
@@ -1110,27 +1007,20 @@ int R_LoadShader ( const char * name ,int type )
 			{
 				int pass = s->numpasses++;
 				Shader_Readpass(s, &s->pass[pass],&ptr);
-
-
 			}
 			else if (token[0] == '}')
 			{
 				break;
-
 			}
 			else
 			{
 				Shader_Parsetok(s, NULL, shaderkeys, token,&ptr);
 			}
-		
-
 		}
 
 		Shader_Finish(s);
-
 	}
-	// make a default shader :
-	else
+	else		// make a default shader
 	{
 		switch (type)
 		{
@@ -1185,10 +1075,9 @@ int R_LoadShader ( const char * name ,int type )
 	return shadercount++;
 }
 
-void
-Syntax(void)
+void Syntax(void)
 {
-    Error("Syntax error\n");
+    Con_Printf("Syntax error\n");
 }
 
 static void

@@ -23,7 +23,7 @@
 #include "c_var.h"
 
 
-extern cvar_t *cl_running ;
+extern cvar_t *cl_running;
 extern cvar_t *cl_cdkey;
 extern cvar_t *cl_yawspeed;
 extern cvar_t *cl_pitchspeed;

@@ -105,7 +105,7 @@ aboolean Engine_Init (void)
 	Cbuf_AddText("exec q3config.cfg\n");
 	Cbuf_Execute();
 
-	if (!SV_Init()) {
+	if (!SV_Init("FIXME")) {
 		Error ("Could not initialize server subsystem");
 		return afalse;
 	}

@@ -27,6 +27,8 @@
 #include "cgame.h"
 #include "cmap.h"
 #include "keys.h"
+#include "game.h"
+#include "server.h"
 
 cvar_t *cl_running;
 cvar_t *cl_cdkey;
@@ -44,14 +46,6 @@ typedef struct cvarTable_s {
 	char	*resetString;
 	int		flags;
 } cvarTable_t;
-
-typedef struct 
-{
-	connstate_t connstate;
-	aboolean	demo_playing;
-	entityState_t current_entities[256];
-} client_t;
-
 
 static cvarTable_t cvarTable [] =
 {
@@ -110,7 +104,7 @@ aboolean CL_Init (void)
 	S_Init();
 
 	cl.connstate = CA_UNINITIALIZED;
-	cl.demo_playing = afalse;
+//	cl.demo_playing = afalse;
 
 	CL_GetCvars();
 	Cmd_AddCommand ("vid_restart",Cmd_vid_restart );

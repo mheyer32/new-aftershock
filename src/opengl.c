@@ -2242,12 +2242,6 @@ int WIN_Reset_DisplaySettings (void )
 	);
 
 	return (res==DISP_CHANGE_SUCCESSFUL);
-
-
-
-
-
-
 }
 
 
@@ -2259,7 +2253,10 @@ int WIN_CreateWindow ( HINSTANCE inst ,int nCmdShow)
 
 	WNDCLASSEX wcex;
 	vid_mode_t mode;
-
+	RECT		WindowRect;
+	DWORD		dwExStyle;
+	DWORD		dwStyle;
+	
 	memset (&wcex,0,sizeof (WNDCLASSEX));
 	wcex.cbSize = sizeof(WNDCLASSEX); 
 
@@ -2289,12 +2286,45 @@ int WIN_CreateWindow ( HINSTANCE inst ,int nCmdShow)
 
 	mode= vid_modes[r_mode->integer];
 
+	WindowRect.left = (long)0;
+	WindowRect.right = (long)mode.width;
+	WindowRect.top = (long)0;
+	WindowRect.bottom = (long)mode.height;
+
+	if (/*r_fullscreen->integer*/0) {
+		dwExStyle = WS_EX_APPWINDOW;
+		dwStyle = WS_POPUP;
+	}
+	else {
+		dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
+		dwStyle = WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS;
+	}
+
+	// adjust window to true requested size
+	AdjustWindowRectEx(&WindowRect, dwStyle, FALSE, dwExStyle);
+
 // Fullscreen support works ,
 // it`s just disabled cause it makes Problems when debugging 
-   if (1)//!r_fullscreen->integer)
+   if (1/*!r_fullscreen->integer*/)
    {
-   hWnd = CreateWindow("AFTERSHOCK", "Aftershock", WS_CLIPSIBLINGS | WS_CAPTION,
-      CW_USEDEFAULT, 0, mode.width,mode.height , NULL, NULL, hInst, NULL);
+//	   hWnd = CreateWindow("AFTERSHOCK", "Aftershock", WS_CLIPSIBLINGS | WS_CAPTION,
+//		  CW_USEDEFAULT, 0, mode.width,mode.height , NULL, NULL, hInst, NULL);
+
+	// create the window
+	hWnd = CreateWindowEx
+	(
+		dwExStyle,		// extended style for the window
+		"Aftershock",		// class name
+		"Aftershock",			// window title
+		WS_CLIPSIBLINGS | WS_CLIPCHILDREN | dwStyle, // window style
+		0, 0,		// window position
+		WindowRect.right-WindowRect.left,	// selected width
+		WindowRect.bottom-WindowRect.top,	// and weight
+		NULL,			// no parent window
+		NULL,			// no menu
+		hInst,		// instance
+		NULL
+	);
 
 		glconfig.isFullscreen=0;
 		winX=mode.width;
@@ -2302,15 +2332,32 @@ int WIN_CreateWindow ( HINSTANCE inst ,int nCmdShow)
    }
    else 
    {
-	   WIN_Reset_DisplaySettings ();
+		WIN_Reset_DisplaySettings ();
 		glconfig.isFullscreen=1;
+/*
 		hWnd = CreateWindowEx( WS_EX_TOPMOST , 
                         "Aftershock", "Aftershock", 
                         WS_POPUP | WS_CLIPSIBLINGS,
                         0, 0, mode.width, mode.height,
                         NULL, NULL, hInst, NULL);
 
-		
+*/		
+	// create the window
+	hWnd = CreateWindowEx
+	(
+		dwExStyle,		// extended style for the window
+		"Aftershock",		// class name
+		"Aftershock",			// window title
+		WS_CLIPSIBLINGS | WS_CLIPCHILDREN | dwStyle, // window style
+		0, 0,		// window position
+		WindowRect.right-WindowRect.left,	// selected width
+		WindowRect.bottom-WindowRect.top,	// and weight
+		NULL,			// no parent window
+		NULL,			// no menu
+		hInst,		// instance
+		NULL
+	);
+
 		Con_Printf ("...calling CDS :");
 		if (!WIN_ChangeResolution (mode.width,mode.height,r_colorbits->integer ? r_colorbits->integer : 16 ))
 		{
@@ -2441,6 +2488,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_DESTROY:
 			PostQuitMessage( 0 );
 			break;
+
+		case WM_SIZE:
+			if (opengl_initialized)
+			{
+				winX = LOWORD(lParam);
+				winY = HIWORD(lParam);
+			}
+			break;
+
 		default:
 			return DefWindowProc( hWnd, message, wParam, lParam );
    }
@@ -2741,6 +2797,16 @@ int Init_OpenGL (void)
 				Con_Printf ("... GL_EXT_texture_env_add not found\n");
 				gl_ext_info._TexEnv_Add=0;
 				glconfig.textureEnvAddAvailable=0;
+			}
+			if (IsExtensionSupported("GL_NV_texgen_reflection"))
+			{
+				Con_Printf ("...using GL_NV_texgen_reflection\n");
+				gl_ext_info._GL_NV_texgen_reflection = 1;
+			}
+			else
+			{
+				Con_Printf ("... GL_NV_texgen_reflection not found\n");
+				gl_ext_info._GL_NV_texgen_reflection=0;
 			}
 			if (IsExtensionSupported ("GL_EXT_texture_env_combine"))
 			{

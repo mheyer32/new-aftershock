@@ -17,6 +17,7 @@
  */
 
 #include "a_shared.h"
+#include "io.h."
 #include "util.h"
 #include "network.h"
 #include "game.h"
@@ -26,8 +27,6 @@
 #include "cmap.h"
 #include "server.h"
 #include "client.h"
-
-
 
 /* cvars */
 static cvar_t	*dedicated;
@@ -75,36 +74,10 @@ static cvarTable_t cvarTable[] = {
 	{ &mapname, "mapname", "Q3DM1", CVAR_SERVERINFO }
 };
 
-const static int cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
-
-typedef struct client_s {
-	net_address_t		address;
-	connstate_t     	connstate;
-	int					timeout;
-	int					ping;
-	char				userinfo[MAX_INFO_STRING];
-	usercmd_t			cmd;
-} client_t;
-
-typedef struct server_static_s {
-	aboolean	initialized;
-	int			num_clients;
-	client_t	clientlist[MAX_CLIENTS];
-	gameState_t	gamestate;
-} server_static_t;
-
-typedef struct {
-
-	void			*gEnts;
-	int				numGEntities;
-	int				sizeofGEntity_t;
-	playerState_t	*clients;
-	int				sizeofGClient;
-} server_t;
-
-
 server_static_t svs;
 server_t sv;
+
+const static int cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
 
 char *entitypos = NULL;
 
@@ -196,9 +169,79 @@ void SV_Get_GameState (gameState_t *state)
 	memcpy (state, &svs.gamestate, sizeof(gameState_t));
 }
 
+static void SV_Startup( void )
+{
+	if( svs.initialized ) {
+		Error("SV_Startup: svs.initialized");
+		return;
+	}
+
+	sv_maxclients->modified = afalse;
+
+	if( sv_maxclients->integer < 1 ) {
+		Cvar_Set( "sv_maxclients", "1" );
+	} else if( sv_maxclients->integer > MAX_CLIENTS ) {
+		Cvar_Set( "sv_maxclients", va( "%i", MAX_CLIENTS ) );
+	}
+
+	Cvar_Set( "sv_running", "1" );
+	svs.initialized = atrue;
+}
+
+static void SV_Map( const char *mapname )
+{
+	char buf [MAX_INFO_STRING];
+
+	if (GAME_main) {
+		GAME_main (GAME_SHUTDOWN, 0, 0, 0, 0, 0, 0, 0);
+		UnLoadGame();
+	}
+
+	Con_Printf( "------ Server Initialization ------\n" );
+
+	Con_Printf( "Server: %s\n", mapname );
+
+	if( !Cvar_VariableValue( "sv_running" ) ) {
+		SV_Startup();
+	}
+
+	if( sv_maxclients->modified ) {
+		// TODO
+	}
+
+//	CL_Map();
+
+	FS_Restart();
+
+	Cvar_Set( "nextmap", va( "map %s", mapname ) );
+
+	CM_LoadMap( va( "maps/%s.bsp", mapname ), afalse );
+
+	Cvar_Set( "mapname", mapname );
+
+	entitypos = cm.entityspawn;
+
+	memset(buf, 0, sizeof(buf));
+
+	SV_MakeServerinfo(buf);
+	SV_SetConfigstring( CS_SERVERINFO, buf );
+
+	if (!LoadGame()) 
+	{
+		Error ("Could not load Game!");
+		return;
+	}
+
+	GAME_main(GAME_INIT, 0, 0, 0, 0, 0, 0, 0);
+
+	Com_Printf( "-----------------------------------\n" );
+}
+
 static void Cmd_map (void)
 {
-	char name [MAX_OSPATH];
+	char name[MAX_APATH];
+	char mapfile[MAX_APATH];
+	int file, filelen;
 
 	if (Cmd_Argc() < 2)
 	{
@@ -206,38 +249,50 @@ static void Cmd_map (void)
 		return;
 	}
 
-	Cmd_Argv(1, name, MAX_OSPATH);
+	Cmd_Argv(1, mapfile, MAX_APATH);
+	COM_StripExtension(mapfile, name);
+	A_strncpyz (mapfile, va("maps/%s.bsp", name), MAX_APATH);
 
-	Cvar_Set2 ("mapname", name, 0);
+	// read the file
+	filelen = FS_OpenFile (mapfile, &file, FS_READ);
 
-	if (!SV_Startup(mapname->string))
+	if (!file || !filelen) {
+		Con_Printf("Can't find map %s\n", mapfile);
 		return;
-	
-//	CL_Startup ();
+	}
 
-	GAME_main (GAME_RUN_FRAME, 1000, 0, 0, 0, 0, 0, 0);
+	FS_FCloseFile (file);
+
+	SV_Map(name);
 }
 
 static void Cmd_spmap (void )
 {
-	char name [MAX_OSPATH];
+	char name[MAX_APATH];
+	char mapfile[MAX_APATH];
+	int file, filelen;
 
 	if (Cmd_Argc() < 2)
 	{
 		Con_Printf("Usage: spmap [mapname]\n");
-		return ;
+		return;
 	}
 
-	Cmd_Argv(1, name, MAX_OSPATH);
+	Cmd_Argv(1, mapfile, MAX_APATH);
+	COM_StripExtension(mapfile, name);
+	A_strncpyz (mapfile, va("maps/%s.bsp", name), MAX_APATH);
 
-	Cvar_Set2 ("mapname", name, 0);
+	// read the file
+	filelen = FS_OpenFile (mapfile, &file, FS_READ);
 
-	if (!SV_Startup(mapname->string))
+	if (!file || !filelen ) {
+		Con_Printf("Can't find map %s\n", mapfile);
 		return;
-	
-//	CL_Startup ();
+	}
 
-	GAME_main (GAME_RUN_FRAME, 1000, 0, 0, 0, 0, 0, 0);
+	FS_FCloseFile (file);
+
+	SV_Map(name);
 }
 
 void SV_LocateGameData (void *gEntities, int numEntities, int sizeofGEntity_t,
@@ -250,62 +305,40 @@ void SV_LocateGameData (void *gEntities, int numEntities, int sizeofGEntity_t,
 	sv.sizeofGClient = sizeofGClient;
 }
 
-int SV_Init (void)
+aboolean SV_Init (char *map)
 {
+	memset (&svs, 0, sizeof (svs));
+
 	SV_GetCvars();
 
 	Cmd_AddCommand("map", Cmd_map);
 	Cmd_AddCommand("spmap", Cmd_spmap);
 
-	memset (&svs, 0, sizeof (svs));
-
-	svs.initialized = 1;
-	return 1;
+	return atrue;
 }
 
-int SV_Shutdown (void)
+void SV_Frame (int millisec)
 {
-	svs.initialized = 0;
 
-	return 1;
 }
 
-int SV_Startup (char *name)
+void SV_Shutdown (void)
 {
-//	char buf [MAX_OSPATH]; // Vic
-	char buf [MAX_INFO_STRING];
+	if( !sv_running || !sv_running->integer ) return;
 
-	Con_Printf("------ Server Initialization ------\n");
+	Con_Printf( "----- Server Shutdown -----\n" );
 
-	Cvar_Set2("sv_running", "1", 0);
-
-	Com_sprintf(buf, sizeof(buf), "map %s", name);
-	Cvar_Set2("nextmap", buf, 0);
-
-	if (!CM_LoadMap (name, 1))
-		return 0;
-
-	entitypos = cm.entityspawn;
-
-	Cvar_Set2("mapname", name, 0);
-
-	memset(buf, 0, sizeof(buf));
-
-	SV_MakeServerinfo(buf);
-	SV_SetConfigstring( CS_SERVERINFO, buf );
-
-	if (!LoadGame()) 
-	{
-		Error ("Could not load Game!");
-		return 0;
+	if (GAME_main) {
+		GAME_main (GAME_SHUTDOWN, 0, 0, 0, 0, 0, 0, 0);
+		UnLoadGame();
 	}
 
-	GAME_main(0, 0, 0,0,0,0,0,0);
+	memset (&svs, 0, sizeof (svs));
 
-	Con_Printf("-----------------------------------\n" );
-	return 1;
+	Cvar_Set( "sv_running", "0" );
+
+	Com_Printf( "---------------------------\n" );
 }
-
 
 void SV_SetBrushModel(sharedEntity_t *ent, const char *name)
 {

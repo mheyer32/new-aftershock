@@ -526,7 +526,7 @@ int Tex_UploadTexture (byte **data ,int width ,int height , int format ,int flag
 	{
 		if (gl_ext_info._GL_S3_s3tc)
 		{
-			if (format==GL_RGB)
+			if (format == GL_RGB)
 				internal_format=GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 			else 
 				internal_format=(r_texturebits->integer <=16) 

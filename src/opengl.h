@@ -86,16 +86,14 @@ typedef struct {
 	aboolean				smpActive;		// dual processor
 } glconfig_t;
 
-
-
 extern glconfig_t glconfig;
 
 typedef struct {
-
 	int _TexEnv_Add;
 	int _TexEnv_Combine;
 	int _TexEnv_Combine4;
 	int _GL_NV_register_combiners;
+	int	_GL_NV_texgen_reflection;
 	int _ARB_Multitexture;
 	int _CompiledVertex_Arrays;
 	int _WGL_ARB_extensions_string;
@@ -103,14 +101,14 @@ typedef struct {
 	int _WGL_swap_control;
 	int _GL_ARB_texture_compression;
 	int _GL_3DFX_texture_compression_FXT1;
-	int _GL_S3_s3tc ;
-}ext_info_t;
+	int _GL_S3_s3tc;
+} ext_info_t;
 
 
 typedef struct {
-	int width ;
+	int width;
 	int height;
-}vid_mode_t ;
+} vid_mode_t;
 
 
 

@@ -154,8 +154,10 @@ int FS_Write(const void *buffer, int len, int handle)
 	if (handle < 1 || handle > MAX_APATH)
 		return 0;
 
-	if (!buffer)
+	if (!buffer) {
 		Error ("FS_Write : buffer = NULL !");
+		return 0;
+	}
 
 	f= &files [handle];
 
@@ -194,7 +196,7 @@ void FS_Init (const char *dir)
 	char fname [MAX_OSPATH];
 	char buf2[MAX_OSPATH];
 
-	Con_Printf("   ------- FS_INIT: -------    \n");
+	Con_Printf("------- FS_INIT: -------\n");
 
 	if (!Pak_Init ())
 		return ;
@@ -226,7 +228,7 @@ void FS_Init (const char *dir)
 
 	File_FindClose(handle);
 
-	Con_Printf ("-----  FS_INIT :Success --------\n");
+	Con_Printf ("----- FS_INIT:Success --------\n");
 }
 
 // TODO !
@@ -279,7 +281,19 @@ int FS_FileSize (const char *name)
 	if (!len || !file )
 		return 0;
 	
-	FS_FCloseFile(file );
+	FS_FCloseFile(file);
 
 	return len;
 }
+
+/*
+================
+FS_Restart
+================
+*/
+void FS_Restart(void)
+{
+	FS_Shutdown();
+	FS_Init("baseq3");
+}
+

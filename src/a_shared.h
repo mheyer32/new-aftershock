@@ -113,7 +113,7 @@
 //=============================================================
 
 
-#define AFTERSHOCK_VERSION "0.17"
+#define AFTERSHOCK_VERSION "0.21"
 
 
 
@@ -974,20 +974,6 @@ typedef struct entityState_s {
 	int		legsAnim;		// mask off ANIM_TOGGLEBIT
 	int		torsoAnim;		// mask off ANIM_TOGGLEBIT
 } entityState_t;
-
-typedef enum connstate_e {
-	CA_UNINITIALIZED,
-	CA_DISCONNECTED, 	// not talking to a server
-	CA_AUTHORIZING,		// not used any more, was checking cd key 
-	CA_CONNECTING,		// sending request packets to the server
-	CA_CHALLENGING,		// sending challenge packets to the server
-	CA_CONNECTED,		// netchan_t established, getting gamestate
-	CA_LOADING,			// only during cgame initialization, never during main loop
-	CA_PRIMED,			// got gamestate, waiting for first frame
-	CA_ACTIVE,			// game views should be displayed
-	CA_CINEMATIC		// playing a cinematic or a static pic, not connected to a server
-} connstate_t;
-
 
 void *_cdecl malloc (unsigned int size);
 void *memcpy(void *, const void *, size_t);

@@ -942,8 +942,7 @@ int Unz_GetStringForDir (unzFile * pak,const char * dir,const char *extension,ch
 					if (dir[0])
 					token +=strlen (dir)+1;
 
-//					A_strncpyz (bufpos,token, bufsize - (*len));
-					strcpy (bufpos, token);
+					A_strncpyz (bufpos,token, strlen(token)+1);
 
 					bufpos+=strlen(token)+1;
 					*(bufpos-1)=0;
@@ -953,8 +952,6 @@ int Unz_GetStringForDir (unzFile * pak,const char * dir,const char *extension,ch
 	}
 
 	return found;
-
-
 }
 
 int Unz_FileExists (unzFile * pak, const char * file )

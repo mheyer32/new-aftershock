@@ -266,6 +266,9 @@ reference_t transform_ref;
 
 colour_t r_actcolor = {255, 255, 255, 255};
 
+void R_ClearScene (void);
+
+
 void R_Init(void)
 {
 	Con_Printf ("-------- R_INIT ---------\n");
@@ -309,7 +312,9 @@ void R_Init(void)
 
     R_backend_init();
 
-	Con_Printf ("... finished R_INIT ... \n");
+	R_ClearScene();
+
+	Con_Printf ("... finished R_INIT ...\n");
 }
 
 void R_Shutdown (void)
@@ -617,6 +622,7 @@ void R_render_model (refEntity_t *re)
 	}
 
 	Matrix4_Identity (tmpmat);
+
 	tmpmat[12] = re->origin[0];
 	tmpmat[13] = re->origin[1];
 	tmpmat[14] = re->origin[2];
@@ -851,80 +857,72 @@ void R_Render_PortalSurface (refEntity_t *e )
 {
 }
 
-void R_RenderScene( const refdef_t *fd ) 
+void R_RenderScene (const refdef_t *fd)
 {
 	mat4_t modmat;
 
-	memcpy (&r_render_def,fd,sizeof (refdef_t));
+	memcpy (&r_render_def, fd, sizeof (refdef_t));
 
-
-// Setup projection :
-// WORKS !!!
-
+	// Setup projection
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
     glLoadIdentity();
-	GL_Perspective(fd->fov_y,fd->fov_x/fd->fov_y,r_znear->value,3000.0);
+	GL_Perspective(fd->fov_y, fd->fov_x / fd->fov_y, r_znear->value, 3000.0);
 
-//Setup the Matrix :
-// Finally WORKS !!!
-
+	// Setup the Matrix
 	glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-    glLoadIdentity ();
+	glPushMatrix();
+    glLoadIdentity();
 
-    glRotatef (-90,  1, 0, 0);	    // put Z going up
-    glRotatef (90,  0, 0, 1);	    // put Z going up
-   // glRotatef (-r_refdef.viewangles[2],  1, 0, 0);
-   // glRotatef (-r_refdef.viewangles[0],  0, 1, 0);
-   // glRotatef (-r_refdef.viewangles[1],  0, 0, 1);
+    glRotatef(-90, 1, 0, 0);	// put Z going up
+    glRotatef(90, 0, 0, 1);	    // put Z going up
 
 	Matrix4_Identity(modmat);
 
-	modmat[0]=fd->viewaxis[0][0];
-	modmat[1]=fd->viewaxis[0][1];
-	modmat[2]=fd->viewaxis[0][2];
+	modmat[0]	= fd->viewaxis[0][0];
+	modmat[1]	= fd->viewaxis[0][1];
+	modmat[2]	= fd->viewaxis[0][2];
+	modmat[3]	= 0;
 
-	modmat[4]=fd->viewaxis[1][0];
-	modmat[5]=fd->viewaxis[1][1];
-	modmat[6]=fd->viewaxis[1][2];
+	modmat[4]	= fd->viewaxis[1][0];
+	modmat[5]	= fd->viewaxis[1][1];
+	modmat[6]	= fd->viewaxis[1][2];
+	modmat[7]	= 0;
 
-	modmat [8]=fd->viewaxis[2][0];
-	modmat [9]=fd->viewaxis[2][1];
-	modmat [10]=fd->viewaxis[2][2];
+	modmat[8]	= fd->viewaxis[2][0];
+	modmat[9]	= fd->viewaxis[2][1];
+	modmat[10]	= fd->viewaxis[2][2];
+	modmat[11]	= 0;
 
+	modmat[12]	= -fd->vieworg[0];
+	modmat[13]	= -fd->vieworg[1];
+	modmat[14]	= -fd->vieworg[2];
+	modmat[15]	= 1.0f;
 
 	glMultMatrixf(modmat);
 
-    glTranslatef (-fd->vieworg[0],  -fd->vieworg[1],  -fd->vieworg[2]);
+	glGetFloatv (GL_MODELVIEW_MATRIX, model_view_mat);
 
-	glGetFloatv ( GL_MODELVIEW_MATRIX , model_view_mat );
+	glViewport(fd->x, winY - fd->height - fd->y, fd->width, fd->height); // TODO ?
 
-
-	glViewport(fd->x,winY-fd->height+fd->y,fd->width,fd->height); // TODO ?
-
-
-
-	VectorCopy (fd->vieworg,r_eyepos);
+	VectorCopy (fd->vieworg, r_eyepos);
 	
-// Reset the reference :
+	// Reset the reference
 	Matrix4_Identity (transform_ref.matrix);
 	transform_ref.matrix_identity = atrue;
-	transform_ref.inv_matrix_calculated = afalse ;
-	
+	transform_ref.inv_matrix_calculated = afalse;
 
+	// Make Clipplanes
+	R_Setup_Clipplanes(fd);
 
-// Make Clipplanes :
-	R_Setup_Clipplanes (fd);
-
-// Render World :
+	// Render World
 	if (r_drawworld->integer)
 		if (!(fd->rdflags & RDF_NOWORLDMODEL) )
 			R_Draw_World();
 
-// Render Entities :
+	// Render Entities
 	if (r_drawentities->integer)
-	R_renderEntities ();
+		R_renderEntities();
 
 	R_RenderPolys();
 
@@ -934,8 +932,7 @@ void R_RenderScene( const refdef_t *fd )
 	glPopMatrix();
 }
 
-
- // TODO !!!
+// TODO !!!
 void R_Update_Screen (void )
 {
 }
@@ -1056,30 +1053,7 @@ void R_Draw_World (void)
 
 	if (!r_drawworld->integer)
 		return;
-/*
-	r_eyecluster = R_Find_Cluster(r_eyepos);
 
-    glViewport(0, 0, winX, winY);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    GL_Perspective(90,
-		(float)winX / (float)winY, r_znear->value, 3000.0);
-
-    glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-    // Set up camera
-	glRotatef (-90,  1, 0, 0);	    // put Z going up
-	glRotatef (90,  0, 0, 1);	    // put Z going up
-	glRotatef (0, 1, 0, 0);
-	glRotatef (0, 0, 1, 0);
-	glRotatef (0, 0, 0, 1);
-
-    glTranslatef (-r_eyepos[0], 
-		-r_eyepos[1], 
-		-r_eyepos[2]);
-*/
     facelist.numfaces = 0;
     numsky = 0;
 
@@ -1272,9 +1246,12 @@ unsigned int SortKey (cface_t * face )
 		(face->shadernum << 7 ) + // 9 Bits 
 		(face->lm_texnum ) ;  // 6 Bits
 */		
-//	return 0;
+	return (r_shaders[face->shadernum].sort << 29) + // Needs 4 Bits 
+		(r_shaders[face->shadernum].sortkey << 21) + // 8 Bits
+		(face->shadernum << 7) + // 9 Bits 
+		(face->lightmapnum);  // 6 Bits
 
-	return (((face)->shadernum << 16) + (face)->lightmapnum+1);
+//	return 0;
 }
 
 static int R_Find_Cluster(const vec3_t pos)

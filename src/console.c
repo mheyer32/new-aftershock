@@ -186,7 +186,7 @@ static void Con_AddToMinibuffer(const char input)
 		return;
 
 	if( !Key_GetOverstrikeMode() ) {
-		for(i=len; i>console.cursorPos; i--) {
+		for(i = len; i > console.cursorPos; i--) {
 			console.minibuffer[i] = console.minibuffer[i-1];
 		}
 	}
@@ -195,7 +195,7 @@ static void Con_AddToMinibuffer(const char input)
 	console.cursorPos++;
 
 	if( console.cursorPos == len + 1 ) {
-		console.minibuffer[ console.cursorPos ] = 0;
+		console.minibuffer[console.cursorPos] = 0;
 	}
 
 	Con_SetHScrollPos();
