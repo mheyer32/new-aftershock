@@ -27,7 +27,7 @@
 #include "io.h"
 #include "console.h"
 
-#define IMG_BUFSIZE (1024*1024-8)
+#define IMG_BUFSIZE (512 * 512 * 4)
 
 
 
@@ -49,6 +49,24 @@ typedef struct
     byte pixsize;
     byte imgdesc;
 } tgaheader_t;
+
+
+/*
+typedef struct
+{
+   byte numIden;
+   byte colorMapType;
+   byte imageType;
+   byte colorMapSpec[5]; // not used, just here to take up space
+   byte origX[2];
+   byte origY[2];
+   byte width[2];
+   byte height[2];
+   byte bpp;
+   byte imageDes; // don't use, space eater
+} tgaHeader_t;
+*/
+
 
 
 
@@ -394,55 +412,55 @@ byte * Tex_Load_TGA (const char *fname ,int *width, int * height , int * format)
     tgacur = tga + sizeof(tgaheader_t) + tgahead->idlen;
     if (tgahead->imgtype == 10)
     {
-	int i, j, packetlen;
-	byte packethead;
-	byte *c = img, *end = img + len;
-	byte rlc[4];
+		int i, j, packetlen;
+		byte packethead;
+		byte *c = img, *end = img + len;
+		byte rlc[4];
 	
-	while (c < end)
-	{
-	    packethead = *tgacur;
-	    if (++tgacur > tgaend)
-		Error("Unexpected end of tga file");
-	    if (packethead & 0x80)
-	    {
-		/* Run-length packet */
-		packetlen = (packethead & 0x7f) + 1;
-		memcpy(rlc, tgacur, depth);
-		if ((tgacur += depth) > tgaend)
-		    Error("Unexpected end of tga file");
-		for (j=0; j < packetlen; ++j)
-		    for(i=0; i < depth; ++i)
-			*c++ = rlc[i];
-	    }
-	    else
-	    {
-		/* Raw data packet */
-		packetlen = packethead + 1;
-		memcpy(c, tgacur, depth * packetlen);
-		if ((tgacur += depth * packetlen) > tgaend)
-		    Error("Unexpected end of tga file");
-		c += packetlen * depth;
-	    }
-	}
+		while (c < end)
+		{
+			packethead = *tgacur;
+			if (++tgacur > tgaend)
+			Error("Unexpected end of tga file");
+			if (packethead & 0x80)
+			{
+				/* Run-length packet */
+				packetlen = (packethead & 0x7f) + 1;
+				memcpy(rlc, tgacur, depth);
+				if ((tgacur += depth) > tgaend)
+					Error("Unexpected end of tga file");
+				for (j=0; j < packetlen; ++j)
+				for(i=0; i < depth; ++i)
+					*c++ = rlc[i];
+			}
+			else
+			{
+			/* Raw data packet */
+				packetlen = packethead + 1;
+				memcpy(c, tgacur, depth * packetlen);
+				if ((tgacur += depth * packetlen) > tgaend)
+					Error("Unexpected end of tga file");
+				c += packetlen * depth;
+			}
+		}
 
-	/* Flip image in y */
-	{
-	    int i, linelen;
-	    byte *temp;
+		/* Flip image in y */
+		{
+			int i, linelen;
+			byte *temp;
 	    
-	    linelen = tgahead->width * depth;
-	    temp = malloc(linelen);
-	    for (i=0; i < tgahead->height/2; ++i)
-	    {
-		memcpy(temp, &img[i * linelen], linelen);
-		memcpy(&img[i * linelen], &img[(tgahead->height - i - 1)
+			linelen = tgahead->width * depth;
+			temp = malloc(linelen);
+			for (i=0; i < tgahead->height/2; ++i)
+			{
+				memcpy(temp, &img[i * linelen], linelen);
+				memcpy(&img[i * linelen], &img[(tgahead->height - i - 1)
 					      * linelen], linelen);
-		memcpy(&img[(tgahead->height - i - 1) * linelen], temp,
-		       linelen);
-	    }
-	    free(temp);
-	}	
+				memcpy(&img[(tgahead->height - i - 1) * linelen], temp,
+					linelen);
+			}
+			free(temp);
+		}	
     }
     else
     {
@@ -487,6 +505,103 @@ byte * Tex_Load_TGA (const char *fname ,int *width, int * height , int * format)
 
 }
 
+// TODO !!!
+// Does not work yet !
+byte * Tex_Load_TGA2 ( const char * fname , int * width , int *height , int * format )
+{
+
+	int fsize ;
+	int file ;
+	tgaheader_t *tgahead;
+	byte * where =NULL;
+	byte * img = NULL;
+	int size =0,i =0;
+	byte temp;
+
+
+	// Read the File :
+	fsize =FS_OpenFile (fname ,&file ,FS_READ );
+
+	if (!file || !fsize )
+		return NULL;
+
+	FS_Read (img_buf,fsize,file );
+	FS_FCloseFile (file );
+
+
+	tgahead = (void *)img_buf ;
+
+	where = img_buf ;
+
+	// Swap the header:
+	tgahead->height=LittleShort (tgahead->height);
+	tgahead->width =LittleShort (tgahead->width);
+	tgahead->xorig =LittleShort (tgahead->xorig);
+	tgahead->yorig =LittleShort (tgahead->yorig);
+
+
+	where += sizeof (tgahead ) + tgahead->idlen;
+
+	if (tgahead->cmtype!= 0 )
+		return NULL;
+
+	if (tgahead->imgtype!= 2 && tgahead->imgtype != 3 )
+		return NULL;
+
+	size = tgahead->width * tgahead->height ;
+
+	switch (tgahead->pixsize )
+	{
+
+	case 32:
+		{
+			img = malloc ( size * 4 );
+			*format = GL_RGBA;
+
+			memcpy (img ,where ,size *4 );
+			
+			for (i=0;i< size *4 ;i+=4)
+			{
+				temp = img [i];
+				img[i] = img [i+2];
+				img[i+2] = temp ;
+
+			}
+
+		}
+		break;
+
+	case 24:
+		{
+			img = malloc (size * 3 );
+			*format = GL_RGB;
+
+			memcpy (img ,where, size *3 );
+
+			for (i=0;i<size * 3;i+=3 )
+			{
+				temp = img[i];
+				img [i] = img [i+2];
+				img [i+2] = temp ;
+			
+			}
+		}
+		break;
+
+
+	default :
+		return NULL;
+
+	}
+
+
+	*width = tgahead->width;
+	*height = tgahead->height;
+
+	return img ;
+
+
+}
 
 byte * Tex_Load_JPG ( const char * fname ,int * width ,int * height,int *format )
 {

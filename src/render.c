@@ -205,8 +205,15 @@ void R_Setup_Clipplanes (const refdef_t * fd );
 void R_Recursive_World_Node (int n);
 void R_Render_Walk_Face (int num );
 int R_ClipFrustrum (vec3_t mins ,vec3_t maxs );
+
+void R_Render_Poly (refEntity_t *e );
 void R_Render_Sprite (const refEntity_t * re );
+void R_Render_Beam ( refEntity_t *e );
+void R_Render_RailCore (refEntity_t *e);
+void R_Render_RailRings (refEntity_t *e );
 void R_Render_Bsp_Model (int num );
+void R_Render_Lightning (refEntity_t *e );
+void R_Render_PortalSurface (refEntity_t *e );
 
 unsigned int SortKey (cface_t * face );
 
@@ -566,19 +573,25 @@ void R_renderEntities (void)
 			R_render_model (&refEntities[i]);
 			break;
 		case RT_POLY:
+			R_Render_Poly(&refEntities[i]);
 			break;
 		case RT_SPRITE:
 			R_Render_Sprite (&refEntities[i]);
 			break;
 		case RT_BEAM:
+			R_Render_Beam (&refEntities[i]);
 			break;
 		case RT_RAIL_CORE:
+			R_Render_RailCore (&refEntities[i]);
 			break;
 		case RT_RAIL_RINGS:
+			R_Render_RailRings (&refEntities[i]);
 			break;
 		case RT_LIGHTNING:
+			R_Render_Lightning (&refEntities[i]);
 			break;
 		case RT_PORTALSURFACE:
+			R_Render_PortalSurface (&refEntities[i]);
 			break;
 	
 		default :
@@ -655,6 +668,9 @@ void R_LerpTag( orientation_t *tag, int model, int startFrame, int endFrame, flo
 
 	if (!mod->numframes>0)
 		return ;
+
+
+
 
 	// if out of bounds , wrap :
 	if (mod->numframes <= startFrame)
@@ -746,12 +762,6 @@ void R_render_model (refEntity_t *re)
 
 	glLoadMatrixf (model_view_mat);
 
-
-    //glRotatef (e->angles[1],  0, 0, 1);
-    //glRotatef (-e->angles[0],  0, 1, 0);
-	//ZOID: fixed z angle
-    //glRotatef (e->angles[2],  1, 0, 0);
-
 	
 	if (re->nonNormalizedAxes)
 	{
@@ -795,6 +805,14 @@ void R_render_model (refEntity_t *re)
 
 	// is this right ?
 	g_frametime = saved_time - (float )re->shaderTime/ 1000.0;
+
+
+
+	if (re->renderfx & RF_WRAP_FRAMES )
+	{
+		re->frame = re->frame % model->numframes;
+	}
+
 
 
 	for (j = 0; j < model->nummeshes; j++)
@@ -910,62 +928,152 @@ void R_render_model (refEntity_t *re)
 
 }
 
-// TODO !!!
+// Works :
+// TODO : rotation !
 void R_Render_Sprite (const refEntity_t * e )
 {
-	/*	vec3_t	point;
-	float		*up, *right;
-	vec3_t		v_forward, v_right, v_up;
-	vec3_t p[4];
+
+	vec3_t v[4];
+	vec2_t tc [4];
+	vec3_t org ;
+	int elems [6];
+	vec3_t up ,right ;
+	float rad ;
+	vec3_t tmp ;
+	int i;
+
+	VectorCopy (e->origin,org );
+	rad =e->radius;
+
 	
-		up = r_render_def .viewaxis[YAW];
-		right = r_render_def.viewaxis[PITCH];
+	VectorCopy (r_render_def.viewaxis[1],up);
+	VectorCopy (r_render_def.viewaxis[2],right );
+
+	VectorAdd (up , right , tmp );
+	VectorNormalize (tmp );
+	VectorScale (tmp,rad ,tmp );
+
+	// 1 
+	VectorAdd (org , tmp , v[0]);
+
+	// 3
+	VectorSubtract (org ,tmp ,v[2]);
+
+	VectorNegate(right, right);	
+	VectorAdd ( up,right,tmp );
+	VectorNormalize (tmp);
+
+	VectorScale (tmp,rad ,tmp );
 	
+	// 2 
+	VectorAdd (org , tmp , v[1]);
 
-	glColor3f (1,1,1);
+	// 4 
+	VectorScale (tmp ,-1.0 , tmp );
+	VectorAdd (org , tmp, v[3]);
 
-	//GL_DisableMultitexture();
 
-    //GL_Bind(frame->gl_texturenum);
+	// TexCoords:
 
-	GL_Enable (GL_ALPHA_TEST);
-	glBegin (GL_QUADS);
+	tc[0][0]=0.0;
+	tc[0][1]=0.0;
 
-	GL_Enable (GL_ALPHA_TEST);
-	glBegin (GL_QUADS);
+	tc[1][0]=0.0;
+	tc[1][1]=1.0;
 
-	glTexCoord2f (0, 1);
-	VectorMA (e->origin, -1, up, point);
-	VectorMA (point, -1, right, point);
-	glVertex3fv (point);
-	VectorCopy (point,p[0]);
+	tc[2][0]=1.0;
+	tc[2][1]=1.0;
 
-	glTexCoord2f (0, 0);
-	VectorMA (e->origin, 1, up, point);
-	VectorMA (point, -1, right, point);
-	glVertex3fv (point);
-	VectorCopy (point,p[1]);
+	tc[3][0]=1.0;
+	tc[3][1]=0.0;
 
-	glTexCoord2f (1, 0);
-	VectorMA (e->origin,1, up, point);
-	VectorMA (point, -1, right, point);
-	glVertex3fv (point);
-	VectorCopy (point,p[2]);
 
-	glTexCoord2f (1, 1);
-	VectorMA (e->origin, 1, up, point);
-	VectorMA (point, -1, right, point);
-	VectorCopy (point,p[3]);
-	glEnd ();
 
-	GL_Disable (GL_ALPHA_TEST);
-*/
+	// elems :
+	elems[0]=0;
+	elems[1]=1;
+	elems[2]=2;
+
+	elems[3]=2;
+	elems[4]=3;
+	elems[5]=0;
+
+
+	// Push :
+  for (i=0;i<6;i++)
+	{
+		arrays.elems[arrays.numelems++] = arrays.numverts + elems[i];
+
+	}
+
+	for (i=0;i<4;i++)
+	{
+		VectorCopy (v[i],arrays.verts[arrays.numverts]);
+		arrays.tex_st[arrays.numverts][0]=tc[i][0];
+		arrays.tex_st[arrays.numverts][1]=tc[i][1];
+		arrays.numverts++;
+
+	}
+
+	Render_Backend_Flush(e->customShader, 0);
 
 }
 
+// TODO !!!
+void R_Render_Poly (refEntity_t *e )
+{
 
 
 
+}
+
+// TODO !!!
+void R_Render_Beam ( refEntity_t *e )
+{
+
+
+
+
+
+}
+
+// TODO !!!
+void R_Render_RailCore (refEntity_t *e)
+{
+
+
+
+
+
+
+
+
+}
+
+// TODO !!!
+void R_Render_RailRings (refEntity_t *e )
+{
+
+
+
+
+
+}
+
+// TODO !!!
+void R_Render_Lightning (refEntity_t *e)
+{
+
+
+}
+
+// TODO !!!
+void R_Render_PortalSurface (refEntity_t *e )
+{
+
+
+
+}
 
 void R_RenderScene( const refdef_t *fd ) 
 {
@@ -1033,20 +1141,18 @@ void R_RenderScene( const refdef_t *fd )
 // Make Clipplanes :
 	R_Setup_Clipplanes (fd);
 
-
-	GL_Enable (GL_DEPTH_TEST );
-
-
 // Render World :
-	if (!(fd->rdflags & RDF_NOWORLDMODEL) )
-	R_Draw_World();
+	if (r_drawworld->integer)
+		if (!(fd->rdflags & RDF_NOWORLDMODEL) )
+			R_Draw_World();
 
 // Render Entities :
+	if (r_drawentities->integer)
 	R_renderEntities ();
 
 	R_RenderPolys();
 
-	glFinish();
+
 
 // Prepare for rendering overlay :
 	glViewport(0, 0, winX, winY);
@@ -1060,6 +1166,7 @@ void R_RenderScene( const refdef_t *fd )
 
 
 }
+
 
  // TODO !!!
 void R_Update_Screen (void )
