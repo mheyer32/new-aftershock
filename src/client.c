@@ -206,9 +206,9 @@ void CL_Run_Frame (void )
 		catcher=Key_GetCatcher ();
 
 		
-		if (catcher & KEYCATCH_UI )
+	//	if (catcher & KEYCATCH_UI )
 		UI_main(UI_REFRESH,(int)(g_frametime*1000.0),0,0,0,0,0,0 );
-
+		
 
 
 		Con_Draw();
@@ -220,9 +220,18 @@ void CL_Run_Frame (void )
 
 void CL_KeyEvent (int Key )
 {
+	char buf [MAX_STRING_CHARS ];
 
+	if (!cl_running->integer)
+		return ;
 
+	Key_GetBindingBuf (Key,buf,MAX_STRING_CHARS);
 
+	if (!buf[0])
+		return ;
+
+	
+	// TODO !!!
 
 
 }

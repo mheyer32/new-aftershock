@@ -32,7 +32,6 @@
 typedef struct
 {
     int face;
-	int type ;
     uint_t sortkey;
 } rendface_t;
 

@@ -17,7 +17,7 @@
  */
 #include "util.h"
 #include "a_shared.h"
-#include "bsp.h"
+#include "cmap.h"
 #include "shader.h"
 #include "mapent.h"
 #include "render.h"
@@ -225,7 +225,8 @@ static int *skylist;          /* Sky faces hit by walk */
 static int numsky;            /* Number of sky faces in list */
 static float cos_fov;         /* Cosine of the field of view angle */
 
-
+int * r_lightmaps = NULL;
+int  r_numLightmaps = 0;
 
 
 #define  MAX_REF_ENTITIES 256 
@@ -262,8 +263,7 @@ static cplane_t clipplanes[4];
 
 static mat4_t model_view_mat ;
 
-int r_numbsp_faces =0;
-
+int r_WorldMap_loaded = 0;
 
 // This will be used by the backend when doing sfx like environment-mapping
 reference_t transform_ref;
@@ -274,7 +274,7 @@ static int
 classify_point(vec3_t p, int plane_n)
 {
     /* Determine which side of plane p is on */
-    cplane_t *plane = &map.planes[plane_n];
+    cplane_t *plane = &cm.planes[plane_n];
 
     return (vec_dot(p, plane->normal) < plane->dist ? -1 : 1);
 	//return (vec_dot(p, r_planes[plane_n].vec) < r_planes[plane_n].offset ? -1 : 1);
@@ -327,9 +327,6 @@ void R_Init(void)
 
     glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-
-
-	render_list =malloc (MIN_RENDER_LIST_SIZE+ r_numbsp_faces * sizeof (rendface_t ));
 
 
     R_backend_init();
@@ -1179,6 +1176,83 @@ void R_Update_Screen (void )
 }
 
 
+static void R_Upload_Lightmaps (void )
+{
+	int i ,texsize = 128 * 128 * 3 ;
+	
+	r_numLightmaps = cm.lightmapdata_size / texsize ;
+
+	r_lightmaps = malloc (r_numLightmaps * sizeof (int ));
+
+	glGenTextures (r_numLightmaps , r_lightmaps );
+
+
+	for (i=0; i< r_numLightmaps ; i++ )
+	{
+		// TODO :Apply Gammma ? 
+
+		GL_BindTexture (GL_TEXTURE_2D,r_lightmaps [i]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 128, 128, 0, GL_RGB,
+		     GL_UNSIGNED_BYTE, &cm.lightmapdata[i * texsize]);
+	}
+
+
+}
+
+static void R_Free_Lightmaps (void )
+{
+	glDeleteTextures (r_numLightmaps , r_lightmaps );
+
+	free (r_lightmaps );
+
+	r_numLightmaps =0;
+
+
+}
+
+
+// Loads and setups the map for Rendering :
+void R_LoadWorldMap( const char *mapname )
+{
+	if (r_WorldMap_loaded )
+		R_FreeWorldMap ();
+
+
+	if (!CM_LoadMap (mapname , 1 ))
+	{
+		Con_Printf ("WARNING : R_LoadWorldMap : CM_LoadMap falied !\n");
+		return ;
+		
+	}
+
+	R_Upload_Lightmaps ();
+
+
+	// sizeup the face-arrays :
+	facelist.faces = malloc (cm.num_faces * sizeof (rendface_t ));
+	facelist.numfaces =0;
+	memset (facelist.faces ,0, cm.num_faces * sizeof ( rendface_t ));
+
+
+	r_WorldMap_loaded =1;
+
+}
+
+
+void R_FreeWorldMap (void )
+{
+	R_Free_Lightmaps ();
+	
+	free (facelist.faces);
+
+	r_WorldMap_loaded =0;
+}
+
 
 
 void R_StartFrame (void )
@@ -1232,7 +1306,7 @@ void R_Draw_World (void )
 	r_eyecluster=R_Find_Cluster(r_eyepos);
 
 
-	for (i=0;i<map.num_models;i++ )
+	for (i=0;i<cm.num_models;i++ )
 		R_Render_Bsp_Model (i);
 
 
@@ -1297,7 +1371,7 @@ void R_Recursive_World_Node (int n)
 
 	if (n<0 )
 	{
-		cleaf_t *leaf=&map.leafs[-(n+1)];
+		cleaf_t *leaf=&cm.leaves[-(n+1)];
 		int i;
 
 		if (r_eyecluster >= 0)
@@ -1309,12 +1383,12 @@ void R_Recursive_World_Node (int n)
 		i=leaf->firstface;
 
 		while (i++<leaf->numfaces)
-			R_Render_Walk_Face (map.lfaces[i]);
+			R_Render_Walk_Face (cm.lfaces[i]);
 
 	}
 	else
 	{
-		node=&map.nodes[n];
+		node=&cm.nodes[n];
 
 		if (R_ClipFrustrum (node->mins,node->maxs))
 			return ;
@@ -1368,7 +1442,7 @@ int R_ClipFrustrum (vec3_t mins ,vec3_t maxs )
 
 void R_Render_Walk_Face (int num )
 {
-	cface_t * face=&map.faces[num];
+	cface_t * face=&cm.faces[num];
 
 	if (r_faceinc[num]) return;
     r_faceinc[num] = 1;
@@ -1379,12 +1453,12 @@ void R_Render_Walk_Face (int num )
 	case FACETYPE_NORMAL:
 	case FACETYPE_TRISURF:
 		// CULL the face : (this is not exact but it looks right )
-		if (r_shaders[map.shadernums[face->shadernum]].flags & SHADER_DOCULL);
+		/*if (r_shaders[map.shadernums[face->shadernum]].flags & SHADER_DOCULL);
 			if (face->v_norm[0]*(face->verts->v_point[0]-r_eyepos[0])
 				+face->v_norm[1]*(face->verts->v_point[1]-r_eyepos[1])
 				+face->v_norm[2]*(face->verts->v_point[2]-r_eyepos[2])>0)return;
 
-
+		*/
 		break;
 
 	case FACETYPE_MESH :
@@ -1429,11 +1503,12 @@ int R_TestVis ( const vec3_t p1, const vec3_t p2 )
 // TODO !!!
 unsigned int SortKey (cface_t * face )
 {
-
+/*
 	return (r_shaders[map.shadernums[face->shadernum]].sort << 29 ) + // Needs 4 Bits 
 		(r_shaders[map.shadernums[face->shadernum]].sortkey << 21) + // 8 Bits
 		(face->shadernum << 7 ) + // 9 Bits 
 		(face->lm_texnum ) ;  // 6 Bits
+		*/
 }
 
 static int
@@ -1445,7 +1520,7 @@ R_Find_Cluster(const vec3_t pos)
 	float dist;
 	cplane_t *plane;
     
-    node = map.nodes;
+    node = cm.nodes;
 
     /* Find the leaf/cluster containing the given position */
     
@@ -1468,7 +1543,7 @@ R_Find_Cluster(const vec3_t pos)
 	    }
 	    else
 	    {
-		node = &map.nodes[node->children[0]];
+		node = &cm.nodes[node->children[0]];
 	    }
 	}
 	else
@@ -1480,14 +1555,14 @@ R_Find_Cluster(const vec3_t pos)
 	    }
 	    else
 	    {
-		node = &map.nodes[node->children[1]];
+		node = &cm.nodes[node->children[1]];
 	    }
 	}	    
     }
 
     if (leaf >= 0)
 	{
-	cluster =map.leafs[leaf].cluster;
+		cluster =cm.leaves[leaf].cluster;
 	}
     return cluster;
 }

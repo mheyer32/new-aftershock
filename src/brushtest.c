@@ -19,7 +19,7 @@
 #include "a_shared.h"
 #include "util.h"
 #include "pak.h"
-#include "bsp.h"
+#include "cmap.h"
 #include "entity.h"
 #include "vec.h"
 #include "brushtest.h"
@@ -279,7 +279,7 @@ void Check_Brush ( cbrush_t *brush)
 
 	start_solid = 1;
 
-	if ( !(brush->shader->contents & content_mask) ) return;
+	if ( !(brush->shaderref->contents & content_mask) ) return;
 
 	bside = brush->sides;
 	for (i = 0; i < brush->numsides; i++, bside++) {
@@ -344,7 +344,7 @@ void Check_Brush ( cbrush_t *brush)
 
 void Check_Leaf ( int num )
 {
-	cleaf_t * leaf = &map.leafs[num];
+	cleaf_t * leaf = &cm.leaves[num];
 	int i , brushnum,idx;
 	unsigned char bit ;
 	// Needed ??? 
@@ -355,12 +355,12 @@ void Check_Leaf ( int num )
 	
 	for (i=0;i<leaf->numbrushes ; i++ )
 	{
-		brushnum = map.lbrushes[leaf->firstbrush +i ];
+		brushnum = cm.lbrushes[leaf->firstbrush +i ];
 		idx = brushnum >> 3;
 		bit = (unsigned char) (1 << (brushnum & 7));
 		if (!(brushflag[idx] & bit)) {
 			brushflag[idx] |= bit;
-			Check_Brush(&map.brushes[brushnum]);
+			Check_Brush(&cm.brushes[brushnum]);
 		}
 		
 	}
@@ -370,7 +370,7 @@ void Check_Leaf ( int num )
 
 void Check_Node ( int num )
 {
-	cnode_t * node = &map.nodes[num];
+	cnode_t * node = &cm.nodes[num];
 	
 	if ((smins[0] > node->maxs[0]) || (smaxs[0] < node->mins[0])) return;
 	if ((smins[1] > node->maxs[1]) || (smaxs[1] < node->mins[1])) return;
@@ -397,7 +397,7 @@ void Check_Node ( int num )
 void Check_Model ( int num )
 {
 	vec3_t origin ;
-	cmodel_t * model = &map.models[num];
+	cmodel_t * model = &cm.models[num];
 	cbrush_t * brush;
 	int i;
 	
@@ -462,7 +462,7 @@ void Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_
 	model_index =0 ;
 	Check_Node (0);
 
-	for (i=1; i< map.num_models;i++ )
+	for (i=1; i< cm.num_models;i++ )
 	{
 			model_index = i;
 			Check_Model ( i);
@@ -479,7 +479,7 @@ void Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_
 		
 	if (brush_hit)
 	{
-		results->contents= brush_hit->shader->contents;
+		results->contents= brush_hit->shaderref->contents;
 	}
 
 	//results->Point_Contents (col_end );
@@ -497,7 +497,7 @@ int Point_Contents (const vec3_t pos ,int passEntityNum)
 	int i,j,k;
 	cplane_t * plane=NULL;
 	cleaf_t * leaf =NULL;
-	cnode_t * node= map.nodes;
+	cnode_t * node= cm.nodes;
 	float dist ;
 	cbrush_t * brush=NULL;
 	cbrushside_t *  side =NULL;
@@ -513,12 +513,12 @@ int Point_Contents (const vec3_t pos ,int passEntityNum)
 		{
 			if (node->children[0]<0)
 			{
-				leaf=&map.leafs [~node->children[0]];
+				leaf=&cm.leaves [~node->children[0]];
 				break;
 			}
 			else 
 			{
-				node= &map.nodes[node->children[0]];
+				node= &cm.nodes[node->children[0]];
 
 			}
 
@@ -528,12 +528,12 @@ int Point_Contents (const vec3_t pos ,int passEntityNum)
 		{
 			if (node->children[1]<0)
 			{
-				leaf=&map.leafs [~node->children[1]];
+				leaf=&cm.leaves [~node->children[1]];
 				break;
 			}
 			else 
 			{
-				node= &map.nodes[node->children[1]];
+				node= &cm.nodes[node->children[1]];
 
 			}
 
@@ -547,7 +547,7 @@ int Point_Contents (const vec3_t pos ,int passEntityNum)
 
 		for (i=0;i<leaf->numbrushes;i++)
 		{
-			brush=&map.brushes[map.lbrushes[leaf->firstbrush+i]];
+			brush=&cm.brushes[cm.lbrushes[leaf->firstbrush+i]];
 
 			
 			side=brush->sides;
@@ -571,16 +571,16 @@ int Point_Contents (const vec3_t pos ,int passEntityNum)
 			
 			if (j== brush->numsides)
 			{
-				contents |= brush->shader->contents;
+				contents |= brush->shaderref->contents;
 				return contents ;
 			}
 		}
 
 
 
-	for ( i=1 ; i<map.num_models;i++)
+	for ( i=1 ; i<cm.num_models;i++)
 	{
-		model=&map.models[i];
+		model=&cm.models[i];
 		VectorAdd (model->mins ,model->maxs ,origin );
 		VectorScale (origin ,0.5 ,origin );
 
@@ -615,7 +615,7 @@ int Point_Contents (const vec3_t pos ,int passEntityNum)
 
 			if (k == brush->numsides )
 			{
-				contents |= brush->shader->contents;
+				contents |= brush->shaderref->contents;
 				return contents ;
 			}
 

@@ -19,8 +19,7 @@
 #ifndef BRUSHTEST_H
 #define BRUSHTEST_H
 
-#include "bsp.h"
-#include "vec.h"
+
 
 int Point_Contents (const vec3_t pos ,int passEntityNum);
 

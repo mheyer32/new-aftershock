@@ -27,31 +27,6 @@
 #include "console.h"
 
 
-#define MAX_FILES 128 
-
-
-
-# define OPEN_READONLY			0
-# define OPEN_WRITEONLY			1
-# define OPEN_READWRITE			2
-# define OPEN_APPEND			3
-
-
-
-
-
-typedef enum {
-	FILE_NORMAL,
-	FILE_IN_PAK
-}filetype_t;
-
-typedef struct {
-	char name [MAX_OSPATH];
-	filetype_t type;
-	void * fhandle ;
-}file_t;
-
-
 static file_t files [MAX_FILES ];
 static int files_used [MAX_FILES ];
 static int num_files=0;
@@ -265,7 +240,7 @@ void FS_Init (const char *dir )
 	
 	while(File_FindNext(handle,fname,0,0))
 	{
-		printf (buf2,"%s/%s",dir,fname);
+		sprintf (buf2,"%s/%s",dir,fname);
 			Pak_OpenPak(buf2);
 		
 	}

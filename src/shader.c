@@ -17,8 +17,7 @@
  */
 #include "a_shared.h"
 #include "util.h"
-#include "pak.h"
-#include "bsp.h"
+#include "cmap.h"
 #include "shader.h"
 #include "opengl.h"
 #include "io.h"

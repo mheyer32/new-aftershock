@@ -18,10 +18,8 @@
 
 
 
-
+#include "a_shared.h"
 #include "util.h"
-#include "bsp.h"
-#include "vec.h"
 #include "glinc.h"
 #include "render.h"
 #include "opengl.h"

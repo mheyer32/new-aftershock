@@ -163,7 +163,7 @@ enum {
 /* Periodic functions */
 typedef struct
 {
-    uint_t func;     /* SHADER_FUNC enum */
+    unsigned int  func;     /* SHADER_FUNC enum */
     float args[4];   /* offset, amplitude, phase_offset, rate */
 } shaderfunc_t;
 
@@ -175,11 +175,11 @@ typedef struct {
 /* Per-pass rendering state information */
 typedef struct
 {
-    uint_t flags;
+    unsigned int flags;
     int texref;                 /* Texture ref (if not lightmap) */
-    uint_t blendsrc, blenddst;  /* glBlend args */
-    uint_t depthfunc;           /* glDepthFunc arg */
-    uint_t alphafunc;           /* glAlphaFunc arg1 */
+    unsigned int  blendsrc, blenddst;  /* glBlend args */
+    unsigned int  depthfunc;           /* glDepthFunc arg */
+    unsigned int  alphafunc;           /* glAlphaFunc arg1 */
     float alphafuncref;         /* glAlphaFunc arg2 */
     int   rgbgen;             
     shaderfunc_t rgbgen_func;
@@ -204,7 +204,7 @@ typedef struct
 	byte sortkey ;  // a precalculated sortkey which is added to the shaderkey ; (TODO )
 	byte flush;      // FLUSH_ENUM
 	byte cull;
-    uint_t flags;
+    unsigned int  flags;
 //	int contents;
     int numpasses;
 	int sort ;
@@ -234,7 +234,7 @@ typedef struct
 /* Gathers texture file names prior to texture loading */
 typedef struct
 {
-    uint_t flags;
+    unsigned int flags;
     char *fname;
 } texfile_t;
 

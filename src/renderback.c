@@ -17,11 +17,9 @@
  */
 #include "a_shared.h"
 #include "util.h"
-#include "bsp.h"
+#include "cmap.h"
 #include "shader.h"
 #include "render.h"
-#include "tex.h"
-#include "lightmap.h"
 #include "mesh.h"
 #include "skybox.h"
 #include "md3.h"
@@ -322,7 +320,7 @@ render_backend(facelist_t *facelist)
 	
     for (f=0; f < facelist->numfaces; ++f)
     {
-	face = &map.faces[facelist->faces[f].face];
+	face = &cm.faces[facelist->faces[f].face];
 
 	/* Look for faces that share rendering state */
 	if (facelist->faces[f].sortkey != key)
@@ -331,7 +329,7 @@ render_backend(facelist_t *facelist)
 	    if (f)
 		Render_Backend_Flush(shader,lmtex);
 	    shader = face->shadernum;
-	    lmtex = face->lm_texnum;
+	    lmtex = face->lightmapnum;
 	    key = facelist->faces[f].sortkey;
 	}
 
@@ -366,7 +364,7 @@ render_backend_sky(int numsky, int *skylist)
     float skyheight;
     uint_t *elem;
 
-    shader = map.faces[skylist[0]].shadernum;
+    shader = cm.faces[skylist[0]].shadernum;
     skyheight = r_shaders[shader].skyheight;
     arrays.numverts = arrays.numelems = 0;
 
@@ -406,7 +404,7 @@ static void
 render_pushface(cface_t *face)
 {
     int  *elem,*finaladdress;
-    vertex_t *vert;
+    cvertex_t *vert;
     elem = face->elems;
 	finaladdress=elem+face->numelems;
 	while (elem<finaladdress)
@@ -418,7 +416,7 @@ render_pushface(cface_t *face)
     
     vert = face->verts;
 	finaladdress=(void *)(vert+face->numverts);
-	while (vert<(vertex_t *)finaladdress)
+	while (vert<(cvertex_t *)finaladdress)
 	{
 	vec_copy(vert->v_point, arrays.verts[arrays.numverts]);
 	VectorCopy (vert->v_norm ,arrays.norms [arrays.numverts]);
@@ -1098,7 +1096,7 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 		// Set the Texture  :
 		if (pass->flags & SHADER_LIGHTMAP )
 		{
-			texture=lmtex;
+			texture=r_lightmaps [lmtex];
 		}
 		else if (pass->flags & SHADER_ANIMMAP )
 		{
@@ -1237,7 +1235,7 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 
 	glTexCoordPointer(2, GL_FLOAT, 0,Render_Backend_Make_TexCoords(pass,0));
 
-	GL_BindTexture(GL_TEXTURE_2D,lmtex);
+	GL_BindTexture(GL_TEXTURE_2D,r_lightmaps[lmtex]);
 
 	// SECOND PASS :
 	pass = &s->pass[1];

@@ -38,7 +38,7 @@ void SV_SetBrushModel( sharedEntity_t *ent, const char *name );
 void SV_SetConfigstring( int num, const char *string );
 void SV_Get_GameState ( gameState_t * state );
 void SV_GetConfigstring( int num, char *buffer, int bufferSize );
-
+int SV_Get_Entity_Token ( char *buffer, int bufferSize );
 
 
 

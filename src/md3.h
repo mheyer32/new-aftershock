@@ -18,12 +18,8 @@
 #ifndef __MD3_H__
 #define __MD3_H__
 
-/* Each MD3 model is composed of one or more meshes.  Currently the md3
- * loader is used only for mapents, so animated (multiframe) models
- * are not supported.
- */
 
-#include "bsp.h"
+#include "cmap.h"
 
 
 
@@ -46,10 +42,10 @@ typedef struct
 	int numframes;
     vec3_t **points;
 	vec3_t *normals;
-    texcoord_t *tex_st;  /* Texture coords */
-    texcoord_t **norms;  /* Used for environment mapping ? */
+    vec2_t *tex_st;  /* Texture coords */
+    vec2_t **norms;  /* Used for environment mapping ? */
     int numelems;
-    uint_t *elems;
+    unsigned int  *elems;
 	int * skins;
 } md3mesh_t;
 

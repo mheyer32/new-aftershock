@@ -108,10 +108,6 @@ SOURCE=.\brushtest.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\bsp.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\c_var.c
 # End Source File
 # Begin Source File
@@ -121,6 +117,10 @@ SOURCE=.\cgame.c
 # Begin Source File
 
 SOURCE=.\client.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\cmap.c
 # End Source File
 # Begin Source File
 
@@ -153,10 +153,6 @@ SOURCE=.\io.c
 # Begin Source File
 
 SOURCE=.\keys.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\lightmap.c
 # End Source File
 # Begin Source File
 
@@ -289,7 +285,7 @@ SOURCE=.\brushtest.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\bsp.h
+SOURCE=.\bspfile.h
 # End Source File
 # Begin Source File
 
@@ -302,6 +298,10 @@ SOURCE=.\cgame.h
 # Begin Source File
 
 SOURCE=.\client.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\cmap.h
 # End Source File
 # Begin Source File
 

@@ -15,8 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
+#include "a_shared.h"
 #include "util.h"
-#include "bsp.h"
+#include "cmap.h"
+#include "render.h"
 #include "mesh.h"
 
 #define LEVEL_WIDTH(lvl) ((1 << (lvl+1)) + 1)
@@ -29,15 +31,15 @@ mesh_create_all(void)
     int i;    
     
     /* Count meshes */
-    for (r_nummeshes=0; r_nummeshes < r_numfaces; r_nummeshes++)
-	if (map.faces[r_nummeshes].facetype != FACETYPE_MESH)
+    for (r_nummeshes=0; r_nummeshes < cm.num_faces; r_nummeshes++)
+	if (cm.faces[r_nummeshes].facetype != FACETYPE_MESH)
 	    break;
 
     r_meshes = (mesh_t*)malloc(r_nummeshes * sizeof(mesh_t));
 
     for (i=0; i < r_nummeshes; i++)
     {
-	mesh_create(&map.faces[i], &r_meshes[i]);
+	mesh_create(&cm.faces[i], &r_meshes[i]);
     }
 }
 
@@ -290,7 +292,7 @@ mesh_create(cface_t *face, mesh_t *mesh)
 {
     int step[2], size[2], len, i, u, v, p;
     vec3_t *cp;
-    vertex_t *vert;
+    cvertex_t *vert;
 
     cp = (vec3_t*)malloc(face->numverts * sizeof(vec3_t));
     vert = face->verts;

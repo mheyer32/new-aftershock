@@ -21,7 +21,7 @@
 #include "sys_main.h"
 #include "util.h"
 #include "vec.h"
-#include "bsp.h"
+#include "cmap.h"
 #include "c_var.h"
 #include "command.h"
 #include "render.h"
@@ -420,10 +420,10 @@ static void Call_SV_GetConfigstring(int bufferSize ,char *buffer, int num)
 SV_GetConfigstring( num, buffer, bufferSize );
 }
 
-static int Call_Get_Entity_Token ( int bufferSize,char *buffer  )
+static int Call_SV_Get_Entity_Token ( int bufferSize,char *buffer  )
 {
 
-	return  Get_Entity_Token ( buffer, bufferSize );
+	return  SV_Get_Entity_Token ( buffer, bufferSize );
 }
 
 
@@ -602,7 +602,7 @@ int GAME_Call (int arg,...)
 		case G_GET_USERCMD:	// ( int clientNum, usercmd_t *cmd )
 			break;
 		case G_GET_ENTITY_TOKEN:  // qboolean ( char *buffer, int bufferSize )
-			return Call_Get_Entity_Token ( va_arg (mark ,int ),va_arg (mark,char *)  );
+			return Call_SV_Get_Entity_Token ( va_arg (mark ,int ),va_arg (mark,char *)  );
 			break;
 		case G_FS_GETFILELIST:
 			return	Call_FS_GetFileList (va_arg(mark,int),va_arg(mark,char*), va_arg(mark,const char *),va_arg(mark,const char*));
@@ -880,6 +880,7 @@ int CGAME_Call (int arg,...)
 	case CG_S_STARTBACKGROUNDTRACK:
 		break;
 	case CG_R_LOADWORLDMAP:
+		R_LoadWorldMap(va_arg (mark, const char *) );
 		break;
 	case CG_R_REGISTERMODEL:
 		return R_RegisterModel( va_arg(mark,const char *)) ;

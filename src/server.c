@@ -23,7 +23,7 @@
 #include "c_var.h"
 #include "command.h"
 #include "console.h"
-#include "bsp.h"
+#include "cmap.h"
 #include "server.h"
 #include "client.h"
 
@@ -110,7 +110,7 @@ typedef struct {
 server_static_t svs;
 server_t sv;
 
-
+char * entitypos =NULL ;
 
 void SV_GetCvars( void )
 {
@@ -217,11 +217,6 @@ static void Cmd_map (void )
 
 	Cmd_Argv(1,mapname,MAX_APATH);
 
-//	BSP_Load_Map (mapname);
-
-//	Con_Printf("map : %s \n",mapname);
-
-
 	SV_Startup(mapname);
 
 
@@ -280,7 +275,6 @@ int SV_Shutdown (void )
 int SV_Startup (char * mapname )
 {
 
-
 	char buf [MAX_OSPATH];
 
 	Con_Printf( "------ Server Initialization ------\n" );
@@ -290,8 +284,11 @@ int SV_Startup (char * mapname )
 	Com_sprintf( buf, sizeof(buf), "map %s", mapname );
 	Cvar_Set2( "nextmap", buf,0 );
 
-	BSP_Load_Map (mapname);
-//	AAS_Load_Map (mapname );
+
+	if (!CM_LoadMap (mapname , 1))
+		return 0;
+
+	entitypos = cm.entityspawn ;
 
 	Cvar_Set2( "mapname", mapname,0 );
 
@@ -333,17 +330,42 @@ void SV_SetBrushModel( sharedEntity_t *ent, const char *name )
 
 	model_idx = atoi( name+1 );
 
-	if( model_idx < 0 || model_idx > map.num_models ) {
+	if( model_idx < 0 || model_idx > cm.num_models ) {
 		Con_Printf( "SV_SetBrushModel: %s isn't a brush model\n", name );
 		return;
 	}
 
-	model = &map.models[model_idx];
+	model = &cm.models[model_idx];
 
 	VectorCopy( model->mins, ent->r.mins );
 	VectorCopy( model->maxs, ent->r.maxs );
 
 
 
+}
+
+
+
+int SV_Get_Entity_Token ( char *buffer, int bufferSize )
+{
+	
+	char *token;
+	
+	COM_BeginParseSession ();
+
+	while (entitypos)
+	{
+	token = COM_ParseExt ( & entitypos ,1);
+	
+	if (! token [0]) // new Line 
+		continue;
+			
+	A_strncpyz ( buffer , token , bufferSize ); // success
+	
+	return 1;
+		
+	}	
+	return 0;
+	
 }
 

@@ -19,7 +19,6 @@
 #define __RENDER_H__
 
 extern vec3_t r_eyepos;      /* World coords */
-extern vec3_t r_eyedir;      /* Camera direction unit vector */
 extern float r_eye_az, r_eye_el;  /* eyedir azimuth and elevation (deg) */
 extern float r_eyefov;       /* Field of view angle (deg) */
 extern float r_sinfov;
@@ -28,7 +27,6 @@ extern float r_tanfov;
 extern float r_aspect;
 extern int r_eyecluster;     /* Current PVS cluster */
 extern float g_frametime;   /* Current time */
-
 
 #include "c_var.h"
 
@@ -268,8 +266,6 @@ extern HGLRC hRC;
 void R_StartFrame (void );
 void R_EndFrame (void );
 
-
-
 void R_DrawStretchPic( float x,float y,float w,float h,float s1,float t1,float s2,float t2,int hShader);
 void R_SetColor( const float *rgba );
 void R_Init(void );
@@ -287,7 +283,12 @@ void R_LerpTag( orientation_t *tag, int model, int startFrame, int endFrame, flo
 int R_RegisterModel( const char *name ) ;
 int  R_RegisterSkin( const char *name );
 
+void R_LoadWorldMap( const char *mapname );
+void R_FreeWorldMap (void );
 
+
+extern int * r_lightmaps; 
+extern int r_numLightmaps ;
 
 
 #endif /*__RENDER_H__*/

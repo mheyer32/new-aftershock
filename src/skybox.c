@@ -25,7 +25,7 @@
 
 
 #include "util.h"
-#include "bsp.h"
+#include "cmap.h"
 #include "skybox.h"
 #include <math.h>
 
@@ -172,7 +172,7 @@ static void
 gen_box_side(int side, vec3_t orig, vec3_t drow, vec3_t dcol)
 {
     vec3_t pos, w, row, *v;
-    texcoord_t *tc;
+    vec2_t *tc;
     float p;
     int r, c;
     float d, b, t;

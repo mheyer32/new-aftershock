@@ -31,6 +31,7 @@
 #include "keys.h"
 #include "shader.h"
 #include "opengl.h"
+#include "io.h"
 
 
 #define BORDER			9
@@ -563,7 +564,7 @@ void Con_Draw(void)
 /* prints a line on the console */
 void Con_Printf(const char *format, ...)
 {
-	char buffer[1024];
+	char buffer[MAX_STRING_CHARS * 2];
 	va_list args;
 	time_t t;
 	struct tm *local_time;
@@ -571,9 +572,9 @@ void Con_Printf(const char *format, ...)
 	va_start(args, format);
 	vsprintf(buffer, format, args);
 	va_end(args);
-	/*
+	
 
-	if(logfile->integer && !conlog) {
+/*	if(logfile->integer && !conlog) {
 		conlog = FileOpen("aconsole.log", OPEN_APPEND);
 		if(conlog) {
 			time(&t);
@@ -588,11 +589,12 @@ void Con_Printf(const char *format, ...)
 		FileClose(conlog);
 		conlog = 0;
 	}
-
-	if(conlog) {
+*/
+/*	if(conlog) {
 		FileWriteString(buffer, conlog);
 	}
 */
+
 	Con_AddToBuffer(buffer);
 
 

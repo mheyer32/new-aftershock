@@ -18,7 +18,7 @@
 #include "a_shared.h"
 #include "util.h"
 #include "pak.h"
-#include "bsp.h"
+#include "cmap.h"
 #include "md3.h"
 #include "shader.h"
 #include "console.h"

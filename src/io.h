@@ -21,7 +21,28 @@
 
 
 
-#include "a_shared.h"
+#define MAX_FILES 128 
+
+# define OPEN_READONLY			0
+# define OPEN_WRITEONLY			1
+# define OPEN_READWRITE			2
+# define OPEN_APPEND			3
+
+
+
+
+
+typedef enum {
+	FILE_NORMAL,
+	FILE_IN_PAK
+}filetype_t;
+
+typedef struct {
+	char name [MAX_OSPATH];
+	filetype_t type;
+	void * fhandle ;
+}file_t;
+
 
 
 

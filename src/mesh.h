@@ -29,7 +29,7 @@ typedef struct
     texcoord_t *tex_st;
     texcoord_t *lm_st;
     int numelems;
-    uint_t *elems;
+    unsigned int  *elems;
 	
 } mesh_t;
 
