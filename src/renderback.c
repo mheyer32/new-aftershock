@@ -58,17 +58,15 @@
 #define TURB_SCALE 0.2
 
 
-void (* R_backend_flush  ) (int shader ,int lightmap )=NULL;
-
-
 
 static int error=0;
 //if a mesh or a mapent is in the array enable culling
 static int meshincluded=0;
 
+void Render_Backend_Flush (int shadernum ,int lmtex );
 
-void Render_Backend_Flush_Generic (int shadernum ,int lmtex );
-
+void Render_Backend_Flush_Generic (shader_t *s ,int lmtex );
+void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmtex );
 
 
 static void render_pushface(cface_t *face);
@@ -121,9 +119,6 @@ R_backend_init(void)
 	}
 
 
-	
-	R_backend_flush = Render_Backend_Flush_Generic;
-
 
 }
 
@@ -156,7 +151,6 @@ void R_backend_shutdown(void )
 
 	free (arrays.stage_tex_st);
 
-	R_backend_flush=NULL;
 
 }
 
@@ -193,6 +187,8 @@ colour_t * R_Make_Rgba (shaderpass_t * pass )
 	colour_t * col;
 	switch (pass->rgbgen)
 	{
+	case RGB_GEN_NONE:  // should not happen !!
+		break;
 
 	case RGB_GEN_IDENTITY_LIGHTING :
 		memset (arrays.mod_colour,r_overBrightBits->integer ? 128 : 255 ,arrays.numverts *4 );
@@ -308,7 +304,7 @@ void Render_backend_Overlay ( quad_t * q,int numquads )
 	{
 	    /* Flush the renderer and reset */
 	  
-			R_backend_flush(shader, 0);
+			Render_Backend_Flush(shader, 0);
 	
 	    shader = quad->shader;
 	}
@@ -320,10 +316,7 @@ void Render_backend_Overlay ( quad_t * q,int numquads )
 
     }
     /* Final flush to clear queue */
-	
-
-
-	R_backend_flush(shader, 0);
+	Render_Backend_Flush(shader, 0);
 
 }
 
@@ -350,7 +343,7 @@ render_backend(facelist_t *facelist)
 	{
 	    /* Flush the renderer and reset */
 	    if (f)
-		R_backend_flush(shader,lmtex);
+		Render_Backend_Flush(shader,lmtex);
 	    shader = face->shadernum;
 	    lmtex = face->lm_texnum;
 	    key = facelist->faces[f].sortkey;
@@ -373,7 +366,7 @@ render_backend(facelist_t *facelist)
     }
     /* Final flush to clear queue */
 	
-	R_backend_flush(shader,lmtex);
+	Render_Backend_Flush(shader,lmtex);
 
 
 	
@@ -415,7 +408,7 @@ render_backend_sky(int numsky, int *skylist)
 	    arrays.numverts++;
 	}
     }
-	R_backend_flush(shader,0);
+	Render_Backend_Flush(shader,0);
 	
     /* Restore world space */
     glMatrixMode(GL_MODELVIEW);
@@ -744,6 +737,7 @@ float * Render_Backend_Make_TexCoords (shaderpass_t * pass ,int stage )
 
 		
 		// FIXME !!!
+		// this is not cube-mapping !
 		VectorCopy (r_eyepos ,pos );
 		if (!transform_ref.matrix_identity)
 		{
@@ -760,18 +754,18 @@ float * Render_Backend_Make_TexCoords (shaderpass_t * pass ,int stage )
 		for(j=0; j<arrays.numverts; j++)
 			{
 			
-			VectorCopy (arrays.verts[j],v);
+				VectorCopy (arrays.verts[j],v);
 			
-			VectorSubtract(v, pos, dir);
-			VectorNormalize(dir);
+				VectorSubtract(v, pos, dir);
+				VectorNormalize(dir);
 
-			VectorCopy (arrays.norms[j],n);
+				VectorCopy (arrays.norms[j],n);
 
-			dir[0]+=n[0];
-			dir[1]+=n[1];
+				dir[0]+=n[0];
+				dir[1]+=n[1];
 
-			in[j][0]=dir[0];
-			in[j][1]=dir[1];
+				in[j][0]=dir[0];
+				in[j][1]=dir[1];
 			}
 			
 			
@@ -1025,20 +1019,51 @@ byte * Render_Backend_Make_Colors ( shaderpass_t * pass )
 }
 
 
-void Render_Backend_Flush_Generic (int shadernum ,int lmtex )
+void Render_Backend_Flush (int shadernum ,int lmtex )
 {
+	shader_t *s;
 
-	shader_t *s ;
-	shaderpass_t *pass;
-	int i,texture;
-
-	if (shadernum<0 || !arrays.numverts)
+	if (!shadernum || shadernum < 0)
 	{
 		arrays.numverts=arrays.numelems=0;
 		return ;
 	}
 
-	s=&r_shaders[shadernum];
+	s=&r_shaders [shadernum];
+
+	switch (s->flush)
+	{
+		
+	case SHADER_FLUSH_GENERIC:
+		Render_Backend_Flush_Generic(s,lmtex);
+		break;
+	case SHADER_FLUSH_MULTITEXTURE_LIGHTMAP:
+		Render_Backend_Flush_Multitexture_Lightmapped(s,lmtex);
+		break;
+	case SHADER_FLUSH_MULTITEXTURE_COMBINE :
+
+
+		break;
+	
+	case SHADER_FLUSH_VERTEX_LIT:
+
+
+		break;
+	default :
+		arrays.numverts=arrays.numelems=0;
+		return ;
+
+	}
+
+
+}
+
+
+void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
+{
+
+	shaderpass_t *pass;
+	int i,texture;
 
 	// Set the main states :
 	if (s->flags & SHADER_NOCULL )
@@ -1058,6 +1083,11 @@ void Render_Backend_Flush_Generic (int shadernum ,int lmtex )
 	if (glLockArraysEXT)
 		glLockArraysEXT(0,arrays.numverts);
 
+	if (gl_ext_info._ARB_Multitexture)
+	{
+		GL_ActiveTextureARB (GL_TEXTURE0_ARB );
+		GL_ClientActiveTextureARB (GL_TEXTURE0_ARB);
+	}
 	
 	
 	for (i=0;i<s->numpasses;i++)
@@ -1143,20 +1173,11 @@ void Render_Backend_Flush_Generic (int shadernum ,int lmtex )
 // no blending in first pass 
 // Modulate int 2. pass
 
-void Render_Backend_Flush_Multitexture_Lightmapped (int shadernum ,int lmtex )
+void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmtex )
 {
-	shader_t *s ;
 	shaderpass_t * pass;
 	int texture ;
 
-
-	if (shadernum < 0 )
-	{
-		arrays.numverts=arrays.numelems=0;
-		return ;
-	}
-
-	s=&r_shaders[shadernum];
 
 	if (s->numpasses != 2 )
 		return ;
@@ -1266,9 +1287,55 @@ void Render_Backend_Flush_Multitexture_Lightmapped (int shadernum ,int lmtex )
 
 }
 
+// assumes  2 Passes 
+// we could extend this 
+// TODO !!!
+void Render_Backend_Flush_Multitexture_Combine (shader_t *s,int lmtex )
+{
+	shaderpass_t * pass;
+	int texture ,i ;
+
+	if (s->numpasses != 2 )
+		return ;
+
+	Render_Backend_Make_Vertices (s);
+
+	// Set the main states :
+	if (s->flags & SHADER_NOCULL )
+		GL_Disable (GL_CULL_FACE );
+	else 
+		GL_Enable (GL_CULL_FACE );
+
+	if (s->flags & SHADER_POLYGONOFFSET)
+		GL_Enable (GL_POLYGON_OFFSET);
+	else
+		GL_Disable (GL_POLYGON_OFFSET);
+
+
+	Render_Backend_Make_Vertices(s);
+	glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
+
+	if (glLockArraysEXT)
+		glLockArraysEXT(0,arrays.numverts);
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
 
 // TODO !!!
-void Render_Backend_Flush_Vertex_Lit (int shadernum , int lmtex )
+void Render_Backend_Flush_Vertex_Lit (shader_t *s, int lmtex )
 {
 
 

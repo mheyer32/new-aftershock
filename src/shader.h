@@ -38,7 +38,6 @@ enum
 	SHADER_FOG           = 1 << 8,
 	SHADER_NOPICMIP      = 1 << 9,
 	SHADER_CLAMP         = 1 << 10,  // will just be used for texture loading 
-	SHADER_MULTITEXTURE_LIGHTMAPPED =1 << 11
 };
 
 /* Shaderpass flags */
@@ -91,15 +90,16 @@ enum {
 // RGB_Gen :
 
 enum {
-	RGB_GEN_IDENTITY_LIGHTING = 0,
-	RGB_GEN_IDENTITY=1,
-	RGB_GEN_WAVE =2,
-	RGB_GEN_ENTITY =3,
-	RGB_GEN_ONE_MINUS_ENTITY=4,
-	RGB_GEN_VERTEX=5,
-	RGB_GEN_ONE_MINUS_VERTEX=6,
-	RGB_GEN_LIGHTING_DIFFUSE =7,
-	RGB_GEN_EXACT_VERTEX =8
+	RGB_GEN_NONE ,
+	RGB_GEN_IDENTITY_LIGHTING ,
+	RGB_GEN_IDENTITY,
+	RGB_GEN_WAVE ,
+	RGB_GEN_ENTITY ,
+	RGB_GEN_ONE_MINUS_ENTITY,
+	RGB_GEN_VERTEX,
+	RGB_GEN_ONE_MINUS_VERTEX,
+	RGB_GEN_LIGHTING_DIFFUSE ,
+	RGB_GEN_EXACT_VERTEX 
 };
 
 
@@ -135,6 +135,16 @@ enum {
 	DEFORMV_AUTOSPRITE,
 	DEFORMV_AUTOSPRITE2
 };
+
+
+// The flushing functions :
+enum {
+	SHADER_FLUSH_GENERIC ,
+	SHADER_FLUSH_MULTITEXTURE_LIGHTMAP ,
+	SHADER_FLUSH_MULTITEXTURE_COMBINE ,
+	SHADER_FLUSH_VERTEX_LIT
+};
+
 
 
 
@@ -186,8 +196,9 @@ typedef struct
 /* Shader info */
 typedef struct
 {	
-	char name [67];
+	char name [66];
 	byte sortkey ;  // a precalculated sortkey which is added to the shaderkey ; (TODO )
+	byte flush;      // FLUSH_ENUM 
     uint_t flags;
 //	int contents;
     int numpasses;

@@ -22,6 +22,9 @@
 #include "c_var.h"			/* cvar_t */
 #include "network.h"		/* Net_SendPacket */
 
+
+// From GOLK :www.digital-phenomenon.de
+
 extern cvar_t *net_port;
 
 NET_SOCKET UDP_OpenSocket(unsigned short port)

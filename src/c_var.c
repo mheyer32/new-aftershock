@@ -23,6 +23,8 @@
 #include "util.h"
 
 
+// From GOLK :www.digital-phenomenon.de
+
 #define MAX_CVARS	1024	
 
 /* TODO: put elsewhere */

@@ -862,7 +862,7 @@ int Shader_GetOffset (const char *name )
 {
 
 	int i;
-
+	// HASHTABLE !!!
 	
 	for (i=0;i<numshaders;i++)
 	{
@@ -903,7 +903,7 @@ Shader_Readpass(shader_t *shader, shaderpass_t *pass, char ** ptr)
     pass->texref = -1;
 	pass->anim_numframes=0;
     pass->depthfunc = GL_LEQUAL;
-    pass->rgbgen = RGB_GEN_IDENTITY;
+    pass->rgbgen = RGB_GEN_NONE;
     pass->num_tc_mod = 0;
 	pass->alpha_gen =ALPHA_GEN_DEFAULT ;
 	pass->tc_gen=TC_GEN_BASE;
@@ -921,6 +921,19 @@ Shader_Readpass(shader_t *shader, shaderpass_t *pass, char ** ptr)
 		else
 			Shader_Parsetok (shader,pass,shaderpasskeys,token,ptr);
 	}
+
+
+	// Check some things 
+
+	if (pass->rgbgen==RGB_GEN_NONE)
+	{
+		pass->rgbgen=RGB_GEN_IDENTITY;
+
+		;
+	}
+
+
+
 
 
 }
@@ -998,7 +1011,7 @@ void Shader_Finish (shader_t *s )
 					if (! (s->pass[1].flags & SHADER_LIGHTMAP ))
 					{
 						// OK !
-						s->flags |=SHADER_MULTITEXTURE_LIGHTMAPPED;
+						s->flush=SHADER_FLUSH_MULTITEXTURE_LIGHTMAP;
 					}
 				}
 			}
@@ -1006,11 +1019,19 @@ void Shader_Finish (shader_t *s )
 
 	}
 
+	// check if we can use Render_Backend_Flush_Multitexture_Combine :
+	// TODO :
+
+
+
+
 	
-	sort =  (s->flags &  SHADER_NOCULL ) + ((s->flags & SHADER_POLYGONOFFSET ) << 1) 
-	         + ((s->flags & SHADER_MULTITEXTURE_LIGHTMAPPED ) << 2); 
+	sort =  (s->flags &  SHADER_NOCULL ) + ((s->flags & SHADER_POLYGONOFFSET ) << 1) ;
+	       // need to integrate the flush directive !!!
 
 	s->sortkey =sort;
+
+
 
 }
 
@@ -1050,7 +1071,7 @@ int R_LoadShader ( const char * name ,int type )
 		s->numpasses=0;
 		s->deform_vertices=DEFORMV_NONE;
 		s->skyheight=512.0f;
-
+		s->flush=SHADER_FLUSH_GENERIC;
 
 
 		token = COM_ParseExt(&ptr,1);
@@ -1086,6 +1107,8 @@ int R_LoadShader ( const char * name ,int type )
 
 		}
 
+		Shader_Finish(s);
+
 
 	}
 	// make a default shader :
@@ -1104,6 +1127,7 @@ int R_LoadShader ( const char * name ,int type )
 			s->pass[0].rgbgen = RGB_GEN_VERTEX;
 			s->sort = SHADER_SORT_ADDITIVE;
 			s->deform_vertices=DEFORMV_NONE;
+			s->flush=SHADER_FLUSH_GENERIC;
 			break;
 
 		case SHADER_BSP :
@@ -1115,6 +1139,7 @@ int R_LoadShader ( const char * name ,int type )
 			 s->pass[0].rgbgen = RGB_GEN_VERTEX;	 
 		     s->sort = SHADER_SORT_OPAQUE;
 			 s->deform_vertices=DEFORMV_NONE;
+			 s->flush=SHADER_FLUSH_GENERIC;
 			break;
 
 		case SHADER_MD3 :
@@ -1126,7 +1151,7 @@ int R_LoadShader ( const char * name ,int type )
 			s->pass[0].rgbgen = RGB_GEN_IDENTITY;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->deform_vertices=DEFORMV_NONE;
-	
+			s->flush=SHADER_FLUSH_GENERIC;
 			break;
 
 		default :

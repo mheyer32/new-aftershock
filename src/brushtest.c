@@ -400,6 +400,8 @@ void Check_Model ( int num )
 	cmodel_t * model = &map.models[num];
 	cbrush_t * brush;
 	int i;
+	
+	// Is this right ??
 
 	VectorAdd (model->mins ,model->maxs ,origin );
 	VectorScale ( origin ,0.5 ,origin );
@@ -473,7 +475,8 @@ void Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_
 	
 	// TODO !!!
 	results->entityNum = ENTITYNUM_WORLD ;
-
+	
+		
 	if (brush_hit)
 	{
 		results->contents= brush_hit->shader->contents;

@@ -17,6 +17,10 @@
  */
 
 
+
+// From GOLK :www.digital-phenomenon.de
+
+
 #include "a_shared.h"
 #include "console.h"		/* Con_Printf */
 

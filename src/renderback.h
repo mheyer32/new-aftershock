@@ -53,9 +53,11 @@ void render_backend_sky(int numsky, int *skylist);
 void render_backend_mapent(int mapent);
 
 
-extern void (* R_backend_flush  ) (int shader ,int lightmap );
+void Render_Backend_Flush (int shadernum ,int lmtex );
+
+
 void R_backend_init(void);
-void R_render_model (const refEntity_t *re);
+void R_render_model (refEntity_t *re);
 void R_Push_raw (vec3_t * v,vec2_t *tc ,colour_t *c,int * elems ,int numverts ,int numelems );
 void R_backend_shutdown(void );
 void Render_backend_Overlay ( quad_t * q,int numquads );

@@ -1721,9 +1721,9 @@ void GL_ActiveTextureARB (int param )
 	{
 		glActiveTextureARB ( param );
 		Active_Tex_Unit = num ;
-
+		
 	}
-else 
+#else 
 	glActiveTextureARB (param );
 #endif 
 

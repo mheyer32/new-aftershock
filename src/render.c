@@ -36,7 +36,7 @@
  * to draw, sorts it by shader, and sends it to the back end (renderback.c)
  */
 #define MAX_TRANSPARENT 1000
-#define MAX_OVERLAY 2048
+#define MAX_OVERLAY 4096
 
 
 /* cvars */
@@ -237,7 +237,7 @@ static int numref_entities=0;
 
 static refdef_t r_render_def ;
 
-quad_t *overlay =NULL;  // MAKE ARRAY ?
+quad_t overlay [MAX_OVERLAY];
 static int overlay_numquads =0;
 
 rendface_t *render_list =NULL ;
@@ -326,7 +326,6 @@ void R_Init(void)
 
 	render_list =malloc (MIN_RENDER_LIST_SIZE+ r_numbsp_faces * sizeof (rendface_t ));
 
-	overlay = malloc (MAX_OVERLAY * sizeof (quad_t ));
 
     R_backend_init();
 
@@ -346,7 +345,6 @@ void R_Shutdown (void )
     free(translist.faces);
     free(r_faceinc);
     free(skylist);
-	free (overlay );
 
 	free (render_list);
 
@@ -399,7 +397,7 @@ void R_RenderPolys (void )
 			arrays.elems[arrays.numverts]=arrays.numverts+j; // FIXME ?
 			arrays.numverts++;
 		}
-		R_backend_flush(p->hShader,0);
+		Render_Backend_Flush (p->hShader,0);
 			
 	}
 
@@ -473,53 +471,33 @@ void	R_DrawStretchPic( float x,float y,float w,float h,float s1,float t1,float s
 	vecs[0][0]=x;
 	vecs[0][1]=y;
 	vecs[0][2]=0;
-
-
 	tc[0][0]=s1;
 	tc[0][1]=t1;
-
-
-	
 	colour_copy (r_actcolor ,color[0]);
-
 
 
 	vecs[1][0]=x+w;
 	vecs[1][1]=y;
 	vecs[1][2]=0;
-
-
 	tc[1][0]=s2;
 	tc[1][1]=t1;
-
-
 	colour_copy (r_actcolor ,color[1]);
 
 
 	vecs[2][0]=x+w;
 	vecs[2][1]=y+h;
 	vecs[2][2]=0;
-
-
 	tc[2][0]=s2;
 	tc[2][1]=t2;
-
-
 	colour_copy (r_actcolor ,color[2]);
 
 	
 	vecs[3][0]=x;
 	vecs[3][1]=y+h;
 	vecs[3][2]=0;
-
-
 	tc[3][0]=s1;
 	tc[3][1]=t2;
-
-
-
 	colour_copy (r_actcolor ,color[3]);
-
 
 
 	elems[0]=0;
@@ -616,16 +594,8 @@ void R_renderEntities (void)
 
 
 
-void R_Finalize (void )
-{
 
 
-
-	Render_backend_Overlay ( overlay,overlay_numquads );
-
-	overlay_numquads =0;
-
-}
 
 void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b )
 {
@@ -650,7 +620,7 @@ void R_AddRefEntityToScene( const refEntity_t *re )
 {
 
 
-	refEntities[numref_entities]=*re;
+	memcpy(&refEntities[numref_entities],re,sizeof (refEntity_t ));
 
 	numref_entities++;
 
@@ -685,7 +655,7 @@ void R_LerpTag( orientation_t *tag, int model, int startFrame, int endFrame, flo
 	if (!mod->numframes>0)
 		return ;
 
-
+	// if out of bounds , wrap :
 	if (mod->numframes <= startFrame)
 		startFrame = 0;
 
@@ -756,7 +726,7 @@ void R_LerpTag( orientation_t *tag, int model, int startFrame, int endFrame, flo
 
 
 //TODO : Optimize , Put to backend 
-void R_render_model (const refEntity_t *re)
+void R_render_model (refEntity_t *re)
 {
 
 	mat4_t mat , loadmat,tmpmat;
@@ -781,14 +751,14 @@ void R_render_model (const refEntity_t *re)
 	//ZOID: fixed z angle
     //glRotatef (e->angles[2],  1, 0, 0);
 
-	// TODO !
-/*	if (re->nonNormalizedAxes)
+	
+	if (re->nonNormalizedAxes)
 	{
 		VectorNormalize (re->axis[0]);
 		VectorNormalize (re->axis[1]);
 		VectorNormalize (re->axis[2]);
 	}
-*/
+
 
 	Matrix4_Identity (tmpmat);
 	tmpmat[12]=re->origin[0];
@@ -916,7 +886,7 @@ void R_render_model (const refEntity_t *re)
 
 		}
 	
-			R_backend_flush(shaderref, 0);
+			Render_Backend_Flush(shaderref, 0);
 		
 
 
@@ -1119,8 +1089,9 @@ void R_StartFrame (void )
 void R_EndFrame (void )
 {
 
-
-	R_Finalize ();
+	
+	Render_backend_Overlay ( overlay,overlay_numquads );
+	overlay_numquads =0;
 
 
 	if (r_ext_swap_control->modified)

@@ -163,7 +163,8 @@ int MD3_free (int num )
 
 
 
-
+// This function is from GOLK : www.digital-phenomenon.de
+// it is slightly modified :
 int  LoadMD3(md3model2_t * md3, const char *filename)
 {
 	byte				*fdata;
@@ -458,18 +459,7 @@ int  LoadMD3(md3model2_t * md3, const char *filename)
 							(*pnorms)[1] = (LittleFloat((float)(*data++))) / 256.f;
 							
 						}
-					/*	pi = mesh->indizes;
-						pf = *ppf;
-						for(k=0; k<mesh->numtris; k++, pi+=3) {
-							VectorSubtract(pf[pi[1]], pf[pi[0]], v1);
-							VectorSubtract(pf[pi[2]], pf[pi[0]], v2);
-							CrossProduct(v2, v1, normal);
-							VectorNormalize(normal);
-							VectorCopy(normal, pnormals[pi[0]]);
-							VectorCopy(normal, pnormals[pi[1]]);
-							VectorCopy(normal, pnormals[pi[2]]);
-						}
-						*/
+			
 					}
 
 					mdata += mesh_header->meshsize;
