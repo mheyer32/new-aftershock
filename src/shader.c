@@ -814,7 +814,8 @@ void Shader_MakeCache (void )
 
 	}
 
-	
+	// John Clinton: fix memory overflow
+	numshaders ++;	
 	
 	shadercache =(cache_t *) malloc ( numshaders * sizeof (cache_t ));
 
@@ -822,7 +823,8 @@ void Shader_MakeCache (void )
 	ptr = shaderbuf;
 	i=0;
 
-	while (ptr )
+	// John Clinton: added numshaders test
+	while( ptr && i < numshaders )
 	{
 		token =COM_ParseExt ( &ptr,1);
 		shadercache[i].offset= ptr - shaderbuf ;
@@ -1192,9 +1194,9 @@ int R_LoadShader ( const char * name ,int type )
 	strcpy (s->name,name);
 
 
-	shadercount++;
+//	shadercount++;
 
-	return shadercount-1;
+	return shadercount++;
 }
 
 
