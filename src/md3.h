@@ -40,7 +40,7 @@ typedef struct
     vec3_t			**points;
 	vec3_t			*normals;
     vec2_t			*tex_st;	// Texture coords
-    vec2_t			**norms;	// Used for environment mapping?
+    vec3_t			**norms;	// Used for environment mapping?
     int				numelems;
     uint_t			*elems;
 	int				*skins;

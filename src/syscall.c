@@ -167,9 +167,9 @@ static void Call_Cmd_Args(int bufferLength, char *buffer)
 	Cmd_Args(buffer, bufferLength);
 }
 
-static void Call_R_LerpTag (const char *tagName, int frac, int endFrame, int startFrame, int model, orientation_t *tag) 
+static void Call_R_LerpTag (const char *tagName, int frac, int endFrame, int startFrame, int modnum, orientation_t *tag) 
 {
-	R_LerpTag (tag, model, startFrame, endFrame, GETFLOAT(frac), tagName); 
+	R_LerpTag (tag, modnum, startFrame, endFrame, GETFLOAT(frac), tagName); 
 }
 
 static void	Call_S_StartLocalSound(int channelNum, sfxHandle_t sfx)

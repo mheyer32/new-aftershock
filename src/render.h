@@ -26,9 +26,9 @@ extern float r_cosfov;
 extern float r_tanfov;
 extern float r_aspect;
 extern int r_eyecluster;     /* Current PVS cluster */
-extern double cl_frametime;   /* Current time */
-extern double sv_frametime;   /* Current time */
-extern double shadertime;
+extern float cl_frametime;   /* Current time */
+extern float sv_frametime;   /* Current time */
+extern float shadertime;
 
 #include "c_var.h"
 #include "lightmap.h"
@@ -224,12 +224,11 @@ typedef struct poly_s {
 // used for overlay
 typedef struct 
 {
-
 	int shader;
 	int elems[6];
-	vec3_t verts [4];
-	float tc [4][2];
-	colour_t color [4];
+	vec3_t verts[4];
+	float tc[4][2];
+	colour_t color[4];
 } quad_t;
 
 
@@ -256,7 +255,6 @@ void R_StartFrame (void);
 void R_EndFrame (void);
 
 void R_DrawStretchPic (float x, float y, float w, float h, float s1, float t1, float s2, float t2, int hShader);
-void R_SetColor(const float *rgba);
 void R_Init(void);
 void R_Shutdown(void);
 void R_DrawString(int x, int y, const char *str, vec4_t color);
@@ -267,12 +265,15 @@ void R_ClearScene (void);
 void R_RenderScene (const refdef_t *fd);
 void R_AddRefEntityToScene(const refEntity_t *re);
 int  R_TestVis(const vec3_t p1, const vec3_t p2);
-void R_LerpTag(orientation_t *tag, int model, int startFrame, int endFrame, float frac, const char *tagName);
+void R_LerpTag(orientation_t *tag, int modnum, int startFrame, int endFrame, float frac, const char *tagName);
+void R_InterpolateNormal( vec3_t n1, vec3_t n2, float frac, vec3_t nI );
 
 int R_RegisterModel(const char *name);
 int R_RegisterSkin(const char *name);
 
 void R_LoadWorldMap(const char *mapname);
 void R_FreeWorldMap (void);
+
+void R_SetColor(const float *rgba);		// FIXME
 
 #endif /*__RENDER_H__*/

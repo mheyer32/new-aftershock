@@ -15,6 +15,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
+#define WIN32_LEAN_AND_MEAN
+
 #include "a_shared.h"
 #include "cmap.h"
 #include "shader.h"
@@ -44,34 +46,50 @@
    mapents, etc. so we don't have to have a "push" function for each. */
 
 
-void Render_Backend_Flush (int shadernum, int lmtex);
+void R_BackendFlush (int shadernum, int lmtex);
+static void R_BackendFlush_Generic (shader_t *s, int lmtex);
+static void R_BackendFlush_MultitextureLightmapped (shader_t *s, int lmtex);
+static void R_BackendFlush_MultitextureCombine (shader_t *s, int lmtex);
+static void R_BackendFlush_VertexLit (shader_t *s, int lmtex);
 
-static void Render_Backend_Flush_Generic (shader_t *s, int lmtex);
-static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s, int lmtex);
-static void Render_Backend_Flush_Multitexture_Combine (shader_t *s, int lmtex);
-static void Render_Backend_Flush_Vertex_Lit (shader_t *s, int lmtex);
+static void R_BackendPushFace(cface_t *face);
+static void R_BackendPushMesh(mesh_t *mesh);
+void		R_BackendPushPoly(poly_t *p);
+static void R_BackendStripmine(int numelems, int *elems);
 
-static void render_pushface(cface_t *face);
-static void render_pushmesh(mesh_t *mesh);
-static void render_pushface_deformed(int shadernum, cface_t *face);
-static void render_stripmine(int numelems, int *elems);
-static int render_setstate(shaderpass_t *pass, uint_t lmtex);
+typedef struct
+{
+    int			numverts;
+    vec3_t		*verts;
+	vec3_t		*norms;
+    colour_t	*colour;
+	colour_t	*entity_colour;
+    vec2_t		*tex_st;
+    vec2_t		*texmod_st;
+    vec2_t		*lm_st;
+	vec2_t		**stage_tex_st;
+	colour_t	*mod_colour;
+    int			numelems;
+    int			*elems;
+} arrays_t;
 
-arrays_t arrays;
+static arrays_t arrays;
 
 aboolean r_overlay = afalse;
+colour_t r_actcolor = {255, 255, 255, 255};
 
 extern reference_t transform_ref;
 
-static double render_func_eval(uint_t func, float *args)
+static float render_func_eval(uint_t func, float *args)
 {
+	float x = args[2] + shadertime * args[3];
+
 	// Evaluate a number of time based periodic functions
 	if (func == SHADER_FUNC_SIN)
-		return (sin(args[2]*TWOPI + shadertime*args[3]) * args[1] + args[0]);
+		return ((float)sin((double)(args[2]*TWOPI + shadertime*args[3])) * args[1] + args[0]);
 	else 
 	{
-		double x = args[2] + shadertime * args[3];
-		x -= floor(x);
+		x -= (float)floor(x);
 
 		switch (func)
 		{
@@ -93,7 +111,7 @@ static double render_func_eval(uint_t func, float *args)
     return 0.0;
 }
 
-void Render_Backend_Init(void)
+void R_BackendInit(void)
 {
     arrays.verts = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
 	arrays.norms = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
@@ -122,7 +140,7 @@ void Render_Backend_Init(void)
 	}
 }
 
-void Render_Backend_Shutdown(void)
+void R_BackendShutdown(void)
 {
 	int i;
 
@@ -141,8 +159,10 @@ void Render_Backend_Shutdown(void)
 	free (arrays.stage_tex_st);
 }
 
-void R_Push_Quad (quad_t *q)
+void R_BackendPushQuad (quad_t *q)
 {
+	R_BackendClear();
+
 	arrays.elems[arrays.numelems++] = arrays.numverts + q->elems[0];
 	arrays.elems[arrays.numelems++] = arrays.numverts + q->elems[1];
 	arrays.elems[arrays.numelems++] = arrays.numverts + q->elems[2];
@@ -171,7 +191,20 @@ void R_Push_Quad (quad_t *q)
 	arrays.numverts++;
 }
 
-void Render_Backend_Overlay (quad_t *q, int numquads)
+void R_BackendPushPoly (poly_t *p)
+{
+	int j;
+
+	for (j = 0; j < p->numVerts; j++, arrays.numverts++)
+	{
+		VectorCopy(p->verts[j].xyz, arrays.verts[arrays.numverts]);
+		Vector2Copy(p->verts[j].st, arrays.tex_st[arrays.numverts]);
+		Vector4Copy(p->verts[j].modulate, arrays.colour[j]);
+		arrays.elems[arrays.numverts] = arrays.numverts + j;
+	}
+}
+
+void R_BackendOverlay (quad_t *q, int numquads)
 {
 	int i, shader = q->shader;
 	quad_t *quad = &q[0];
@@ -182,15 +215,15 @@ void Render_Backend_Overlay (quad_t *q, int numquads)
 		if (shader != quad->shader)
 		{
 			// Flush the renderer and reset
-			Render_Backend_Flush(shader, 0);
+			R_BackendFlush(shader, 0);
 			shader = quad->shader;
 		}
 
-		R_Push_Quad (quad);
+		R_BackendPushQuad (quad);
     }
 
     // Final flush to clear queue
-	Render_Backend_Flush(shader, 0);
+	R_BackendFlush(shader, 0);
 }
 
 void Render_Backend(facelist_t *facelist)
@@ -199,7 +232,7 @@ void Render_Backend(facelist_t *facelist)
     uint_t key = (uint_t)-1;
     cface_t *face;   
 
-    arrays.numverts = arrays.numelems = 0;
+   	R_BackendClear();
 
     for (f = 0; f < facelist->numfaces; f++)
     {
@@ -209,7 +242,7 @@ void Render_Backend(facelist_t *facelist)
 		if (facelist->faces[f].sortkey != key)
 		{
 			// Flush the renderer and reset
-			if (f) Render_Backend_Flush(shader, lmtex);
+			if (f) R_BackendFlush(shader, lmtex);
 			shader = face->shadernum;
 			lmtex = face->lightmapnum;
 			key = facelist->faces[f].sortkey;
@@ -220,11 +253,11 @@ void Render_Backend(facelist_t *facelist)
 		{
 			case FACETYPE_NORMAL:
 			case FACETYPE_TRISURF:
-				render_pushface(face);
+				R_BackendPushFace(face);
 				break;
 
 			case FACETYPE_MESH:
-				render_pushmesh(&r_meshes[r_facemeshes[facelist->faces[f].face]]);
+				R_BackendPushMesh(&r_meshes[r_facemeshes[facelist->faces[f].face]]);
 				break;
 
 			default:
@@ -233,16 +266,48 @@ void Render_Backend(facelist_t *facelist)
     }
 
     // Final flush to clear queue
-	Render_Backend_Flush(shader, lmtex);
+	R_BackendFlush(shader, lmtex);
 }
 
-void Render_Backend_Sky(int numsky, int *skylist)
+void R_SetColor (const float *rgba)
+{
+	if (!rgba)
+	{
+		ClearColor (r_actcolor);
+		return;
+	}
+ 
+	r_actcolor[0] = FloatToByte(rgba[0]*255.0f);
+	r_actcolor[1] = FloatToByte(rgba[1]*255.0f);
+	r_actcolor[2] = FloatToByte(rgba[2]*255.0f);
+	r_actcolor[3] = FloatToByte(rgba[3]*255.0f);
+}
+
+void R_BackendClearColor( void )
+{
+	memset (arrays.colour, 255, sizeof(colour_t)*arrays.numverts);
+}
+
+void R_BackendClearEntityColor( void )
+{
+	memset (arrays.entity_colour, 255, sizeof(colour_t)*arrays.numverts);
+}
+
+void R_BackendSetEntityColor( const colour_t c )
+{
+	int i;
+
+	for( i = 0; i < arrays.numverts; i++ )
+		Vector4Copy (c, arrays.entity_colour[i]);
+}
+
+void R_BackendSky(int numsky, int *skylist)
 {
     int s, i, shader = cm.faces[skylist[0]].shadernum;
     float skyheight = r_shaders[shader].skyheight;
     uint_t *elem;
 
-    arrays.numverts = arrays.numelems = 0;
+	R_BackendClear();
 
     // Center skybox on camera to give the illusion of a larger space
     glMatrixMode(GL_MODELVIEW);
@@ -258,15 +323,14 @@ void Render_Backend_Sky(int numsky, int *skylist)
 		for (i = 0; i < r_skybox->numelems; i++)
 			arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
 
-		for (i = 0; i < r_skybox->numpoints; i++)
+		for (i = 0; i < r_skybox->numpoints; i++, arrays.numverts++)
 		{
 			VectorCopy(r_skybox->points[s][i], arrays.verts[arrays.numverts]);
 			Vector2Copy(r_skybox->tex_st[s][i], arrays.tex_st[arrays.numverts]);
-			arrays.numverts++;
 		}
     }
 
-	Render_Backend_Flush(shader, 0);
+	R_BackendFlush(shader, 0);
 	
     // Restore world space
     glMatrixMode(GL_MODELVIEW);
@@ -274,7 +338,7 @@ void Render_Backend_Sky(int numsky, int *skylist)
 }
 
 
-static void render_pushface(cface_t *face)
+static void R_BackendPushFace(cface_t *face)
 {
     int *elem = face->elems;
     cvertex_t *vert = face->verts;
@@ -286,38 +350,44 @@ static void render_pushface(cface_t *face)
     for (i = 0; i < face->numelems; i++)
 		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
     
-    for (i = 0; i < face->numverts; i++)
+    for (i = 0; i < face->numverts; i++, vert++, arrays.numverts++)
 	{
 		VectorCopy(vert->v_point, arrays.verts[arrays.numverts]);
 		VectorCopy(vert->v_norm, arrays.norms[arrays.numverts]);
 		Vector2Copy(vert->tex_st, arrays.tex_st[arrays.numverts]);
 		Vector2Copy(vert->lm_st, arrays.lm_st[arrays.numverts]);
 		Vector4Copy(vert->colour, arrays.colour[arrays.numverts]);
-		vert++;
-		arrays.numverts++;
     }	    
 }
 
-void R_Push_raw (vec3_t *v, vec2_t *tc, colour_t *c, int *elems, int numverts, int numelems)
+void R_BackendInterpolateNormals( vec3_t *n1, vec3_t *n2, float frac, int numverts )
 {
-	int i;
+	int i = arrays.numverts - numverts;
 
-	if (arrays.numverts >= MAX_ARRAYS_VERTS)
-		return;
-
-	for (i = 0; i < numelems; i++)
-		arrays.elems[arrays.numelems++] = arrays.numverts + *elems++;
-
-	for (i = 0; i < numverts; i++) 
-	{
-		VectorCopy(v[i], arrays.verts[arrays.numverts]);
-		Vector2Copy(tc[i], arrays.tex_st[arrays.numverts]);
-		Vector4Copy(c[i], arrays.colour[arrays.numverts]);
-		arrays.numverts++;
+	for( ; i < arrays.numverts; i++ ) {
+		R_InterpolateNormal (n1[i], n2[i], frac, arrays.verts[i]);
 	}
 }
 
-static void render_pushmesh(mesh_t *mesh)
+void R_BackendPushRaw( vec3_t *v, vec3_t *n, vec2_t *tc, int *elems, int numverts, int numelems )
+{
+	int i;
+
+	if( arrays.numverts >= MAX_ARRAYS_VERTS )
+		return;
+
+	for( i = 0; i < numelems; i++ )
+		arrays.elems[arrays.numelems++] = arrays.numverts + *elems++;
+
+	for( i = 0; i < numverts; i++, arrays.numverts++ ) {
+		VectorCopy( v[i], arrays.verts[arrays.numverts] );
+		VectorCopy( n[i], arrays.norms[arrays.numverts] );
+		Vector2Copy( tc[i], arrays.tex_st[arrays.numverts] );
+	}
+}
+
+
+static void R_BackendPushMesh(mesh_t *mesh)
 {
     int  i, *elem = mesh->elems;
 
@@ -325,20 +395,18 @@ static void render_pushmesh(mesh_t *mesh)
 		return;
 
 	// any way to implement faceculling here in the engine ?
-
     for (i = 0; i < mesh->numelems; i++)
 		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
 	
-	for (i = 0; i < mesh->msize; i++)
+	for (i = 0; i < mesh->msize; i++, arrays.numverts++)
 	{
 	    VectorCopy(mesh->points[i], arrays.verts[arrays.numverts]);
 	    Vector2Copy(mesh->tex_st[i], arrays.tex_st[arrays.numverts]);
 	    Vector2Copy(mesh->lm_st[i], arrays.lm_st[arrays.numverts]);
-	    arrays.numverts++;
 	}
 }
 
-static void render_stripmine(int numelems, int *elems)
+static void R_BackendStripmine(int numelems, int *elems)
 {
     int toggle;
     uint_t a, b, elem;
@@ -392,7 +460,7 @@ static void render_stripmine(int numelems, int *elems)
 }
 
 // TODO !!!
-void Render_Backend_Make_Vertices (shader_t *s)
+void R_BackendMake_Vertices (shader_t *s)
 {
 	float deflect;
 	vec3_t v;
@@ -468,7 +536,7 @@ void Render_Backend_Make_Vertices (shader_t *s)
 	}
 }
 
-float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
+float *R_BackendMake_TexCoords (shaderpass_t *pass, int stage)
 {
 	int i = arrays.numverts, n;
 	vec2_t *in = arrays.tex_st;
@@ -556,7 +624,7 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 	if (pass->num_tc_mod > 0)
 	{
 		float t1, t2, p1, p2;
-		double pos;
+		float pos;
 
 		for (n = 0; n < pass->num_tc_mod; n++)
 		{
@@ -593,7 +661,7 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 					
 				case SHADER_TCMOD_TURB:
 				{
-					double k;
+					float k;
 
 					pos = pass->tc_mod[n].args[2] + shadertime * pass->tc_mod[n].args[3];
 
@@ -660,7 +728,7 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 	return *(float **)&out;
 }
 
-byte *Render_Backend_Make_Colors (shaderpass_t *pass)
+byte *R_BackendMake_Colors (shaderpass_t *pass)
 {
 	int i;
 	byte c;
@@ -683,7 +751,7 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 			break;
 
 		case RGB_GEN_IDENTITY:
-			memset (arrays.mod_colour, 255, arrays.numverts * 4);
+			memset (arrays.mod_colour, 255, sizeof(colour_t)*arrays.numverts);
 			col = arrays.mod_colour;
 			break;
 
@@ -732,7 +800,7 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 			break;
 
 		case RGB_GEN_LIGHTING_DIFFUSE:	// TODO
-			memset (arrays.mod_colour, 255, arrays.numverts * 4);
+			memset (arrays.mod_colour, 255, sizeof(colour_t)*arrays.numverts);
 			col = arrays.mod_colour;
 			break;
 
@@ -846,6 +914,12 @@ void R_End2d (void)
 	r_overlay = afalse;
 }
 
+void R_BackendClear( void )
+{
+	arrays.numelems = 0;
+	arrays.numverts = 0;
+}
+
 void R_DrawStretchPic (float x, float y, float w, float h, float s1, float t1, float s2, float t2, int hShader)
 {
 	quad_t q;
@@ -853,8 +927,6 @@ void R_DrawStretchPic (float x, float y, float w, float h, float s1, float t1, f
 
 	if (hShader < 0) 
 		return;
-
-	arrays.numelems = arrays.numverts = 0;
 
 	q.verts[0][0] = x;
 	q.verts[0][1] = y;
@@ -891,11 +963,11 @@ void R_DrawStretchPic (float x, float y, float w, float h, float s1, float t1, f
 	q.elems[4] = 2;
 	q.elems[5] = 3;
 	
-	R_Push_Quad (&q);
+	R_BackendPushQuad (&q);
 	
 	R_Begin2d ();
 
-	Render_Backend_Flush_Generic (&r_shaders[hShader], 0);
+	R_BackendFlush_Generic (&r_shaders[hShader], 0);
 
 	R_End2d ();
 }
@@ -925,13 +997,13 @@ void DoGamma(void)
 	glColor4f (1.0, 1.0, 1.0, 1.0);
 }
 
-void Render_Backend_Flush (int shadernum, int lmtex)
+void R_BackendFlush (int shadernum, int lmtex)
 {
 	shader_t *s;
 
 	if (shadernum < 0)
 	{
-		arrays.numverts = arrays.numelems = 0;
+		R_BackendClear();
 		return;
 	}
 
@@ -940,30 +1012,30 @@ void Render_Backend_Flush (int shadernum, int lmtex)
 	switch (s->flush)
 	{
 		case SHADER_FLUSH_GENERIC:
-			Render_Backend_Flush_Generic(s, lmtex);
+			R_BackendFlush_Generic(s, lmtex);
 			break;
 
 		case SHADER_FLUSH_MULTITEXTURE_LIGHTMAP:
-			Render_Backend_Flush_Multitexture_Lightmapped(s, lmtex);
+			R_BackendFlush_MultitextureLightmapped(s, lmtex);
 			break;
 
 		case SHADER_FLUSH_MULTITEXTURE_COMBINE:
-			Render_Backend_Flush_Multitexture_Combine(s, lmtex);
+			R_BackendFlush_MultitextureCombine(s, lmtex);
 			break;
 
 		case SHADER_FLUSH_VERTEX_LIT:
-			Render_Backend_Flush_Vertex_Lit(s, lmtex);
+			R_BackendFlush_VertexLit(s, lmtex);
 			break;
 
 		default:
 			break;
 	}
 
-	arrays.numverts = arrays.numelems = 0;
+	R_BackendClear();
 }
 
 
-static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
+static void R_BackendFlush_Generic( shader_t *s, int lmtex )
 {
 	shaderpass_t *pass;
 	int i, texture;
@@ -990,7 +1062,7 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 	else
 		GL_Disable (GL_POLYGON_OFFSET);
 
-	Render_Backend_Make_Vertices(s);
+	R_BackendMake_Vertices(s);
 
 	glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
 	glNormalPointer(GL_FLOAT, 0, arrays.norms);
@@ -1009,10 +1081,10 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 		pass = &s->pass[i];
 		
 		// Set the Texture Coord Array
-		glTexCoordPointer(2, GL_FLOAT, 0, Render_Backend_Make_TexCoords (pass, 0));
+		glTexCoordPointer(2, GL_FLOAT, 0, R_BackendMake_TexCoords (pass, 0));
 		
 		// Set the Colors
-		glColorPointer(4, GL_UNSIGNED_BYTE, 0, Render_Backend_Make_Colors(pass));
+		glColorPointer(4, GL_UNSIGNED_BYTE, 0, R_BackendMake_Colors(pass));
 		
 		// Set the Texture
 		if (pass->flags & SHADER_LIGHTMAP)
@@ -1071,8 +1143,8 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 		}
 
 		// Draw it
-			glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
-				arrays.elems);
+		glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
+			arrays.elems);
 	}
 
 	if (glUnlockArraysEXT)
@@ -1081,13 +1153,13 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 
 /*
 ================
-Render_Backend_Flush_Multitexture_Lightmapped
+R_BackendFlush_Multitexture_Lightmapped
 
 Assumes a 2 pass shader. No blending
 in first pass. Modulate int 2. pass.
 ================
 */
-static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmtex )
+static void R_BackendFlush_MultitextureLightmapped (shader_t *s ,int lmtex )
 {
 	shaderpass_t *pass;
 	int texture;
@@ -1095,7 +1167,7 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 	if (s->numpasses != 2)
 		return;
 
-	Render_Backend_Make_Vertices (s);
+	R_BackendMake_Vertices (s);
 
 	switch (s->cull)
 	{
@@ -1119,7 +1191,7 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 	else
 		GL_Disable (GL_POLYGON_OFFSET);
 
-	Render_Backend_Make_Vertices(s);
+	R_BackendMake_Vertices(s);
 
 	glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
 
@@ -1143,7 +1215,7 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 	if (lmtex < 1)
 		return;
 
-	glTexCoordPointer(2, GL_FLOAT, 0, Render_Backend_Make_TexCoords(pass, 0));
+	glTexCoordPointer(2, GL_FLOAT, 0, R_BackendMake_TexCoords(pass, 0));
 
 	GL_BindTexture(GL_TEXTURE_2D, r_lightmaps[lmtex]);
 
@@ -1158,7 +1230,7 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 
 	GL_TexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	
-	glTexCoordPointer(2, GL_FLOAT, 0, Render_Backend_Make_TexCoords(pass, 1));
+	glTexCoordPointer(2, GL_FLOAT, 0, R_BackendMake_TexCoords(pass, 1));
 
 	if (pass->flags & SHADER_ANIMMAP)
 	{
@@ -1197,17 +1269,17 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 
 /*
 ================
-Render_Backend_Flush_Multitexture_Lightmapped
+R_BackendFlush_Multitexture_Lightmapped
 
 Assumes 2 passes. We could extend this. TODO!
 ================
 */
-static void Render_Backend_Flush_Multitexture_Combine (shader_t *s,int lmtex )
+static void R_BackendFlush_MultitextureCombine (shader_t *s,int lmtex )
 {
 	if (s->numpasses != 2)
 		return;
 
-	Render_Backend_Make_Vertices (s);
+	R_BackendMake_Vertices (s);
 
 	switch (s->cull)
 	{
@@ -1231,7 +1303,7 @@ static void Render_Backend_Flush_Multitexture_Combine (shader_t *s,int lmtex )
 	else
 		GL_Disable (GL_POLYGON_OFFSET);
 
-	Render_Backend_Make_Vertices(s);
+	R_BackendMake_Vertices(s);
 
 	glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
 
@@ -1240,6 +1312,6 @@ static void Render_Backend_Flush_Multitexture_Combine (shader_t *s,int lmtex )
 }
 
 // TODO !!!
-static void Render_Backend_Flush_Vertex_Lit (shader_t *s, int lmtex )
+static void R_BackendFlush_VertexLit (shader_t *s, int lmtex )
 {
 }

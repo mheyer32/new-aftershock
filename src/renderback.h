@@ -18,7 +18,7 @@
 #ifndef __RENDER_BACK_H__
 #define __RENDER_BACK_H__
 
-#define MAX_ARRAYS_VERTS 8192
+#define MAX_ARRAYS_VERTS 4096
 #define MAX_ARRAYS_ELEMS MAX_ARRAYS_VERTS * 3 
 
 typedef struct
@@ -34,32 +34,21 @@ typedef struct
     rendface_t *faces;
 } facelist_t;
 
-typedef struct
-{
-    int			numverts;
-    vec3_t		*verts;
-	vec3_t		*norms;
-    colour_t	*colour;
-	colour_t	*entity_colour;
-    vec2_t		*tex_st;
-    vec2_t		*texmod_st;
-    vec2_t		*lm_st;
-	vec2_t		**stage_tex_st;
-	colour_t	*mod_colour;
-    int			numelems;
-    int			*elems;
-} arrays_t;
-
-void Render_Backend_Finalize(void);
+void R_BackendFinalize(void);
 void Render_Backend(facelist_t *list);
-void Render_Backend_Sky(int numsky, int *skylist);
-void Render_Backend_Mapent(int mapent);
-void Render_Backend_Flush (int shadernum, int lmtex);
-void Render_Backend_Init(void);
-void Render_Push_Raw (vec3_t *v, vec2_t *tc, colour_t *c, int *elems, int numverts, int numelems);
-void Render_Backend_Shutdown(void);
-void Render_Backend_Overlay (quad_t * q, int numquads);
-
-extern arrays_t arrays;
+void R_BackendSky(int numsky, int *skylist);
+void R_BackendMapent(int mapent);
+void R_BackendFlush (int shadernum, int lmtex);
+void R_BackendInit(void);
+void R_BackendShutdown(void);
+void R_BackendOverlay (quad_t * q, int numquads);
+void R_BackendPushQuad (quad_t *quad);
+void R_BackendPushPoly (poly_t *p);
+void R_BackendClear( void );
+void R_BackendClearColor( void );
+void R_BackendClearEntityColor( void );
+void R_BackendSetEntityColor( const colour_t c );
+void R_BackendPushRaw( vec3_t *v, vec3_t *n, vec2_t *tc, int *elems, int numverts, int numelems );
+void R_BackendInterpolateNormals( vec3_t *n1, vec3_t *n2, float frac, int numverts );
 
 #endif /*__RENDER_BACK_H__*/

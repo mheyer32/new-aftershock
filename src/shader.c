@@ -952,7 +952,7 @@ void Shader_Parsetok(shader_t *shader, shaderpass_t *pass, shaderkey_t *keys, ch
 
 void Shader_Finish (shader_t *s)
 {
-	// check if we can use Render_Backend_Flush_Multitexture_Lightmapped
+	// check if we can use R_BackendFlushMultitextureLightmapped
 	if (r_allowExtensions->integer && gl_ext_info._ARB_Multitexture)
 	{
 		if (s->numpasses == 2)
@@ -969,8 +969,7 @@ void Shader_Finish (shader_t *s)
 		}
 	}
 
-	// TODO: check if we can use Render_Backend_Flush_Multitexture_Combine
-
+	// TODO: check if we can use R_BackendFlushMultitextur_Combine
 
 	if (! (s->flags & SHADER_DEPTHWRITE) &&
 	! (s->flags & SHADER_TRANSPARENT) &&

@@ -134,9 +134,9 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 	unsigned int		*pi;
 	vec2_t				*pst;
 	vec3_t				*pf;
-	vec2_t				*pnorms;
+	vec3_t				*pnorms;
 	vec3_t				**ppf;
-	vec2_t				**ppnorms;
+	vec3_t				**ppnorms;
 	vec3_t				**ppnormals;
 	md3mesh_t			*mesh;
 	int					file;
@@ -376,7 +376,7 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 				// vertices
 				if (mesh->numverts && (mesh_header->meshsize > mesh_header->vert_offs)) {
 					mesh->points = (vec3_t **)malloc(mesh->numframes * sizeof(vec3_t *));
-					mesh->norms = (vec2_t **)malloc(mesh->numframes * sizeof(vec2_t *));
+					mesh->norms = (vec3_t **)malloc(mesh->numframes * sizeof(vec3_t *));
 
 					data = mdata + mesh_header->vert_offs;
 
@@ -386,7 +386,7 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 			
 					for (j = 0; j < num3; j++, ppf++, ppnorms++, ppnormals++) {
 						pf = *ppf = (vec3_t *)malloc(num2 * sizeof(vec3_t));
-						pnorms = *ppnorms = (vec2_t *)malloc(num2 * sizeof(vec2_t));
+						pnorms = *ppnorms = (vec3_t *)malloc(num2 * sizeof(vec3_t));
 				
 						for (k = 0; k < num2; k++, pf++, pnorms++) {
 							(*pf)[0] = (float)(*((short *)data)) * MD3_XYZ_SCALE;
@@ -398,6 +398,7 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 
 							(*pnorms)[0] = (LittleFloat((float)(*data++))) / 256.f;
 							(*pnorms)[1] = (LittleFloat((float)(*data++))) / 256.f;
+							(*pnorms)[2] = 0;
 						}
 					}
 

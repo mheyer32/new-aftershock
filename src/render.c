@@ -194,63 +194,55 @@ void R_GetCvars( void )
 	}
 }
 
-void R_Draw_World (void);
-void R_Setup_Clipplanes (const refdef_t *fd);
-void R_Recursive_World_Node (int n);
-void R_Render_Walk_Face (int num);
-int R_ClipFrustrum (vec3_t mins, vec3_t maxs);
-
-void R_Render_Model (const refEntity_t *re);
-void R_Render_Poly (const refEntity_t *re);
-void R_Render_Sprite (const refEntity_t *re);
-void R_Render_Beam (const refEntity_t *re);
-void R_Render_RailCore (const refEntity_t *re);
-void R_Render_RailRings (const refEntity_t *re);
-void R_Render_Bsp_Model (int num);
-void R_Render_Lightning (const refEntity_t *re);
-void R_Render_PortalSurface (const refEntity_t *re);
-
-unsigned int SortKey (cface_t *face);
+static void R_Draw_World (void);
+static void R_Setup_Clipplanes (const refdef_t *fd);
+static void R_Recursive_World_Node (int n);
+static void R_Render_Walk_Face (int num);
+static int  R_ClipFrustrum (vec3_t mins, vec3_t maxs);
+static void R_RenderModel (const refEntity_t *re);
+static void R_RenderPoly (const refEntity_t *re);
+static void R_RenderSprite (const refEntity_t *re);
+static void R_RenderBeam (const refEntity_t *re);
+static void R_RenderRailCore (const refEntity_t *re);
+static void R_RenderRailRings (const refEntity_t *re);
+static void R_RenderBspModel (int num);
+static void R_RenderLightning (const refEntity_t *re);
+static void R_RenderPortalSurface (const refEntity_t *re);
 
 static int R_Find_Cluster(const vec3_t pos);
 static void sort_faces(void);
 
-static facelist_t facelist;   /* Faces to be drawn */
-static facelist_t translist;  /* Transparent faces to be drawn */
-static int r_leafcount;       /* Counts up leafs walked for this scene */
-static byte *r_faceinc;        /* Flags faces as "included" in the facelist */
-static int *skylist;          /* Sky faces hit by walk */
-static int numsky;            /* Number of sky faces in list */
-static float cos_fov;         /* Cosine of the field of view angle */
+static facelist_t facelist;   // Faces to be drawn
+static facelist_t translist;  // Transparent faces to be drawn
+static int r_leafcount;       // Counts up leafs walked for this scene
+static byte *r_faceinc;       // Flags faces as "included" in the facelist
+static int *skylist;          // Sky faces hit by walk
+static int numsky;            // Number of sky faces in list
 
+unsigned int SortKey (cface_t *face);
 uint_t *r_lightmaps = NULL;
 int  r_numLightmaps = 0;
 
 #define  MAX_REF_ENTITIES		256 
-#define  MIN_RENDER_LIST_SIZE	512
- 
 #define  MAX_DYN_POLYS			512
 #define	 MAX_VERTS_ON_POLY		10
 #define  MAX_POLY_VERTS			(MAX_DYN_POLYS * MAX_VERTS_ON_POLY)
 
 static refEntity_t refEntities[MAX_REF_ENTITIES];
-static int numref_entities = 0;
+static int numRefEntities = 0;
 
 static refdef_t r_render_def;
 static refdef_t r_world_def;
 
-rendface_t *render_list = NULL;
-static int r_num_render_list_elems = 0;
-
 // Dynamic Lightning
-dlight_t r_dlights[MAX_DLIGHTS];
-int r_num_dlights = 0;
+dlight_t dlights[MAX_DLIGHTS];
+int numDlights = 0;
 
 static polyVert_t PolyVerts[MAX_POLY_VERTS];
-static int num_PolyVerts = 0;
+static int numPolyVerts = 0;
 
-static poly_t Dyn_Polys[MAX_DYN_POLYS];
-static int dyn_polys_count = 0;
+static poly_t DPolys[MAX_DYN_POLYS];
+static int numDpolysCount = 0;
 
 static cplane_t clipplanes[4];
 
@@ -259,8 +251,6 @@ aboolean r_WorldMap_loaded = afalse;
 // This will be used by the backend when doing sfx like environment-mapping
 reference_t transform_ref;
 
-colour_t r_actcolor = {255, 255, 255, 255};
-
 extern aboolean r_overlay;
 
 void R_ClearScene (void);
@@ -268,7 +258,7 @@ void R_ClearScene (void);
 
 void R_Init(void)
 {
-	Con_Printf ("-------- R_INIT ---------\n");
+	Con_Printf ("-------- R_Init ---------\n");
 
 	R_GetCvars( );
 
@@ -313,7 +303,7 @@ void R_Init(void)
     glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-    Render_Backend_Init();
+    R_BackendInit();
 
 	R_ClearScene();
 
@@ -330,9 +320,7 @@ void R_Shutdown (void)
 
 	R_FreeWorldMap();
 
-	free(render_list);
-
-	Render_Backend_Shutdown();
+	R_BackendShutdown();
 
 	Shutdown_OpenGL();
 }
@@ -341,27 +329,26 @@ void R_Shutdown (void)
 ==================
 R_AddPolyToScene
 
-TODO: push to the render_list
 ==================
 */
 void R_AddPolyToScene (const polyVert_t *verts, int numVerts, int Shader) 
 {
 	poly_t *p;
 
-	if ((dyn_polys_count >= MAX_DYN_POLYS) ||
+	if ((numDpolysCount >= MAX_DYN_POLYS) ||
 		(Shader < 0) || 
 		!verts || 
 		!numVerts)
 		return;
 
-	p = &Dyn_Polys[dyn_polys_count++];
+	p = &DPolys[numDpolysCount++];
 	p->hShader = Shader;
 	p->numVerts = numVerts;
 	
-	memcpy (&PolyVerts[num_PolyVerts], verts, numVerts * sizeof(polyVert_t));
+	memcpy (&PolyVerts[numPolyVerts], verts, numVerts * sizeof(polyVert_t));
 
-	p->verts = &PolyVerts[num_PolyVerts];
-	num_PolyVerts += numVerts;
+	p->verts = &PolyVerts[numPolyVerts];
+	numPolyVerts += numVerts;
 }
 
 /*
@@ -371,23 +358,15 @@ R_RenderPolys
 TODO: Optimize and sort
 =================
 */
-void R_RenderPolys (void)
+static void R_RenderPolys( void )
 {
-	int i, j;
-	poly_t *p = &Dyn_Polys[0];
+	int i;
+	poly_t *p;
 
-	for (i = 0; i < dyn_polys_count; i++, p++)
+	for (i = 0, p = &DPolys[0]; i < numDpolysCount; i++, p++)
 	{
-		for (j = 0; j < p->numVerts; j++)
-		{
-			VectorCopy(p->verts[j].xyz, arrays.verts[arrays.numverts]);
-			Vector2Copy(p->verts[j].st, arrays.tex_st[arrays.numverts]);
-			Vector4Copy(p->verts[j].modulate, arrays.colour[j]);
-			arrays.elems[arrays.numverts] = arrays.numverts+j; // FIXME ?
-			arrays.numverts++;
-		}
-
-		Render_Backend_Flush (p->hShader, 0);
+		R_BackendPushPoly (p);
+		R_BackendFlush (p->hShader, 0);
 	}
 }
 
@@ -437,67 +416,53 @@ void R_DrawString(int x, int y, const char *str, vec4_t color)
 	}
 }
 
-void R_SetColor (const float *rgba)
-{
-	if (!rgba)
-	{
-		ClearColor (r_actcolor);
-		return;
-	}
- 
-	r_actcolor[0] = FloatToByte(rgba[0]*255.0f);
-	r_actcolor[1] = FloatToByte(rgba[1]*255.0f);
-	r_actcolor[2] = FloatToByte(rgba[2]*255.0f);
-	r_actcolor[3] = FloatToByte(rgba[3]*255.0f);
-}
-
 void R_ClearScene (void)
 {
-	numref_entities = 0;
-	num_PolyVerts = 0;
-	dyn_polys_count = 0;
-	r_num_dlights = 0;
+	numRefEntities = 0;
+	numPolyVerts = 0;
+	numDpolysCount = 0;
+	numDlights = 0;
 }
 
-void R_RenderEntities (void)
+static void R_RenderEntities (void)
 {
 	int i;
 	refEntity_t *refEnt = &refEntities[0];
 
-	for (i = 0; i < numref_entities; i++, refEnt++)
+	for (i = 0; i < numRefEntities; i++, refEnt++)
 	{
 		switch (refEnt->reType)
 		{
 			case RT_MODEL:
-				R_Render_Model (refEnt);
+				R_RenderModel (refEnt);
 				break;
 
 			case RT_POLY:
-				R_Render_Poly (refEnt);
+				R_RenderPoly (refEnt);
 				break;
 
 			case RT_SPRITE:
-				R_Render_Sprite (refEnt);
+				R_RenderSprite (refEnt);
 				break;
 
 			case RT_BEAM:
-				R_Render_Beam (refEnt);
+				R_RenderBeam (refEnt);
 				break;
 
 			case RT_RAIL_CORE:
-				R_Render_RailCore (refEnt);
+				R_RenderRailCore (refEnt);
 				break;
 
 			case RT_RAIL_RINGS:
-				R_Render_RailRings (refEnt);
+				R_RenderRailRings (refEnt);
 				break;
 
 			case RT_LIGHTNING:
-				R_Render_Lightning (refEnt);
+				R_RenderLightning (refEnt);
 				break;
 
 			case RT_PORTALSURFACE:
-				R_Render_PortalSurface (refEnt);
+				R_RenderPortalSurface (refEnt);
 				break;
 		
 			default:
@@ -506,63 +471,73 @@ void R_RenderEntities (void)
 	}
 }
 
-void R_AddLightToScene(const vec3_t org, float intensity, float r, float g, float b)
+void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b )
 {
-	if (r_num_dlights >= MAX_DLIGHTS)
+	if( numDlights >= MAX_DLIGHTS )
 		return;
 
-	VectorCopy(org, r_dlights[r_num_dlights].origin);
+	VectorCopy( org, dlights[numDlights].origin );
 
-	r_dlights[r_num_dlights].r = r;
-	r_dlights[r_num_dlights].g = g;
-	r_dlights[r_num_dlights].b = b;
-
-	r_dlights[r_num_dlights++].intensity = intensity;
+	dlights[numDlights].r = r;
+	dlights[numDlights].g = g;
+	dlights[numDlights].b = b;
+	dlights[numDlights++].intensity = intensity;
 }
 
-void R_AddRefEntityToScene (const refEntity_t *re) 
+void R_AddRefEntityToScene( const refEntity_t *re ) 
 {
-	memcpy (&refEntities[numref_entities], re, sizeof (refEntity_t));
-	numref_entities++;
+	memcpy ( &refEntities[numRefEntities], re, sizeof (refEntity_t) );
+	numRefEntities++;
 }
 
-void R_InterpolateNormal (const vec3_t n1, const vec3_t n2, float frac, vec3_t nI)
+void R_InterpolateNormal( vec3_t n1, vec3_t n2, float frac, vec3_t nI )
 {
-	// new formula
-	nI[0] = n1[0] + frac * (n2[0] - n1[0]);
-	nI[1] = n1[1] + frac * (n2[1] - n1[1]);
-	nI[2] = n1[2] + frac * (n2[2] - n1[2]);
+	if( frac < 0.01 ) {
+		frac = 0.0f;
+	} else if( frac > 0.99f ) {
+		frac = 1.0f;
+	}
+
+	if( !frac ) {
+		VectorCopy(n1, nI);
+	} else if( frac == 1.0f ) {
+		VectorCopy(n2, nI);
+	} else {
+		nI[0] = n1[0] + frac * (n2[0] - n1[0]);
+		nI[1] = n1[1] + frac * (n2[1] - n1[1]);
+		nI[2] = n1[2] + frac * (n2[2] - n1[2]);
+	}
 }
 
-void R_LerpTag(orientation_t *tag, int model, int startFrame, int endFrame, float frac, const char *tagName) 
+void R_LerpTag(orientation_t *tag, int modnum, int startFrame, int endFrame, float frac, const char *tagName) 
 {
 	int i, tagnum = -1;
-	md3model2_t *mod;
+	md3model2_t *model;
 
-	if ((model < 1) || (model > r_md3Modelcount))
+	if ((modnum < 1) || (modnum > r_md3Modelcount))
 		return;
 
-	mod = &r_md3models[model-1];
+	model = &r_md3models[modnum-1];
 
-	if (!mod->numframes)
+	if (!model->numframes)
 		return;
 
 	// if out of bounds, wrap
-	if (mod->numframes <= startFrame)
+	if (model->numframes <= startFrame)
 		startFrame = 0;
 
-	if (mod->numframes <= endFrame)
+	if (model->numframes <= endFrame)
 		endFrame = 0;
 
 	if (startFrame < 0)
-		startFrame = mod->numframes - 1;
+		startFrame = model->numframes - 1;
 
 	if (endFrame < 0) 
-		endFrame = mod->numframes - 1;
+		endFrame = model->numframes - 1;
 
-	for (i = 0; i < mod->numtags; i++)
+	for (i = 0; i < model->numtags; i++)
 	{
-		if (!A_strncmp (tagName, mod->tags[startFrame][i].name, MAX_APATH))
+		if (!A_strncmp (tagName, model->tags[startFrame][i].name, MAX_APATH))
 		{
 			tagnum = i;
 			break;
@@ -572,42 +547,68 @@ void R_LerpTag(orientation_t *tag, int model, int startFrame, int endFrame, floa
 	if (tagnum < 0) 
 		return;
 
-	frac = bound (0.01f, frac, 0.99f);
-
-	if (!frac)
-	{
-		VectorCopy(mod->tags[startFrame][tagnum].pos, tag->origin);
-		VectorCopy(mod->tags[startFrame][tagnum].rot[0], tag->axis[0]);
-		VectorCopy(mod->tags[startFrame][tagnum].rot[1], tag->axis[1]);
-		VectorCopy(mod->tags[startFrame][tagnum].rot[2], tag->axis[2]);
-	}
-	else if (frac == 1.0f)
-	{
-		VectorCopy(mod->tags[endFrame][tagnum].pos, tag->origin);
-		VectorCopy(mod->tags[endFrame][tagnum].rot[0], tag->axis[0]);
-		VectorCopy(mod->tags[endFrame][tagnum].rot[1], tag->axis[1]);
-		VectorCopy(mod->tags[endFrame][tagnum].rot[2], tag->axis[2]);
-	}
-	else 
-	{
-		R_InterpolateNormal(
-			mod->tags[startFrame][tagnum].rot[0],
-			mod->tags[endFrame][tagnum].rot[0],
-			frac, tag->axis[0]);
-		R_InterpolateNormal(
-			mod->tags[startFrame][tagnum].rot[1], 
-			mod->tags[endFrame][tagnum].rot[1], 
-			frac, tag->axis[1]);
-		R_InterpolateNormal(
-			mod->tags[startFrame][tagnum].rot[2], 
-			mod->tags[endFrame][tagnum].rot[2], 
-			frac, tag->axis[2]);
-		R_InterpolateNormal(
-			mod->tags[startFrame][tagnum].pos, 
-			mod->tags[endFrame][tagnum].pos, 
-			frac, tag->origin);
-	}
+	R_InterpolateNormal(
+		model->tags[startFrame][tagnum].rot[0],
+		model->tags[endFrame][tagnum].rot[0],
+		frac, tag->axis[0]);
+	R_InterpolateNormal(
+		model->tags[startFrame][tagnum].rot[1], 
+		model->tags[endFrame][tagnum].rot[1], 
+		frac, tag->axis[1]);
+	R_InterpolateNormal(
+		model->tags[startFrame][tagnum].rot[2], 
+		model->tags[endFrame][tagnum].rot[2], 
+		frac, tag->axis[2]);
+	R_InterpolateNormal(
+		model->tags[startFrame][tagnum].pos, 
+		model->tags[endFrame][tagnum].pos, 
+	  frac, tag->origin);
 }
+
+/*
+=================
+R_FindModelShader
+
+Find the best suitable skin for the models mesh
+=================
+*/
+ahandle_t R_FindMeshShader( const refEntity_t *re, md3mesh_t *mesh )
+{
+	if ( re->customShader > 0 ) {
+		return re->customShader;
+	} else if ( re->customSkin > 0 ) {
+		int i;
+		skin_t *skin = &md3skins[re->customSkin-1];
+		
+		for( i = 0; i < skin->num_mesh_skins; i++ )
+			if( !A_stricmp( skin->skins[i].mesh_name, mesh->name ) )
+				return skin->skins[i].shaderref;
+	
+		return skin->skins[0].shaderref;
+	}
+
+	return mesh->skins[re->skinNum];
+}
+
+/*
+=================
+R_FinishModel
+
+Reset the matrix and pop an old one
+=================
+*/
+void R_FinishModel( void )
+{
+	R_BackendClear();
+
+	Matrix4_Identity(transform_ref.matrix);
+	transform_ref.matrix_identity = atrue;
+	transform_ref.inv_matrix_calculated = afalse;
+		
+	glPopMatrix();
+}
+
+void R_BackendInterpolateNormals( vec3_t *n1, vec3_t *n2, float frac, int numverts );
 
 /*
 =================
@@ -616,21 +617,23 @@ R_Render_Model
 TODO: Optimize, put to backend.
 =================
 */
-void R_Render_Model (const refEntity_t *re)
+static void R_RenderModel( const refEntity_t *re )
 {
 	md3model2_t *model;
 	md3mesh_t *mesh;
-	skin_t *skin;
 	uint_t *elems;
-	int i, j, k;
+	int j;
 	ahandle_t shaderref = -1;
 	int frame, backframe;
-	float frac;
+	float frac = 1.0f - re->backlerp;
 
-	if ((re->hModel < 1) || (re->hModel > r_md3Modelcount))
+	if( re->hModel < 1 || re->hModel > r_md3Modelcount )
 		return;
 
 	model = &r_md3models[re->hModel-1];
+
+	if( !model || model->nummeshes < 0 )
+		 return;
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
@@ -652,8 +655,8 @@ void R_Render_Model (const refEntity_t *re)
 	transform_ref.obj_matrix[14] = re->origin[2];
 	transform_ref.obj_matrix[15] = 1.0;
 
-	if (re->nonNormalizedAxes) {
-		VectorNormalize(&transform_ref.obj_matrix[0]);
+	if ( re->nonNormalizedAxes ) {
+		VectorNormalize( transform_ref.obj_matrix   );
 		VectorNormalize(&transform_ref.obj_matrix[4]);
 		VectorNormalize(&transform_ref.obj_matrix[8]);
 	}
@@ -666,58 +669,21 @@ void R_Render_Model (const refEntity_t *re)
 	transform_ref.matrix_identity = afalse;
 
 	// Set the shader time
-	shadertime = cl_frametime - (double)re->shaderTime;
+	shadertime = cl_frametime - re->shaderTime;
 
-	for (j = 0; j < model->nummeshes; j++)
-	{
-		mesh = &model->meshes[j];
-		shaderref = -1;
-
-		if (re->customShader > 0)
-		{
-			shaderref = re->customShader;
-		}
-		else if (re->customSkin > 0)
-		{
-			skin = &md3skins[re->customSkin-1];
-
-			for (i = 0; i < skin->num_mesh_skins; i++)
-			{
-				if (!A_stricmp(skin->skins[i].mesh_name, mesh->name))
-				{
-					shaderref = skin->skins[i].shaderref;
-					break;
-				}
-			}
-			
-			if (shaderref < 0)
-				shaderref = skin->skins[0].shaderref;
-		}
-		else {
-			shaderref = mesh->skins[re->skinNum];
-		}
-
+	for( j = 0, mesh = &model->meshes[0]; j < model->nummeshes; j++, mesh++ ) {
+		shaderref = R_FindMeshShader( re, mesh );
+		
 		if (shaderref < 0) {
-			// Revert
-			Matrix4_Identity(transform_ref.matrix);
-			transform_ref.matrix_identity = atrue;
-			transform_ref.inv_matrix_calculated = afalse;
-
-			arrays.numverts = arrays.numelems = 0;
-
-			glPopMatrix();
+			R_FinishModel();
 			return;
 		}
 
-		arrays.numverts = 0;
-		arrays.numelems = 0;
-		elems = mesh->elems;
-
-	    for (k = 0; k < mesh->numelems; k++)
-			arrays.elems[arrays.numelems++] = arrays.numverts + *elems++;
+		R_BackendClear();
 
 		frame = re->frame;
 		backframe = re->oldframe;
+		elems = mesh->elems;
 
 		if( re->renderfx & RF_WRAP_FRAMES ) {
 			frame = frame % mesh->numframes;
@@ -726,37 +692,17 @@ void R_Render_Model (const refEntity_t *re)
 
 		if( frame < 0 || frame >= mesh->numframes || backframe < 0 || backframe >= mesh->numframes ) {
 			frame = backframe = 0;
+			frac = 0.0f;
 		}
 
-		for (k = 0; k < mesh->numverts; k++)
-		{
-			VectorCopy(mesh->points[frame][k], arrays.verts[arrays.numverts]);
-			Vector2Copy(mesh->tex_st[k], arrays.tex_st[arrays.numverts]);
-			
-			// Push the entity colour (TEST)
-			Vector4Copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
-			ClearColor (arrays.colour[arrays.numverts]);
-			
-			if (re->backlerp) {
-				frac = 1.0f - re->backlerp;
-				R_InterpolateNormal(mesh->points[backframe][k], mesh->points[frame][k], frac, arrays.verts[arrays.numverts]);
-			}
-			
-			arrays.norms[arrays.numverts][0] = mesh->norms[frame][k][0];
-			arrays.norms[arrays.numverts][1] = mesh->norms[frame][k][1];
-			arrays.norms[arrays.numverts][2] = 0.0f;
-			arrays.numverts++;
-		}
-	
-		Render_Backend_Flush(shaderref, 0);
+		R_BackendPushRaw( mesh->points[frame], mesh->norms[frame], mesh->tex_st, elems, mesh->numverts, mesh->numelems );
+		R_BackendClearColor();
+		R_BackendSetEntityColor( re->shaderRGBA );
+		R_BackendInterpolateNormals ( mesh->points[backframe], mesh->points[frame], frac, mesh->numverts );
+		R_BackendFlush( shaderref, 0 );
 	}
 
-	// Revert
-	Matrix4_Identity(transform_ref.matrix);
-	transform_ref.matrix_identity = atrue;
-	transform_ref.inv_matrix_calculated = afalse;
-
-	glPopMatrix();
+	R_FinishModel();
 }
 
 /*
@@ -766,126 +712,84 @@ R_Render_Sprite
 TODO: rotation.
 =================
 */
-void R_Render_Sprite (const refEntity_t *re)
+static void R_RenderSprite( const refEntity_t *re )
 {
-	vec3_t v[4];
-	vec2_t tc[4];
-	vec3_t org;
-	int elems[6];
-	vec3_t up, right;
-	vec3_t tmp;
+	quad_t q;
+	vec3_t org, up, right, tmp;
 
-	VectorCopy (re->origin, org);
+	VectorCopy( re->origin, org );
 
-	VectorCopy (r_render_def.viewaxis[1], up);
-	VectorCopy (r_render_def.viewaxis[2], right);
+	VectorCopy( r_render_def.viewaxis[1], up );
+	VectorCopy( r_render_def.viewaxis[2], right );
 
-	VectorAdd (up, right, tmp);
-	VectorNormalize (tmp);
-	VectorScale (tmp, re->radius, tmp);
-
-	// 1 
-	VectorAdd (org, tmp, v[0]);
-
-	// 3
-	VectorSubtract (org, tmp, v[2]);
-
-	VectorNegate (right, right);	
-	VectorAdd (up, right, tmp);
-	VectorNormalize (tmp);
-
-	VectorScale (tmp, re->radius, tmp);
-	
-	// 2 
-	VectorAdd (org, tmp, v[1]);
-
-	// 4 
-	VectorScale (tmp, -1.0f, tmp);
-	VectorAdd (org, tmp, v[3]);
+	VectorAdd( up, right, tmp );
+	VectorNormalize( tmp );
+	VectorScale( tmp, re->radius, tmp );
+	VectorAdd( org, tmp, q.verts[0] );
+	VectorSubtract( org, tmp, q.verts[2] );
+	VectorNegate( right, right );	
+	VectorAdd( up, right, tmp );
+	VectorNormalize( tmp );
+	VectorScale( tmp, re->radius, tmp );
+	VectorAdd( org, tmp, q.verts[1] );
+	VectorScale( tmp, -1.0f, tmp );
+	VectorAdd( org, tmp, q.verts[3] );
 
 	// texcoords
-	tc[0][0] = 0.0f;
-	tc[0][1] = 0.0f;
+	q.tc[0][0] = 0.0f;
+	q.tc[0][1] = 0.0f;
+	Vector4Copy( re->shaderRGBA, q.color[0] );
 
-	tc[1][0] = 0.0f;
-	tc[1][1] = 1.0f;
+	q.tc[1][0] = 0.0f;
+	q.tc[1][1] = 1.0f;
+	Vector4Copy( re->shaderRGBA, q.color[1] );
 
-	tc[2][0] = 1.0f;
-	tc[2][1] = 1.0f;
+	q.tc[2][0] = 1.0f;
+	q.tc[2][1] = 1.0f;
+	Vector4Copy( re->shaderRGBA, q.color[2] );
 
-	tc[3][0] = 1.0f;
-	tc[3][1] = 0.0f;
+	q.tc[3][0] = 1.0f;
+	q.tc[3][1] = 0.0f;
+	Vector4Copy( re->shaderRGBA, q.color[3] );
 
-	// elems
-	elems[0] = 0;
-	elems[1] = 1;
-	elems[2] = 2;
-	elems[3] = 2;
-	elems[4] = 3;
-	elems[5] = 0;
+	q.elems[0] = 0;
+	q.elems[1] = 1;
+	q.elems[2] = 2;
+	q.elems[3] = 2;
+	q.elems[4] = 3;
+	q.elems[5] = 0;
 
-	// push
-	arrays.elems[arrays.numelems++] = arrays.numverts + elems[0];
-	arrays.elems[arrays.numelems++] = arrays.numverts + elems[1];
-	arrays.elems[arrays.numelems++] = arrays.numverts + elems[2];
-	arrays.elems[arrays.numelems++] = arrays.numverts + elems[3];
-	arrays.elems[arrays.numelems++] = arrays.numverts + elems[4];
-	arrays.elems[arrays.numelems++] = arrays.numverts + elems[5];
-
-	// Push the entity colour (TEST)
-	Vector4Copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
-	VectorCopy (v[0], arrays.verts[arrays.numverts]);
-	Vector2Copy (tc[0], arrays.tex_st[arrays.numverts]);
-	arrays.numverts++;
-
-	// Push the entity colour (TEST)
-	Vector4Copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
-	VectorCopy (v[1], arrays.verts[arrays.numverts]);
-	Vector2Copy (tc[1], arrays.tex_st[arrays.numverts]);
-	arrays.numverts++;
-
-	// Push the entity colour (TEST)
-	Vector4Copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
-	VectorCopy (v[2], arrays.verts[arrays.numverts]);
-	Vector2Copy (tc[2], arrays.tex_st[arrays.numverts]);
-	arrays.numverts++;
-
-	// Push the entity colour (TEST)
-	Vector4Copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
-	VectorCopy (v[3], arrays.verts[arrays.numverts]);
-	Vector2Copy (tc[3], arrays.tex_st[arrays.numverts]);
-	arrays.numverts++;
-
-	Render_Backend_Flush(re->customShader, 0);
+	R_BackendPushQuad( &q );
+	R_BackendFlush( re->customShader, 0 );
 }
 
 // TODO !!!
-void R_Render_Poly (const refEntity_t *re)
+static void R_RenderPoly( const refEntity_t *re )
 {
 }
 
 // TODO !!!
-void R_Render_Beam (const refEntity_t *re)
+static void R_RenderBeam( const refEntity_t *re )
 {
 }
 
 // TODO !!!
-void R_Render_RailCore (const refEntity_t *re)
+static void R_RenderRailCore( const refEntity_t *re )
 {
 }
 
 // TODO !!!
-void R_Render_RailRings (const refEntity_t *re)
+static void R_RenderRailRings( const refEntity_t *re )
 {
 }
 
 // TODO !!!
-void R_Render_Lightning (const refEntity_t *re)
+static void R_RenderLightning( const refEntity_t *re )
 {
 }
 
 // TODO !!!
-void R_Render_PortalSurface (const refEntity_t *re)
+static void R_RenderPortalSurface( const refEntity_t *re )
 {
 }
 
@@ -1081,7 +985,7 @@ void R_EndFrame (void)
 }
 
 // TODO
-void R_Draw_World (void)
+static void R_Draw_World (void)
 {
 	int i;
 
@@ -1099,14 +1003,14 @@ void R_Draw_World (void)
 	r_eyecluster = R_Find_Cluster (r_eyepos);
 
 	for (i = 0; i < cm.num_models; i++)
-		R_Render_Bsp_Model (i);
+		R_RenderBspModel (i);
 
     // Sort the face list
 	sort_faces();
 
     // Draw sky first
 	if (numsky) {
-		Render_Backend_Sky(numsky, skylist);
+		R_BackendSky(numsky, skylist);
 	}
 
     // Draw normal faces
@@ -1115,7 +1019,7 @@ void R_Draw_World (void)
 
 #define M_PI_2 M_PI*0.5f
 
-void R_Setup_Clipplanes (const refdef_t *fd)
+static void R_Setup_Clipplanes (const refdef_t *fd)
 {
 	float half_pi_minus_half_fov_x = M_PI_2 - fd->fov_x * M_PI / 360.f;
 	float half_pi_minus_half_fov_y = M_PI_2 - fd->fov_y * M_PI / 360.f;
@@ -1150,7 +1054,7 @@ void R_Setup_Clipplanes (const refdef_t *fd)
 	SetPlaneSignbits (&clipplanes[3]);
 }
 
-void R_Render_Bsp_Model (int num)
+void R_RenderBspModel (int num)
 {
 	if (!num)
 		R_Recursive_World_Node (0);
@@ -1161,7 +1065,7 @@ void R_Render_Bsp_Model (int num)
 }
 
 // NO More accept, this slowed just down 
-void R_Recursive_World_Node (int n)
+static void R_Recursive_World_Node (int n)
 {
 	cnode_t *node;
 	cplane_t *plane;
@@ -1202,7 +1106,7 @@ void R_Recursive_World_Node (int n)
 }
 
 
-int R_ClipFrustrum (vec3_t mins, vec3_t maxs)
+static int R_ClipFrustrum (vec3_t mins, vec3_t maxs)
 {
 	if (BoxOnPlaneSide(mins, maxs, &clipplanes[0]) == 1)
 		return 1;
@@ -1216,7 +1120,7 @@ int R_ClipFrustrum (vec3_t mins, vec3_t maxs)
 	return 0;
 }
 
-void R_Render_Walk_Face (int num)
+static void R_Render_Walk_Face (int num)
 {
 	cface_t *face = &cm.faces[num];
 

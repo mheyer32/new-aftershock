@@ -159,7 +159,7 @@ int FS_Write(const void *buffer, int len, int handle)
 		return 0;
 	}
 
-	f= &files[handle];
+	f = &files[handle];
 
 	if (f->type != FILE_NORMAL)
 		return 0;
@@ -181,7 +181,7 @@ void FS_FCloseFile(int handle)
 	if (f->type == FILE_NORMAL)
 		File_Close(f->fhandle);
 
-	files_used [handle - 1] = 0;
+	files_used[handle - 1] = 0;
 }
 
 /*
@@ -274,15 +274,14 @@ void FS_Init (const char *dir)
 		if (!Pak_OpenPak(buf2))
 			Error ("Could not open pk3: %s", fname);
 	}
-	else 
-	{
+	else {
 		Error ("Could not find any .pk3 files!");
 	}
 	
-	while(File_FindNext(handle, fname, 0, 0))
+	while (File_FindNext(handle, fname, 0, 0))
 	{
 		sprintf (buf2, "%s/%s", dir, fname);
-			Pak_OpenPak(buf2);
+		Pak_OpenPak(buf2);
 	}
 
 	File_FindClose(handle);
