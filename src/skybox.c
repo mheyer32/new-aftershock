@@ -44,8 +44,8 @@ void SkyboxCreate(void)
     // Alloc space for skybox verts, etc.
     r_skybox = (skybox_t *)malloc(sizeof(skybox_t));
     r_skybox->points[0] = (vec3_t *)malloc(5 * POINTS_LEN * sizeof(vec3_t));
-    r_skybox->tex_st[0] = (texcoord_t *)malloc(5 * POINTS_LEN *
-					      sizeof(texcoord_t));
+    r_skybox->tex_st[0] = (vec2_t *)malloc(5 * POINTS_LEN *
+					      sizeof(vec2_t));
     r_skybox->elems = (uint_t *)malloc(ELEM_LEN * sizeof(uint_t));
 
     r_skybox->numpoints = POINTS_LEN;
@@ -196,19 +196,21 @@ static void Gen_BoxSide(int side, vec3_t orig, vec3_t drow, vec3_t dcol)
 			VectorCopy(pos, w);
 
 			// Normalize pos -> w
-			p = sqrt(DotProduct(w, w));
-			w[0] /= p;
-			w[1] /= p;
-			w[2] /= p;
+			p = 1 / sqrt(DotProduct(w, w));
+			w[0] *= p;
+			w[1] *= p;
+			w[2] *= p;
 
 			// Find distance along w to sphere
 			t = sqrt(d*d*(w[2]*w[2]-1.0) + b*b) - d*w[2];
 			w[0] *= t;
 			w[1] *= t;
 
+			t = 1 / (2.0 * SCALE_S);
+
 			// Use x and y on sphere as s and t
-			(*tc)[0] = w[0] / (2.0 * SCALE_S);
-			(*tc)[1] = w[1] / (2.0 * SCALE_T);
+			(*tc)[0] = w[0] * t;
+			(*tc)[1] = w[1] * t;
 			
 			VectorAdd(pos, dcol, pos);
 			v++;

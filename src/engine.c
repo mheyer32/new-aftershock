@@ -63,7 +63,7 @@ void Engine_GetCvars( void )
 }
 
 // TODO !!!
-void Error(const char *fmt, ...)
+void Error (const char *fmt, ...)
 {
 	char buf[1024];
     va_list ap;
@@ -81,17 +81,17 @@ void Engine_Shutdown (void)
 {
 	// TODO !
 /*
-	Cbuf_AddText("writeconfig \n");
+	Cbuf_AddText("writeconfig\n");
 	Cbuf_Execute();
 */
-	SV_Shutdown ();
-	CL_Shutdown ();
+	SV_Shutdown();
+	CL_Shutdown();
 	Net_Shutdown();
 	Cbuf_Free();
 	Cmd_Shutdown();
 	Con_Shutdown();
 	Cvar_Shutdown();  
-	Key_Shutdown ();
+	Key_Shutdown();
 	FS_Shutdown();
 }
 

@@ -48,7 +48,7 @@ extern cvar_t *r_drawentities;
 extern cvar_t *r_drawworld;
 extern cvar_t *r_dynamiclight;
 extern cvar_t *r_ext_compiled_vertex_array;
-extern cvar_t *r_ext_compress_textures;
+extern cvar_t *r_ext_compressed_textures;
 #ifdef _WIN32
 extern cvar_t *r_ext_gamma_control;
 #endif

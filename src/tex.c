@@ -444,13 +444,13 @@ int Tex_UploadTexture (byte **data, int width, int height, int format, int flags
 	int h = round_2(height);
 
 	// Scale the image
-	if (glconfig.maxTextureSize < w )
+	if (glconfig.maxTextureSize < w)
 		w = glconfig.maxTextureSize;
 
-	if (glconfig.maxTextureSize < h )
+	if (glconfig.maxTextureSize < h)
 		h = glconfig.maxTextureSize;
 
-	if (!(flags & SHADER_NOPICMIP))
+	if (!(flags & SHADER_NOPICMIP) && (r_picmip->integer > 0))
 	{
 		int i;
 
@@ -465,9 +465,16 @@ int Tex_UploadTexture (byte **data, int width, int height, int format, int flags
 	}
 
 	// Set the internal_format
-	if (r_ext_compress_textures->integer)
+	if (r_ext_compressed_textures->integer)
 	{
-		if (gl_ext_info._GL_S3_s3tc)
+		if (gl_ext_info._GL_ARB_texture_compression)
+		{
+			if (format == GL_RGB)
+				internal_format = GL_COMPRESSED_RGB_ARB;
+			else 
+				internal_format = GL_COMPRESSED_RGBA_ARB;
+		}
+		else if (gl_ext_info._GL_S3_s3tc)
 		{
 			if (format == GL_RGB)
 				internal_format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
@@ -660,7 +667,7 @@ int R_Load_Texture (const char *name, int flags)
 		
 		if (!tex_name)
 		{
-			Con_Printf (S_COLOR_YELLOW "WARNING: Could not load texture %s\n", name);
+			Con_Printf (S_COLOR_YELLOW "WARNING: Could not find texture %s\n", name);
 			return -1;
 		}
 
@@ -672,10 +679,13 @@ int R_Load_Texture (const char *name, int flags)
 			A_strncpyz (ext, "tga", 3);
 			A_strcat (fname, MAX_APATH, ".tga");
 		}
+		else {
+			A_strncpyz (fname, tex_name, MAX_APATH);
+		}
 		
 		if (!A_stricmp (ext, "tga"))
 		{
-			data = Tex_Load_TGA (tex_name, &img_width, &img_height, &format);
+			data = Tex_Load_TGA (fname, &img_width, &img_height, &format);
 			
 			if (!data)
 			{
@@ -683,7 +693,7 @@ int R_Load_Texture (const char *name, int flags)
 
 				// Might still be a jpg file !!! (compatibility with old
 				// shader scripts?)
-				A_strncpyz (newtexname, tex_name, MAX_APATH);
+				A_strncpyz (newtexname, fname, MAX_APATH);
 				A_strncpyz (&newtexname[strlen(newtexname)-3], "jpg", MAX_APATH);
 
 				data = Tex_Load_JPG (newtexname, &img_width, &img_height, &format);
@@ -697,7 +707,7 @@ int R_Load_Texture (const char *name, int flags)
 		}
 		else if (!A_stricmp (ext, "jpg"))
 		{
-			data = Tex_Load_JPG (tex_name, &img_width, &img_height, &format);
+			data = Tex_Load_JPG (fname, &img_width, &img_height, &format);
 			
 			if (!data)
 			{

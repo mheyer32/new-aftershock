@@ -67,25 +67,26 @@ void Render_Backend_Init(void)
 {
     arrays.verts = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
 	arrays.norms = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
-    arrays.tex_st = (texcoord_t *)malloc(MAX_ARRAYS_VERTS * sizeof(texcoord_t));
-	arrays.lm_st = (texcoord_t *)malloc(MAX_ARRAYS_VERTS * sizeof(texcoord_t));
+    arrays.tex_st = (vec2_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec2_t));
+	arrays.lm_st = (vec2_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec2_t));
 	arrays.elems = (int *)malloc(MAX_ARRAYS_ELEMS * sizeof(int));
     arrays.colour = (colour_t *)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));
 	arrays.mod_colour = (colour_t *)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));
-	arrays.entity_colour = 	(colour_t *)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));	
+	arrays.entity_colour = (colour_t *)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));	
 
 	if (!r_allowExtensions->integer)
 	{
 		arrays.stage_tex_st = (vec2_t **)malloc (sizeof(vec2_t *));
-		arrays.stage_tex_st[0] =  (vec2_t *)malloc (MAX_ARRAYS_VERTS * sizeof(vec2_t));
+		arrays.stage_tex_st[0] = (vec2_t *)malloc (MAX_ARRAYS_VERTS * sizeof(vec2_t));
 	}
 	else 
 	{
 		int i;
+
 		arrays.stage_tex_st = (vec2_t **)malloc (glconfig.maxActiveTextures * sizeof(vec2_t *));
 		
 		for (i = 0; i < glconfig.maxActiveTextures; i++)
-			arrays.stage_tex_st[i] =  (vec2_t *)malloc (MAX_ARRAYS_VERTS * sizeof(vec2_t));
+			arrays.stage_tex_st[i] = (vec2_t *)malloc (MAX_ARRAYS_VERTS * sizeof(vec2_t));
 	}
 }
 
@@ -216,16 +217,16 @@ void Render_Backend_Sky(int numsky, int *skylist)
     glScalef(skyheight, skyheight, skyheight);
 
     // FIXME: Need to cull skybox based on face list
-    for (s=0; s < 5; s++)
+    for (s = 0; s < 5; s++)
     {
 		elem = r_skybox->elems;
 
-		for (i=0; i < r_skybox->numelems; i++)
+		for (i = 0; i < r_skybox->numelems; i++)
 		{
 			arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
 		}
 
-		for (i=0; i < r_skybox->numpoints; i++)
+		for (i = 0; i < r_skybox->numpoints; i++)
 		{
 			VectorCopy(r_skybox->points[s][i], arrays.verts[arrays.numverts]);
 			Vector2Copy(r_skybox->tex_st[s][i], arrays.tex_st[arrays.numverts]);
@@ -233,7 +234,7 @@ void Render_Backend_Sky(int numsky, int *skylist)
 		}
     }
 
-	Render_Backend_Flush(shader,0);
+	Render_Backend_Flush(shader, 0);
 	
     // Restore world space
     glMatrixMode(GL_MODELVIEW);
@@ -246,6 +247,9 @@ static void render_pushface(cface_t *face)
     int *elem = face->elems;
     cvertex_t *vert = face->verts;
 	int i;
+
+	if (arrays.numverts >= MAX_ARRAYS_VERTS)
+		return;
 
     for (i = 0; i < face->numelems; i++) {
 		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
@@ -263,16 +267,19 @@ static void render_pushface(cface_t *face)
     }	    
 }
 
-void R_Push_raw (vec3_t *v,vec2_t *tc, colour_t *c, int *elems, int numverts, int numelems)
+void R_Push_raw (vec3_t *v, vec2_t *tc, colour_t *c, int *elems, int numverts, int numelems)
 {
 	int i;
+
+	if (arrays.numverts >= MAX_ARRAYS_VERTS)
+		return;
 
 	for (i = 0; i < numelems; i++)
 	{
 		arrays.elems[arrays.numelems++] = arrays.numverts + *elems++;
 	}
 
-	for (i = 0;i < numverts; i++)
+	for (i = 0; i < numverts; i++)
 	{
 		VectorCopy(v[i], arrays.verts[arrays.numverts]);
 		Vector2Copy(tc[i], arrays.tex_st[arrays.numverts]);
@@ -285,12 +292,13 @@ static void render_pushmesh(mesh_t *mesh)
 {
     int  i, *elem = mesh->elems;
 
+	if (arrays.numverts >= MAX_ARRAYS_VERTS)
+		return;
+
 	// any way to implement faceculling here in the engine ?
 
-    for (i = 0; i < mesh->numelems / 3; i++)
+    for (i = 0; i < mesh->numelems; i++)
     {
-		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
-		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
 		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
     }
 	
@@ -299,7 +307,6 @@ static void render_pushmesh(mesh_t *mesh)
 	    VectorCopy(mesh->points[i], arrays.verts[arrays.numverts]);
 	    Vector2Copy(mesh->tex_st[i], arrays.tex_st[arrays.numverts]);
 	    Vector2Copy(mesh->lm_st[i], arrays.lm_st[arrays.numverts]);
-
 	    arrays.numverts++;
 	}
 }
@@ -367,11 +374,11 @@ __inline static double render_func_eval(uint_t func, float *args)
 			return sin(x * TWOPI) * args[1] + args[0];
 			
 		case SHADER_FUNC_TRIANGLE:
-			return (x < 0.5) ? (2.0f * x - 1.0f) * args[1] + args[0] : 
-				(-2.0f * x + 2.0f) * args[1] + args[0];
+			return (x < 0.5) ? (2.0 * x - 1.0) * args[1] + args[0] : 
+				(-2.0 * x + 2.0) * args[1] + args[0];
 			
 		case SHADER_FUNC_SQUARE:
-			return (x < 0.5f) ? args[1] + args[0] : args[0] - args[1];
+			return (x < 0.5) ? args[1] + args[0] : args[0] - args[1];
 			
 		case SHADER_FUNC_SAWTOOTH:
 			return x * args[1] + args[0];
@@ -380,73 +387,64 @@ __inline static double render_func_eval(uint_t func, float *args)
 			return (1.0f - x) * args[1] + args[0];
     }
 
-    return 0;
+    return 0.0;
 }
 
 // TODO !!!
 void Render_Backend_Make_Vertices (shader_t *s)
 {
-	int i;
+	int i, n;
 
-	if (s->flags & SHADER_DEFORMVERTS)
+	if ((s->flags & SHADER_DEFORMVERTS) && s->numdeforms)
 	{
 		float deflect;
 		vec3_t v;
 
-		switch (s->deform_vertices)
+		for (n = 0; n < s->numdeforms; n++)
 		{
-			case DEFORMV_NONE:
-				break;
+			switch (s->deform_vertices[n])
+			{
+				case DEFORMV_NONE:
+					break;
 
-			case DEFORMV_WAVE:
-				for (i = 0; i < arrays.numverts; i++)
-				{
-					deflect = render_func_eval(s->deformv_wavefunc.func, s->deformv_wavefunc.args);
-					deflect *= s->deform_params[0];
-					VectorCopy(arrays.norms[i], v);
-					VectorScale(v, deflect, v);
-					VectorAdd(v, arrays.verts[i], arrays.verts[i]);
-				}
-				break;
+				case DEFORMV_WAVE:
+					for (i = 0; i < arrays.numverts; i++)
+					{
+						deflect = render_func_eval(s->deformv_wavefunc[n].func, s->deformv_wavefunc[n].args);
+						deflect *= s->deform_params[n][0];
+						VectorCopy(arrays.norms[i], v);
+						VectorScale(v, deflect, v);
+						VectorAdd(v, arrays.verts[i], arrays.verts[i]);
+					}
+					break;
 
-			case DEFORMV_NORMAL:
-				break;
+				case DEFORMV_NORMAL:
+					break;
 
-			case DEFORMV_BULGE:
-				break;
+				case DEFORMV_BULGE:
+					break;
 
-			case DEFORMV_MOVE:
-				break;
+				case DEFORMV_MOVE:
+					break;
 
-			case DEFORMV_AUTOSPRITE:
-				break;
+				case DEFORMV_AUTOSPRITE:
+					break;
 
-			case DEFORMV_AUTOSPRITE2:
-				break;
+				case DEFORMV_AUTOSPRITE2:
+					break;
 
-			default:
-				break;
+				default:
+					break;
+			}
 		}
 	}
-}
-
-void CalcNormal(vec3_t p, vec3_t p1, vec3_t p2, vec3_t n)
-{
-	vec3_t pa, pb;
-    
-	VectorSubtract(p1, p, pa);
-	VectorSubtract(p2, p, pb);
-	VectorNormalize(pa);
-	VectorNormalize(pb);
-	CrossProduct (pa, pb, n);
-	VectorNormalize(n);   
 }
 
 float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 {
 	int i = arrays.numverts, n = 0;
 	vec2_t *in = arrays.tex_st;
-	vec2_t *out;
+	vec2_t *out = arrays.stage_tex_st[stage];
 	vec3_t dir, pos;
 	int j;
 	float rot;
@@ -516,8 +514,6 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 		float t1, t2, p1, p2;
 		double pos;
 
-		out = arrays.stage_tex_st[stage];
-
 		for (n = 0; n < pass->num_tc_mod; n++)
 		{
 			switch (pass->tc_mod[n].type)
@@ -526,10 +522,10 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 				{
 					rot = pass->tc_mod[n].args[0] * cl_frametime * DEG2RAD;
 					
-					sint = sin (rot);
-					cost = cos (rot);
-					p1 = 0.5f - cost * 0.5f + sint * 0.5f;
-					p2 = 0.5f - sint * 0.5f - cost * 0.5f;
+					sint = (float)sin(rot);
+					cost = (float)cos(rot);
+					p1 = 0.5f * (1 - cost + sint);
+					p2 = 0.5f * (1 - sint - cost);
 					
 					for (j = 0; j < arrays.numverts; j++)
 					{
@@ -583,11 +579,11 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 				case SHADER_TCMOD_SCROLL:
 				{
 					pos = pass->tc_mod[n].args[0] * cl_frametime;
-					pos -= floor( pos );
+					pos -= floor(pos);
 					t1 = (float)pos;
 
 					pos = pass->tc_mod[n].args[1] * cl_frametime;
-					pos -= floor( pos );
+					pos -= floor(pos);
 					t2 = (float)pos;
 
 					for (j = 0; j < arrays.numverts; j++) {
@@ -609,15 +605,12 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 				break;
 	
 				default:
-					out = arrays.stage_tex_st[stage];
 					memcpy (out, in, arrays.numverts * sizeof(vec2_t));
 					break;
 			}
 		}
 	}
-	else
-	{
-		out = arrays.stage_tex_st[stage];
+	else {
 		memcpy (out, in, arrays.numverts * sizeof(vec2_t));
 	}
 	
@@ -636,7 +629,7 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 		case RGB_GEN_IDENTITY_LIGHTING:
 			c = (r_overBrightBits->integer) ? 255 : 127;
 
-			for (i = 0; i < arrays.numverts;i++) 
+			for (i = 0; i < arrays.numverts; i++) 
 			{
 				arrays.mod_colour[i][0] = c;
 				arrays.mod_colour[i][1] = c;
@@ -718,7 +711,7 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 			for (i = 0; i < arrays.numverts; i++)
 			{
 				// TODO 
-				alpha = FloatToByte(255.0 / Distance (r_eyepos, arrays.verts[i]));
+				alpha = FloatToByte(Distance (r_eyepos, arrays.verts[i]) / 255.0f);
 				col[i][3] = min (alpha, 255);
 			}
 			break;

@@ -24,7 +24,7 @@
 EntryFunc *CGAME_entry;
 MainFunc *CGAME_main;
 
-int CGAME_Call (int arg,...);
+int CGAME_Call (int arg, ...);
 int (__cdecl *CGAME_syscall)( int arg, ... ) = CGAME_Call;
 
 char CGAME_name[] = "cgamex86.dll";

@@ -364,7 +364,8 @@ void ByteToDir( int b, vec3_t dir );
 
 #if	1
 
-#if 0 
+#if !(defined __linux__ && defined __i386__ && !defined C_ONLY)
+#if defined __LCC__ || defined C_ONLY || !id386
 
 #define DotProduct(x,y)			((x)[0]*(y)[0]+(x)[1]*(y)[1]+(x)[2]*(y)[2])
 
@@ -396,6 +397,8 @@ __forceinline float __cdecl DotProduct(const float v1[3], const float v2[3])
 	return dotret;
 }
 
+#endif
+#endif
 #endif
 
 #define VectorSubtract(a,b,c)	((c)[0]=(a)[0]-(b)[0],(c)[1]=(a)[1]-(b)[1],(c)[2]=(a)[2]-(b)[2])
@@ -1060,11 +1063,20 @@ void Error(const char *fmt, ...);
 
 // Casting floats to unsigned chars is also very expensive, just
 // NEVER cast with (unsigned char)
+#if !(defined __linux__ && defined __i386__ && !defined C_ONLY)
+#if defined __LCC__ || defined C_ONLY || !id386
+
+#define FloatToByte(x) (byte)(x)
+
+#else
+
 __forceinline byte __stdcall FloatToByte(float x) 
 { 
 	float  t = x + (float) 0xC00000;
 	return * (byte *) &t; 
 }
+
+#endif
 
 #if defined(_DEBUG) && !defined(BSPC)
 	#define HUNK_DEBUG
@@ -1077,7 +1089,7 @@ typedef enum {
 } ha_pref;
 
 #ifdef HUNK_DEBUG
-#define Hunk_Alloc( size, preference )				Hunk_AllocDebug(size, preference, #size, __FILE__, __LINE__)
+#define Hunk_Alloc( size, preference )	Hunk_AllocDebug(size, preference, #size, __FILE__, __LINE__)
 void *Hunk_AllocDebug( int size, ha_pref preference, char *label, char *file, int line );
 #else
 void *Hunk_Alloc( int size, ha_pref preference );

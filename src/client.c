@@ -161,7 +161,7 @@ void CL_Startup (void)
 		return;
 	}
 
-	CGAME_main(CG_INIT, 0, 0, 0, 0, 0, 0, 0);
+//	CGAME_main(CG_INIT, 0, 0, 0, 0, 0, 0, 0);
 
 	Cvar_Set ("cl_running", "1");
 
@@ -176,7 +176,7 @@ void CL_End_Gaming (void)
 		return;
 	}
 
-	CGAME_main (CG_SHUTDOWN, 0, 0, 0, 0, 0, 0, 0);
+//	CGAME_main (CG_SHUTDOWN, 0, 0, 0, 0, 0, 0, 0);
 	UnLoadCGAME();
 
 	Cvar_Set ("cl_running", "0");
@@ -209,7 +209,8 @@ void CL_Run_Frame (void)
 		case CA_CONNECTED:
 			{
 				realtime += (cl_frametime * 1000);
-				CGAME_main (CG_DRAW_ACTIVE_FRAME, realtime, 0, 0, 0, 0, 0, 0);
+//				CGAME_main (CG_DRAW_ACTIVE_FRAME, realtime, 0, 0, 0, 0, 0, 0);
+				R_Draw_World();
 			}
 			break;
 

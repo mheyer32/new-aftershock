@@ -114,11 +114,11 @@ aboolean S_Init (void)
 
 	if (FSOUND_GetVersion() < FMOD_VERSION)
 	{
-		Con_Printf(S_COLOR_YELLOW "WARNING: You are using the wrong FMOD DLL version!  You should be using FMOD %.02f\n", FMOD_VERSION);
+		Con_Printf(S_COLOR_YELLOW "WARNING: You are using the wrong FMOD DLL version! You should be using FMOD %.02f\n", FMOD_VERSION);
 		return afalse;
 	}
 
-	memset (samples, 0, MAX_SAMPLES * sizeof (sample_t));
+	memset (samples, 0, MAX_SAMPLES * sizeof(sample_t));
 	s_num_samples = 0;
 	
 	// FSOUND_INIT !!!
@@ -171,6 +171,7 @@ void S_StartSound( vec3_t origin, int entityNum, int entchannel, sfxHandle_t sfx
 	s = &samples[sfx];
 
 	act_channel = FSOUND_PlaySound3DAttrib(entchannel, s->handle, -1, s_volume->value * 255, FSOUND_STEREOPAN, origin, NULL);
+	FSOUND_SetSFXMasterVolume (s_volume->value * 255);
 
 	if (act_channel == -1) // problem
 		return;
@@ -193,6 +194,7 @@ void S_StartLocalSound( sfxHandle_t sfx, int channelNum )
 	s = &samples[sfx];
 	
 	act_channel = FSOUND_PlaySound(channelNum, s->handle);
+	FSOUND_SetSFXMasterVolume (s_volume->value * 255);
 
 	if (act_channel == -1) // failed ! 
 		return;
@@ -257,7 +259,7 @@ sfxHandle_t	S_RegisterSound ( const char *sample )		// returns buzz if not found
 
 	f_len = FS_OpenFile (sample, &file, FS_READ);
 
-	if (!file || !f_len )
+	if (!file || !f_len)
 	{
 		Con_Printf (S_COLOR_YELLOW "WARNING: Could not register sound %s\n",sample);
 		return 0;

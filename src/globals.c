@@ -29,7 +29,7 @@
 #include "md3.h"
 #include "mapent.h"
 
-vec3_t r_eyepos = {0, 0, 0};
+vec3_t r_eyepos = {1090, -158, -208};
 vec3_t r_eyedir;
 float r_eye_az, r_eye_el;
 float r_eyefov;
@@ -53,7 +53,6 @@ int *r_facemeshes;
 
 int r_numtextures;
 shader_t *r_shaders;
-texfile_t *r_texfiles;
 
 skybox_t *r_skybox; 
 

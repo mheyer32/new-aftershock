@@ -19,6 +19,7 @@
 #define __SHADER_H__
 
 #define SHADERPASS_MAX 8
+#define SHADER_DEFORM_MAX	8
 #define SHADER_ANIM_FRAMES_MAX 8
 #define SHADERBUF_SIZE  (1024*1024-8)
 #define MAX_TC_MOD  8
@@ -198,34 +199,30 @@ typedef struct
 //	int contents;
     int numpasses;
 	int sort;
-	int deform_vertices;
+	int numdeforms;
+	int deform_vertices[SHADER_DEFORM_MAX];
     shaderpass_t pass[SHADERPASS_MAX];
     float skyheight;          /* Height for skybox */
-    float deform_params[4];
+    float deform_params[SHADER_DEFORM_MAX][4];
 	float fog_params[4];
-    shaderfunc_t deformv_wavefunc;
+    shaderfunc_t deformv_wavefunc[SHADER_DEFORM_MAX];
 } shader_t;
 
 
-typedef struct
+typedef struct shaderkey_s
 {
     char *keyword;
     int minargs, maxargs;
     void (* func)(shader_t *shader, shaderpass_t *pass,
 		  int numargs, char **args);
+
+	struct shaderkey_s *hash_next;
+	struct shaderkey_s *next;
 } shaderkey_t;
 
 #define MAX_NUM_TEXTURES 512
 #define SHADER_ARGS_MAX (SHADER_ANIM_FRAMES_MAX+1)
 #define LOWERCASE(c) ((c) <= 'Z' && (c) >= 'A' ? (c) + ('a'-'A') : (c))
-
-/* Gathers texture file names prior to texture loading */
-typedef struct
-{
-    unsigned int flags;
-    char *fname;
-} texfile_t;
-
 
 typedef struct
 {
@@ -237,7 +234,6 @@ typedef struct
 extern texture_t *r_dynamic_tex;
 extern int r_numtextures;
 extern shader_t *r_shaders;
-extern texfile_t *r_texfiles;
 extern int shader_white;
 extern int shader_text;
 extern int shader_console;

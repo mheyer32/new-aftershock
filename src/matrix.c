@@ -39,14 +39,19 @@ void Matrix3_Identity (vec3_t mat[3])
 void Matrix4_Multiply(mat4_t a, mat4_t b, mat4_t product)
 {
    int i;
+   float ai0, ai1, ai2, ai3;
 
    for (i = 0; i < 4; i++)
    {
-      float ai0 = A(i,0), ai1 = A(i,1), ai2 = A(i,2), ai3 = A(i,3);
-      P(i,0) = ai0 * B(0,0) + ai1 * B(1,0) + ai2 * B(2,0) + ai3 * B(3,0);
-      P(i,1) = ai0 * B(0,1) + ai1 * B(1,1) + ai2 * B(2,1) + ai3 * B(3,1);
-      P(i,2) = ai0 * B(0,2) + ai1 * B(1,2) + ai2 * B(2,2) + ai3 * B(3,2);
-      P(i,3) = ai0 * B(0,3) + ai1 * B(1,3) + ai2 * B(2,3) + ai3 * B(3,3);
+      ai0 = A(i, 0);
+	  ai1 = A(i, 1);
+	  ai2 = A(i, 2);
+	  ai3 = A(i, 3);
+
+      P(i, 0) = ai0 * B(0, 0) + ai1 * B(1, 0) + ai2 * B(2, 0) + ai3 * B(3, 0);
+      P(i, 1) = ai0 * B(0, 1) + ai1 * B(1, 1) + ai2 * B(2, 1) + ai3 * B(3, 1);
+      P(i, 2) = ai0 * B(0, 2) + ai1 * B(1, 2) + ai2 * B(2, 2) + ai3 * B(3, 2);
+      P(i, 3) = ai0 * B(0, 3) + ai1 * B(1, 3) + ai2 * B(2, 3) + ai3 * B(3, 3);
    }
 }
 
@@ -122,15 +127,15 @@ void Matrix_Multiply_Vec2 (mat4_t a, vec2_t b, vec2_t product)
 {
 	float b0 = b[0], b1 = b[1];
   
-	product[0] = A(0,0)*b0 + A(0,1)*b1 + A(0,2)+ A(0,3);
-	product[1] = A(1,0)*b0 + A(1,1)*b1 + A(1,2)+ A(1,3);
+	product[0] = A(0, 0)*b0 + A(0, 1)*b1 + A(0, 2)+ A(0, 3);
+	product[1] = A(1, 0)*b0 + A(1, 1)*b1 + A(1, 2)+ A(1, 3);
 }
 
 static float Matrix3_Det (float *mat)
 {
-    return (mat[0] * ( mat[4]*mat[8] - mat[7]*mat[5] )
-         - mat[1] * ( mat[3]*mat[8] - mat[6]*mat[5] )
-         + mat[2] * ( mat[3]*mat[7] - mat[6]*mat[4] ));
+    return (mat[0] * (mat[4]*mat[8] - mat[7]*mat[5])
+         - mat[1] * (mat[3]*mat[8] - mat[6]*mat[5])
+         + mat[2] * (mat[3]*mat[7] - mat[6]*mat[4]));
 }
 
 static void Matrix3_Inverse(float *mr, float *ma)
@@ -142,18 +147,20 @@ static void Matrix3_Inverse(float *mr, float *ma)
 		Matrix3_Identity( (float (*)[3])ma );
 		return;
 	}
+
+	det = 1 / det;
 	
-	mr[0] =    ma[4]*ma[8] - ma[5]*ma[7]   / det;
-	mr[1] = -( ma[1]*ma[8] - ma[7]*ma[2] ) / det;
-	mr[2] =    ma[1]*ma[5] - ma[4]*ma[2]   / det;
+	mr[0] =   ma[4]*ma[8] - ma[5]*ma[7]  * det;
+	mr[1] = -(ma[1]*ma[8] - ma[7]*ma[2]) * det;
+	mr[2] =   ma[1]*ma[5] - ma[4]*ma[2]  * det;
 	
-	mr[3] = -( ma[3]*ma[8] - ma[5]*ma[6] ) / det;
-	mr[4] =    ma[0]*ma[8] - ma[6]*ma[2]   / det;
-	mr[5] = -( ma[0]*ma[5] - ma[3]*ma[2] ) / det;
+	mr[3] = -(ma[3]*ma[8] - ma[5]*ma[6]) * det;
+	mr[4] =   ma[0]*ma[8] - ma[6]*ma[2]  * det;
+	mr[5] = -(ma[0]*ma[5] - ma[3]*ma[2]) * det;
 	
-	mr[6] =    ma[3]*ma[7] - ma[6]*ma[4]   / det;
-	mr[7] = -( ma[0]*ma[7] - ma[6]*ma[1] ) / det;
-	mr[8] =    ma[0]*ma[4] - ma[1]*ma[3]   / det;
+	mr[6] =   ma[3]*ma[7] - ma[6]*ma[4]  * det;
+	mr[7] = -(ma[0]*ma[7] - ma[6]*ma[1]) * det;
+	mr[8] =   ma[0]*ma[4] - ma[1]*ma[3]  * det;
 }
 
 static void Matrix4_Submat( mat4_t mr, float * mb, int i, int j )
@@ -211,7 +218,7 @@ aboolean Matrix4_Inverse( mat4_t mr, mat4_t ma )
 	for ( i = 0; i < 4; i++ )
 		for ( j = 0; j < 4; j++ )
 		{
-			sign = 1 - ( (i +j) % 2 ) * 2;
+			sign = 1 - ( (i + j) % 2 ) * 2;
 			
 			Matrix4_Submat( ma, mtemp, i, j );
 			

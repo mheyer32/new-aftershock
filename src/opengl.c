@@ -2056,65 +2056,59 @@ void GL_EnableClientState (int par )
 		if (!Vertex_Array_Enabled)
 		{
 			glEnableClientState (GL_VERTEX_ARRAY);
-			Vertex_Array_Enabled=1;
+			Vertex_Array_Enabled = 1;
 		}
 		break;
+
 	case GL_TEXTURE_COORD_ARRAY:
 		if (!Tex_Coord_Array_Enabled [Active_Client_Tex_Unit])
 		{
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			Tex_Coord_Array_Enabled[Active_Client_Tex_Unit]=1;
+			Tex_Coord_Array_Enabled[Active_Client_Tex_Unit] = 1;
 		}
 
 		break;
 
 
-	default :
+	default:
 		glEnableClientState (par);
 		break;
 
 	}
 #else 
-	glEnableClientState (par );
+	glEnableClientState (par);
 #endif 
 
 }
-void GL_DepthMask ( GLboolean state )
+void GL_DepthMask (GLboolean state)
 {
-
 #if TRACK_GL_STATE
-	if (state==DepthMask_State)
-		return ;
+	if (state == DepthMask_State)
+		return;
 
-	glDepthMask (state );
+	glDepthMask (state);
 
-
-	DepthMask_State =state ;
+	DepthMask_State = state;
 
 #else 
-	glDepthMask (state );
+	glDepthMask (state);
 #endif 
 }
 
-
-
-void GL_BindTexture (int par1,int id )
+void GL_BindTexture (int par1, int id)
 {
 #if TRACK_GL_STATE
-		if (id != Tex_IDs [Active_Tex_Unit ])
-		{
-			
-			glBindTexture (GL_TEXTURE_2D,id);
-			Tex_IDs [Active_Tex_Unit ] = id;
-		}
+	if (id != Tex_IDs[Active_Tex_Unit])
+	{
+		glBindTexture (GL_TEXTURE_2D, id);
+		Tex_IDs [Active_Tex_Unit] = id;
+	}
 #else 
-	glBindTexture (GL_TEXTURE_2D,id);
+	glBindTexture (GL_TEXTURE_2D, id);
 #endif
 }
 
-
-
-void * GL_GetProcAddress (const char * str )
+void *GL_GetProcAddress (const char *str)
 {
 	if (awglGetProcAddress)
 	{
@@ -2122,30 +2116,16 @@ void * GL_GetProcAddress (const char * str )
 	}
 	else
 	{
-		return GetProcAddress(GL_dll,str);
+		return GetProcAddress(GL_dll, str);
 	}
-	
 }
 
 // TODO !!!
-void GL_Set_Gamma (byte red[256],byte green[256],byte blue[256])
+void GL_Set_Gamma (byte red[256], byte green[256], byte blue[256])
 {
-
-
-
-
-
 }
 
-
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-
-
-
-
-
-
-
 
 static const vid_mode_t vid_modes[12] = {
 	{320, 240},
@@ -2162,78 +2142,57 @@ static const vid_mode_t vid_modes[12] = {
 	{856, 380}
 };
 
+// works quite fine
+int WIN_ChangeResolution(int w, int h, int bitdepth) {
+	DEVMODE mode;
+	int flags = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+	int res;
 
-// works quite fine :
-
-int WIN_ChangeResolution(int w, int  h, int  bitdepth ) {
-	  DEVMODE mode;
-	  int flags=DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-	  int res;
-	
-	mode.dmSize=sizeof (mode);
-	mode.dmBitsPerPel=bitdepth;
-	mode.dmPelsWidth=w;
-	mode.dmPelsHeight=h;
-	mode.dmDisplayFlags=0;
-	mode.dmFields=flags;
-
-
-
-
-	res=ChangeDisplaySettingsEx(
-	  NULL,
-	  &mode,
-	  NULL,
-	  CDS_FULLSCREEN,   
-	  NULL
+	memset (&mode, 0, sizeof (DEVMODE));
+	mode.dmSize = sizeof (mode);
+	mode.dmBitsPerPel = bitdepth;
+	mode.dmPelsWidth = w;
+	mode.dmPelsHeight = h;
+	mode.dmDisplayFlags = 0;
+	mode.dmFields = flags;
+ 
+	res = ChangeDisplaySettingsEx(
+		NULL,
+		&mode,
+		NULL,
+		CDS_FULLSCREEN,   
+		NULL
 	);
  
-
-	if (res==DISP_CHANGE_SUCCESSFUL)
+	if (res == DISP_CHANGE_SUCCESSFUL)
 	{
-		winX=w;
-		winY=h;
+		winX = w;
+		winY = h;
 		return 1;
 	}
 
 	return 0;
-
-
-
 }
 
-
-int WIN_Reset_DisplaySettings (void )
+int WIN_Reset_DisplaySettings (void)
 {
-	int res;
-
-	res=ChangeDisplaySettingsEx(
-	  NULL,
-	  NULL,
-	  NULL,
-	  CDS_FULLSCREEN,   
-	  NULL
-	);
-
-	return (res==DISP_CHANGE_SUCCESSFUL);
+	return (ChangeDisplaySettingsEx(NULL,NULL,NULL,CDS_FULLSCREEN,NULL) == DISP_CHANGE_SUCCESSFUL);
 }
 
 static POINT mpos;
 
 // put somewhere else 
-
-int WIN_CreateWindow ( HINSTANCE inst ,int nCmdShow)
+int WIN_CreateWindow (HINSTANCE inst, int nCmdShow)
 {
-
-	WNDCLASSEX wcex;
-	vid_mode_t mode;
+	WNDCLASSEX	wcex;
+	vid_mode_t	mode;
 	RECT		WindowRect;
 	DWORD		dwExStyle;
 	DWORD		dwStyle;
 	
-	memset (&wcex,0,sizeof (WNDCLASSEX));
-	wcex.cbSize = sizeof(WNDCLASSEX); 
+	memset (&wcex, 0, sizeof (WNDCLASSEX));
 
+	wcex.cbSize			= sizeof(WNDCLASSEX); 
 	wcex.style			= CS_OWNDC;
 	wcex.lpfnWndProc	= (WNDPROC)WndProc;
 	wcex.cbClsExtra		= 0;
@@ -2241,31 +2200,29 @@ int WIN_CreateWindow ( HINSTANCE inst ,int nCmdShow)
 	wcex.hInstance		= inst;
 	wcex.hIcon			= NULL;
 	wcex.hCursor		= NULL;
-	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
+	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszMenuName	= NULL;
 	wcex.lpszClassName	= "AFTERSHOCK";
 	wcex.hIconSm		= NULL;
 
-	if (! RegisterClassEx(&wcex))
+	if (!RegisterClassEx(&wcex))
 	{
-		Con_Printf ("Could not register Window Class \n");
+		Con_Printf ("Could not register Window Class\n");
 		return 0;
 	}
 	else 
 		Con_Printf ("... registered window class\n");
 
-
-
 	hInst = inst; 
 
-	mode= vid_modes[r_mode->integer];
+	mode = vid_modes[r_mode->integer];
 
 	WindowRect.left = (long)0;
 	WindowRect.right = (long)mode.width;
 	WindowRect.top = (long)0;
 	WindowRect.bottom = (long)mode.height;
 
-	if (/*r_fullscreen->integer*/0) {
+	if (r_fullscreen->integer) {
 		dwExStyle = WS_EX_APPWINDOW;
 		dwStyle = WS_POPUP;
 	}
@@ -2277,196 +2234,152 @@ int WIN_CreateWindow ( HINSTANCE inst ,int nCmdShow)
 	// adjust window to true requested size
 	AdjustWindowRectEx(&WindowRect, dwStyle, FALSE, dwExStyle);
 
-// Fullscreen support works ,
-// it`s just disabled cause it makes Problems when debugging 
-   if (1/*!r_fullscreen->integer*/)
-   {
-//	   hWnd = CreateWindow("AFTERSHOCK", "Aftershock", WS_CLIPSIBLINGS | WS_CAPTION,
-//		  CW_USEDEFAULT, 0, mode.width,mode.height , NULL, NULL, hInst, NULL);
+	if (!r_fullscreen->integer)
+	{
+	   // create the window
+	   hWnd = CreateWindowEx(
+		   dwExStyle,
+		   "Aftershock",
+		   "Aftershock",
+		   WS_CLIPSIBLINGS | WS_CLIPCHILDREN | dwStyle,
+		   0, 0,
+		   WindowRect.right-WindowRect.left,
+		   WindowRect.bottom-WindowRect.top,
+		   NULL,
+		   NULL,
+		   hInst,
+		   NULL
+		);
 
-	// create the window
-	hWnd = CreateWindowEx
-	(
-		dwExStyle,		// extended style for the window
-		"Aftershock",		// class name
-		"Aftershock",			// window title
-		WS_CLIPSIBLINGS | WS_CLIPCHILDREN | dwStyle, // window style
-		0, 0,		// window position
-		WindowRect.right-WindowRect.left,	// selected width
-		WindowRect.bottom-WindowRect.top,	// and weight
-		NULL,			// no parent window
-		NULL,			// no menu
-		hInst,		// instance
-		NULL
-	);
+		glconfig.isFullscreen = 0;
+		winX = mode.width;
+		winY = mode.height;
+	}
+	else 
+	{
+		WIN_Reset_DisplaySettings();
+		glconfig.isFullscreen = 1;
 
-		glconfig.isFullscreen=0;
-		winX=mode.width;
-		winY=mode.height;
-   }
-   else 
-   {
-		WIN_Reset_DisplaySettings ();
-		glconfig.isFullscreen=1;
-/*
-		hWnd = CreateWindowEx( WS_EX_TOPMOST , 
-                        "Aftershock", "Aftershock", 
-                        WS_POPUP | WS_CLIPSIBLINGS,
-                        0, 0, mode.width, mode.height,
-                        NULL, NULL, hInst, NULL);
-
-*/		
-	// create the window
-	hWnd = CreateWindowEx
-	(
-		dwExStyle,		// extended style for the window
-		"Aftershock",		// class name
-		"Aftershock",			// window title
-		WS_CLIPSIBLINGS | WS_CLIPCHILDREN | dwStyle, // window style
-		0, 0,		// window position
-		WindowRect.right-WindowRect.left,	// selected width
-		WindowRect.bottom-WindowRect.top,	// and weight
-		NULL,			// no parent window
-		NULL,			// no menu
-		hInst,		// instance
-		NULL
-	);
+		// create the window
+		hWnd = CreateWindowEx(
+			dwExStyle,
+			"Aftershock",
+			"Aftershock",
+			WS_CLIPSIBLINGS | WS_CLIPCHILDREN | dwStyle,
+			0, 0,
+			WindowRect.right-WindowRect.left,
+			WindowRect.bottom-WindowRect.top,
+			NULL,
+			NULL,
+			hInst,
+			NULL
+		);
 
 		Con_Printf ("...calling CDS :");
-		if (!WIN_ChangeResolution (mode.width,mode.height,r_colorbits->integer ? r_colorbits->integer : 16 ))
+
+		if (!WIN_ChangeResolution (mode.width, mode.height, r_colorbits->integer ? r_colorbits->integer : 16 ))
 		{
 			Con_Printf ("failed\n");
 			return 0;
 		}
 		else
 			Con_Printf ("ok\n");
+	}
 
-   }
-   if( !hWnd ) 
-   {
-		Con_Printf ("Could not Create Window \n");
+	if (!hWnd)
+	{
+		Con_Printf ("Could not Create Window");
 		return 0;
-   }
+	}
 
-   ShowWindow( hWnd, nCmdShow );
-   UpdateWindow( hWnd );
+	ShowWindow(hWnd, nCmdShow);
+	UpdateWindow(hWnd );
 
 	GetCursorPos (&mpos);
 	SetCursorPos (0, 0);
 
 	ShowCursor (FALSE);		// Vic: hide mouse
 
-   return 1;
-
-
-
+	return 1;
 }
 
-
-int WIN_Destroy_Window (void )
+int WIN_Destroy_Window (void)
 {
-
 	if (hWnd)
 	{
-
-		if (hRC )
+		if (hRC)
 		{
-			awglMakeCurrent( NULL, NULL );
-			awglDeleteContext( hRC );
-		
-			hRC=NULL;
+			awglMakeCurrent(NULL, NULL);
+			awglDeleteContext(hRC);
+			hRC = NULL;
 		}
 
-
-		if (dc )
+		if (dc)
 		{
-			ReleaseDC(hWnd,dc);
-
-			dc= NULL;
-
-
+			ReleaseDC(hWnd, dc);
+			dc = NULL;
 		}
 
-		
-		DestroyWindow ( hWnd);
+		DestroyWindow (hWnd);
 
 		SetCursorPos (mpos.x, mpos.y);
-	ShowCursor (TRUE);		// Vic: hide mouse
+		ShowCursor (TRUE);		// Vic: hide mouse
 
-		hWnd=NULL;
+		hWnd = NULL;
 
-
-
-		if (!UnregisterClass("AFTERSHOCK",hInst))
-		return 0;
-
-
-		return 1;
-
+		return UnregisterClass("AFTERSHOCK", hInst);
 	}
-	else 
-	{
-		Error ("WIN_Destroy_Window : no Window present !");
-
-
+	else {
+		Con_Printf ("WIN_Destroy_Window: no Window present !");
 	}
 
 	return 0;
-
 }
-
-
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	int x,y;
-	static int oldx=-1,oldy=-1;
-
+	int x, y;
+	static int oldx = -1,oldy = -1;
 
 	switch( message ) 
 	{
-		
-				
 		case WM_PAINT:
-			
 			break;
 
 		case WM_SYSKEYDOWN:
 		case WM_KEYDOWN:
 			Sys_Keyboard_Event (wParam,1);
 			break;
+
 		case WM_SYSKEYUP:
 		case WM_KEYUP:
 			Sys_Keyboard_Event (wParam,0);
 			break;
 
-
-			case WM_LBUTTONDOWN:
-			case WM_RBUTTONDOWN:
-			case WM_MBUTTONDOWN:
+		case WM_LBUTTONDOWN:
+		case WM_RBUTTONDOWN:
+		case WM_MBUTTONDOWN:
 			Key_MouseDown(wParam);
 			break;
 
-			case WM_RBUTTONUP:
-			case WM_LBUTTONUP:
-			case WM_MBUTTONUP:
+		case WM_RBUTTONUP:
+		case WM_LBUTTONUP:
+		case WM_MBUTTONUP:
 			Key_MouseUp(wParam);
 			break;
 
-			case WM_MOUSEMOVE:
-
-			x=LOWORD(lParam);
-			y=HIWORD(lParam);
-
-			Key_Update_MousePosition (x,y );		
+		case WM_MOUSEMOVE:
+			x = LOWORD(lParam);
+			y = HIWORD(lParam);
+			Key_Update_MousePosition (x, y);
 			break;
 		
 		case WM_COMMAND:	
-				   return DefWindowProc( hWnd, message, wParam, lParam );	
+			return DefWindowProc(hWnd, message, wParam, lParam);
 			break;
 
 		case WM_DESTROY:
-			PostQuitMessage( 0 );
+			PostQuitMessage(0);
 			break;
 
 		case WM_SIZE:
@@ -2479,11 +2392,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		default:
 			return DefWindowProc( hWnd, message, wParam, lParam );
-   }
-   return 0;
+	}
+
+	return 0;
 }
-
-
 
 #define MAX_PFDS 128
 static int GL_ChoosePFD( int colorbits, int depthbits, int stencilbits )
@@ -2559,34 +2471,34 @@ static int GL_ChoosePFD( int colorbits, int depthbits, int stencilbits )
 	return( best );
 }
 
-
-
 static int IsExtensionSupported(char *ext)
 {
+	char *start = glconfig.extensions_string;
+	char *where, *terminator;
 
-	char *start=glconfig.extensions_string;
-	char *where,*terminator;
-
-	for(;;)
+	for (; ;)
 	{
+		where = strstr(start, ext);
 
-		where=strstr(start,ext);
 		if (!where)
 			break;
-		terminator=where+strlen(ext);
-		if (where==start || *(where-1)==' ')
-			if (*terminator==' ' || *terminator=='\0')
+
+		terminator = where + strlen(ext);
+
+		if (where == start || *(where - 1) == ' ')
+			if (*terminator == ' ' || *terminator == '\0')
 				return 1;
-			start=terminator;
+
+		start = terminator;
 	}
 
 	return 0;
 }
 
 
-void  GetGlConfig(glconfig_t * config)
+void GetGlConfig(glconfig_t *config)
 {
-	memcpy (config,&glconfig,sizeof (glconfig_t ));
+	memcpy (config, &glconfig, sizeof (glconfig_t));
 }
 
 int Init_OpenGL (void)
@@ -2691,7 +2603,8 @@ int Init_OpenGL (void)
 		Con_Printf("succeded\n");
 
 	Con_Printf("...making context current:");
-	if (!awglMakeCurrent( dc, hRC ))
+
+	if (!awglMakeCurrent(dc, hRC))
 	{
 		Con_Printf ("failed\n");
 		return 0;
@@ -2701,15 +2614,19 @@ int Init_OpenGL (void)
 
 	if (1)  // TODO : Make function !!!
 	{
-		const char *vendor=glGetString(GL_VENDOR);
-		const char *ext=glGetString(GL_EXTENSIONS);
-		const char *renderer=glGetString(GL_RENDERER);
-		const char *version=glGetString(GL_VERSION);
+		const char *vendor = glGetString(GL_VENDOR);
+		const char *ext = glGetString(GL_EXTENSIONS);
+		const char *renderer = glGetString(GL_RENDERER);
+		const char *version = glGetString(GL_VERSION);
 
-		if (vendor) A_strncpyz(glconfig.vendor_string,vendor,MAX_STRING_CHARS);
-		if (ext)	A_strncpyz(glconfig.extensions_string,ext,MAX_STRING_CHARS);
-		if (renderer) A_strncpyz(glconfig.renderer_string,renderer,MAX_STRING_CHARS);
-		if (version) A_strncpyz(glconfig.version_string,version,MAX_STRING_CHARS);
+		if (vendor) 
+			A_strncpyz(glconfig.vendor_string, vendor, MAX_STRING_CHARS);
+		if (ext)	
+			A_strncpyz(glconfig.extensions_string, ext, MAX_STRING_CHARS);
+		if (renderer) 
+			A_strncpyz(glconfig.renderer_string, renderer, MAX_STRING_CHARS);
+		if (version) 
+			A_strncpyz(glconfig.version_string, version, MAX_STRING_CHARS);
 
 		if (r_allowExtensions->integer)
 		{
@@ -2718,28 +2635,27 @@ int Init_OpenGL (void)
 			// this is internal
 			if (IsExtensionSupported("GL_ARB_texture_compression"))
 			{
-				gl_ext_info._GL_ARB_texture_compression=1;
+				gl_ext_info._GL_ARB_texture_compression = 1;
 
-				glCompressedTexImage3DARB=GL_GetProcAddress("glCompressedTexImage3DARB");
-                glCompressedTexImage2DARB=GL_GetProcAddress("glCompressedTexImage2DARB");
-				glCompressedTexImage1DARB=GL_GetProcAddress("glCompressedTexImage1DARB");
-				glCompressedTexSubImage3DARB=GL_GetProcAddress("glCompressedTexSubImage3DARB");
-				glCompressedTexSubImage2DARB=GL_GetProcAddress("glCompressedTexSubImage2DARB");
-				glCompressedTexSubImage1DARB=GL_GetProcAddress("glCompressedTexSubImage1DARB");
-				glGetCompressedTexImageARB=GL_GetProcAddress("glGetCompressedTexImageARB");
-                                 
+				glCompressedTexImage3DARB = GL_GetProcAddress("glCompressedTexImage3DARB");
+                glCompressedTexImage2DARB = GL_GetProcAddress("glCompressedTexImage2DARB");
+				glCompressedTexImage1DARB = GL_GetProcAddress("glCompressedTexImage1DARB");
+				glCompressedTexSubImage3DARB = GL_GetProcAddress("glCompressedTexSubImage3DARB");
+				glCompressedTexSubImage2DARB = GL_GetProcAddress("glCompressedTexSubImage2DARB");
+				glCompressedTexSubImage1DARB = GL_GetProcAddress("glCompressedTexSubImage1DARB");
+				glGetCompressedTexImageARB=  GL_GetProcAddress("glGetCompressedTexImageARB");
 			}
 			else
 			{
 				gl_ext_info._GL_ARB_texture_compression=0;
 				
-				glCompressedTexImage3DARB=0;
-                glCompressedTexImage2DARB=0;
-				glCompressedTexImage1DARB=0;
-				glCompressedTexSubImage3DARB=0;
-				glCompressedTexSubImage2DARB=0;
-				glCompressedTexSubImage1DARB=0;
-				glGetCompressedTexImageARB=0;
+				glCompressedTexImage3DARB = 0;
+                glCompressedTexImage2DARB = 0;
+				glCompressedTexImage1DARB = 0;
+				glCompressedTexSubImage3DARB = 0;
+				glCompressedTexSubImage2DARB = 0;
+				glCompressedTexSubImage1DARB = 0;
+				glGetCompressedTexImageARB = 0;
 			}
 
 			if (IsExtensionSupported("GL_S3_s3tc"))
@@ -3025,7 +2941,7 @@ int Init_OpenGL (void)
 	}
 
 	Con_Printf("compressed textures: ");
-	if (r_ext_compress_textures->integer)
+	if (r_ext_compressed_textures->integer)
 	{
 		Con_Printf("enabled\n");
 	}

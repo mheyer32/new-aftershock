@@ -3,7 +3,6 @@
 #include <windows.h>
 #include "console.h"
 
-
 #define OPEN_READONLY		0
 #define OPEN_WRITEONLY		1
 #define OPEN_READWRITE		2
@@ -71,7 +70,7 @@ int File_GetLen (void *file)
 		return 0;
 	}
 
-	return GetFileSize(file,NULL);
+	return GetFileSize(file, NULL);
 }
 
 size_t File_Read(void *buf, size_t size, void *stream)
@@ -84,7 +83,7 @@ size_t File_Read(void *buf, size_t size, void *stream)
 	return ((size_t) dwSizeRead);
 }
 
-size_t File_Write(const void *buf, size_t size,void * stream)
+size_t File_Write(const void *buf, size_t size, void *stream)
 {
 	int dwSizeWritten;
 

@@ -718,12 +718,10 @@ int A_PrintStrlen( const char *string )
 
 char *A_CleanStr( char *string )
 {
-	char*	d;
-	char*	s;
+	char*	d = string;
+	char*	s = string;
 	int		c;
 
-	s = string;
-	d = string;
 	while ((c = *s) != 0 ) {
 		if ( A_IsColorString( s ) ) {
 			s++;
@@ -735,9 +733,8 @@ char *A_CleanStr( char *string )
 	}
 	*d = '\0';
 
-	return(string);
+	return string;
 }
-
 
 char *A_CopyStr(const char *s)
 {
@@ -761,12 +758,14 @@ void Com_sprintf( char *dest, int size, const char *fmt, ...)
 	va_start (argptr,fmt);
 	len = vsprintf (bigbuffer, fmt, argptr);
 	va_end (argptr);
+
 	if ( len >= sizeof( bigbuffer ) ) {
 		Com_Error( ERR_FATAL, "Com_sprintf: overflowed bigbuffer" );
 	}
 	if (len >= size) {
 		Com_Printf ("Com_sprintf: overflow of %i in %i\n", len, size);
 	}
+
 	strncpy (dest, bigbuffer, size );
 }
 
@@ -779,7 +778,7 @@ varargs versions of all text functions.
 FIXME: make this buffer size safe someday
 ============
 */
-char * va( char *format, ... )
+char *va( char *format, ...)
 {
 	va_list		argptr;
 	static char		string[2][32000];	// in case va is called by nested functions

@@ -101,7 +101,7 @@ static void CM_Load_Nodes (void)
 		cm.nodes[i].maxs[1] = LittleLong (nodes[i].maxs[1]);
 		cm.nodes[i].maxs[2] = LittleLong (nodes[i].maxs[2]);
 
-		cm.nodes[i].plane = &cm.planes [LittleLong (nodes[i].plane)];
+		cm.nodes[i].plane = &cm.planes[LittleLong (nodes[i].plane)];
 	}
 
 	free (nodes);
@@ -355,6 +355,17 @@ static void CM_Load_Lightmaps (aboolean load_rdata)
 		cm.lightmapdata_size = CM_ReadLump (LUMP_LIGHTMAPS, &cm.lightmapdata, 1); 
 }
 
+static void CM_Load_Visiblity (void)
+{
+	int num = CM_ReadLump (LUMP_VISIBILITY, &cm.vis, sizeof(cvisibility_t));
+
+	while (num--)
+	{
+		cm.vis[num].numclusters = LittleLong (cm.vis[num].numclusters);
+		cm.vis[num].rowsize = LittleLong (cm.vis[num].numclusters);
+	}
+}
+
 aboolean CM_LoadMap (const char *mapname, aboolean load_rdata)
 {
 	char buf[MAX_APATH];
@@ -431,6 +442,7 @@ aboolean CM_LoadMap (const char *mapname, aboolean load_rdata)
 	CM_Load_Faces (load_rdata);
 	CM_Load_Models (load_rdata);
 	CM_Load_Fog (load_rdata);
+	CM_Load_Visiblity ();
 
 	cm.r_data_loaded = load_rdata;
 

@@ -34,7 +34,7 @@ void Start_Entity_Parsing (char *entdata, int len)
 	}
 }
 
-void End_Entity_Parsing (void )
+void End_Entity_Parsing (void)
 {
 	free (entitydata);
 

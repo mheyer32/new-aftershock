@@ -974,10 +974,10 @@ float RadiusFromBounds( const vec3_t mins, const vec3_t maxs ) {
 	vec3_t	corner;
 	float	a, b;
 
-	for (i=0 ; i<3 ; i++) {
-		a = fabs( mins[i] );
-		b = fabs( maxs[i] );
-		corner[i] = a > b ? a : b;
+	for (i = 0; i < 3; i++) {
+		a = fabs(mins[i]);
+		b = fabs(maxs[i]);
+		corner[i] = max (a, b);
 	}
 
 	return VectorLength (corner);
@@ -989,27 +989,16 @@ void ClearBounds( vec3_t mins, vec3_t maxs ) {
 	maxs[0] = maxs[1] = maxs[2] = -99999;
 }
 
-void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs ) {
-	if ( v[0] < mins[0] ) {
-		mins[0] = v[0];
-	}
-	if ( v[0] > maxs[0]) {
-		maxs[0] = v[0];
-	}
+void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs ) 
+{
+	mins[0] = min (v[0], mins[0]);
+	maxs[0] = max (v[0], maxs[0]);
 
-	if ( v[1] < mins[1] ) {
-		mins[1] = v[1];
-	}
-	if ( v[1] > maxs[1]) {
-		maxs[1] = v[1];
-	}
+	mins[1] = min (v[1], mins[1]);
+	maxs[1] = max (v[1], maxs[1]);
 
-	if ( v[2] < mins[2] ) {
-		mins[2] = v[2];
-	}
-	if ( v[2] > maxs[2]) {
-		maxs[2] = v[2];
-	}
+	mins[2] = min (v[2], mins[2]);
+	maxs[2] = max (v[2], maxs[2]);
 }
 
 
@@ -1018,12 +1007,11 @@ int _VectorCompare( const vec3_t v1, const vec3_t v2 ) {
 }
 
 vec_t VectorNormalize( vec3_t v ) {
-	float	length = DotProduct(v, v), ilength;
+	float	length = v[0]*v[0]+v[1]*v[1]+v[2]*v[2], ilength;
 	
-	length = sqrt (length);
-
 	if ( length ) {
-		ilength = 1/length;
+		length = sqrt (length);
+		ilength = 1 / length;
 		v[0] *= ilength;
 		v[1] *= ilength;
 		v[2] *= ilength;

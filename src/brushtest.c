@@ -175,6 +175,7 @@ void Check_Leaf (int num)
 		brushnum = cm.lbrushes[leaf->firstbrush + i];
 		idx = brushnum >> 3;
 		bit = (unsigned char) (1 << (brushnum & 7));
+
 		if (!(brushflag[idx] & bit)) {
 			brushflag[idx] |= bit;
 			Check_Brush(&cm.brushes[brushnum]);

@@ -15,7 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
-#include <math.h>
 #include "a_shared.h"
 #include "cmap.h"
 #include "shader.h"
@@ -53,7 +52,7 @@ cvar_t *r_drawentities;
 cvar_t *r_drawworld;
 cvar_t *r_dynamiclight;
 cvar_t *r_ext_compiled_vertex_array;
-cvar_t *r_ext_compress_textures;
+cvar_t *r_ext_compressed_textures;
 #ifdef _WIN32
 cvar_t *r_ext_gamma_control;
 #endif
@@ -130,7 +129,7 @@ static cvarTable_t cvarTable[] = {
 	{ &r_drawworld, "r_drawworld", "1", CVAR_CHEAT },
 	{ &r_dynamiclight, "r_dynamiclight", "1", CVAR_ARCHIVE },
 	{ &r_ext_compiled_vertex_array, "r_ext_compiled_vertex_array", "1", CVAR_ARCHIVE | CVAR_LATCH },
-	{ &r_ext_compress_textures, "r_ext_compress_textures", "1", CVAR_ARCHIVE | CVAR_LATCH },
+	{ &r_ext_compressed_textures, "r_ext_compressed_textures", "1", CVAR_ARCHIVE | CVAR_LATCH },
 #ifdef _WIN32
 	{ &r_ext_gamma_control, "r_ext_gamma_control", "1", CVAR_ARCHIVE | CVAR_LATCH },
 #endif
@@ -183,7 +182,7 @@ static cvarTable_t cvarTable[] = {
 	{ &vid_ypos, "vid_ypos", "22", CVAR_ARCHIVE}
 };
 
-const static int	cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
+const static int cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
 
 void R_GetCvars( void )
 {
@@ -319,7 +318,7 @@ void R_Init(void)
 
 	R_ClearScene();
 
-	Con_Printf ("... finished R_Init ...\n");
+	Con_Printf ("... finished R_Init ...\n\n");
 }
 
 void R_Shutdown (void)
@@ -1105,6 +1104,10 @@ void R_Draw_World (void)
     // Clear "included" faces lists
     memset(r_faceinc, 0, cm.num_faces * sizeof(byte));
 
+	VectorSet (r_eyepos, 0, 0, 0);
+
+	r_eyecluster = R_Find_Cluster (r_eyepos);
+
 	for (i = 0; i < cm.num_models; i++)
 		R_Render_Bsp_Model (i);
 
@@ -1140,7 +1143,7 @@ void R_Setup_Clipplanes (const refdef_t * fd )
 	RotatePointAroundVector( clipplanes[3].normal, fd->viewaxis[0], fd->viewaxis[1], -half_pi_minus_half_fov_y);
 
 	clipplanes[0].type = 3;
-	clipplanes[0].dist = DotProduct (fd->vieworg,clipplanes[0].normal);
+	clipplanes[0].dist = DotProduct (fd->vieworg, clipplanes[0].normal);
 	SetPlaneSignbits (&clipplanes[0]);
 
 	clipplanes[1].type = 3;
@@ -1178,8 +1181,9 @@ void R_Recursive_World_Node (int n)
 		cleaf_t *leaf = &cm.leaves[~n];
 		int i;
 
-//		if (r_eyecluster >= 0)
-//		if (! BSP_TESTVIS(r_eyecluster, leaf->cluster)) return;
+		if (r_eyecluster >= 0)
+			if (!BSP_TESTVIS(r_eyecluster, leaf->cluster)) 
+				return;
 		
 //		if (R_ClipFrustrum (leaf->mins, leaf->maxs))
 //			return;
@@ -1196,9 +1200,9 @@ void R_Recursive_World_Node (int n)
 		
 		plane = node->plane;
 		
-		if (plane->type < 3)
-			dist = r_eyepos[plane->type] - plane->dist;
-		else
+//		if (plane->type < 3)
+//			dist = r_eyepos[plane->type] - plane->dist;
+//		else
 			dist = DotProduct(r_eyepos, plane->normal) - plane->dist;
 	
 		R_Recursive_World_Node (node->children[(dist <= 0)]);
@@ -1217,7 +1221,7 @@ int R_ClipFrustrum (vec3_t mins, vec3_t maxs)
 	if (res[1] == 1) return 1;
 	res[2] = BoxOnPlaneSide(mins, maxs, &clipplanes[2]);
 	if (res[2] == 1) return 1;
-	res[3] = BoxOnPlaneSide(mins, maxs,&clipplanes[3]);
+	res[3] = BoxOnPlaneSide(mins, maxs, &clipplanes[3]);
 	if (res[3] == 1) return 1;
 
 	return 0;
@@ -1227,7 +1231,8 @@ void R_Render_Walk_Face (int num)
 {
 	cface_t *face = &cm.faces[num];
 
-	if (r_faceinc[num]) return;
+	if (r_faceinc[num]) 
+		return;
 
     r_faceinc[num] = 1;
 
@@ -1236,15 +1241,16 @@ void R_Render_Walk_Face (int num)
 		case FACETYPE_NORMAL:
 		case FACETYPE_TRISURF:
 			// CULL the face : (this is not exact but it looks right )
-			if (r_shaders[cm.shaderrefs[face->shadernum].shadernum].flags & SHADER_DOCULL);
+			if (r_shaders[cm.shaderrefs[face->shadernum].shadernum].flags & SHADER_DOCULL)
 				if (face->verts->v_norm[0]*(face->verts->v_point[0]-r_eyepos[0])
 					+face->verts->v_norm[1]*(face->verts->v_point[1]-r_eyepos[1])
-					+face->verts->v_norm[2]*(face->verts->v_point[2]-r_eyepos[2])>0)return;
+					+face->verts->v_norm[2]*(face->verts->v_point[2]-r_eyepos[2]) > 0)
+					return;
 		break;
 
 		case FACETYPE_MESH:
 	//		if (R_ClipFrustrum (face->mins,face->maxs))
-	//			return ;
+	//			return;
 			break;
 
 		default: // FLARE OR Error
@@ -1296,17 +1302,17 @@ static int R_Find_Cluster(const vec3_t pos)
     int leaf = -1;
 	float dist;
 	cplane_t *plane;
- 	cnode_t *node = cm.nodes;
+ 	cnode_t *node = &cm.nodes[0];
    
     // Find the leaf/cluster containing the given position
-    while (1)
+    for (;;)
     {
 		plane = node->plane;
 
-		if (plane->type < 3)
-			dist = pos[plane->type] - plane->dist;
-		else 
-			dist = DotProduct(pos,plane->normal) - plane->dist;
+//		if (plane->type < 3)
+//			dist = pos[plane->type] - plane->dist;
+//		else 
+			dist = DotProduct(pos, plane->normal) - plane->dist;
 			
 		if (dist > 0)
 		{
@@ -1336,15 +1342,12 @@ static int R_Find_Cluster(const vec3_t pos)
     return cluster;
 }
 
-
-static int
-face_cmp(const void *a, const void *b)
+static int face_cmp(const void *a, const void *b)
 {
     return ((rendface_t*)a)->sortkey - ((rendface_t*)b)->sortkey;
 }
 
-static void
-sort_faces(void)
+static void sort_faces(void)
 {
     /* FIXME: expand qsort code here to avoid function calls */
     qsort((void*)facelist.faces, facelist.numfaces, sizeof(rendface_t),

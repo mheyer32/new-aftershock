@@ -444,7 +444,7 @@ void Key_SetBinding( int keynum, const char *binding )
 	A_strncpyz (bind->command, binding, MAX_APATH);
 }
 
-static void  Cmd_Bind (void )
+static void Cmd_Bind (void)
 {
 	char key [MAX_STRING_CHARS];
 	char command [MAX_STRING_CHARS];
@@ -455,12 +455,11 @@ static void  Cmd_Bind (void )
 		Cmd_Argv(1, key, MAX_STRING_CHARS);
 		Cmd_Argv(2, command, MAX_STRING_CHARS);
 
-		
 		keynum = Key_StringToKeynum(key);
 
-		if (keynum < 0 || keynum > 255 )
+		if (keynum < 0 || keynum > 255)
 		{
-			Con_Printf("unknown key: %s ", key);
+			Con_Printf("unknown key: %s\n", key);
 			return;
 		}
 			
@@ -468,7 +467,7 @@ static void  Cmd_Bind (void )
 		A_strncpyz( key_bindings[keynum].command, command, MAX_APATH);
 	}
 	else {
-		Con_Printf("usage : bind key command ");
+		Con_Printf("usage : bind key command\n");
 	}
 }
 
@@ -476,10 +475,10 @@ static void Cmd_Unbindall (void )
 {
 	int i;
 
-	for (i=0;i<256;i++)
+	for (i = 0;i < 256; i++)
 	{
-		A_strncpyz(key_bindings[i].keyname," ",256);
-		A_strncpyz(key_bindings[i].command," ",256);
+		A_strncpyz(key_bindings[i].keyname, " ", 256);
+		A_strncpyz(key_bindings[i].command, " ", 256);
 	}
 }
 
@@ -489,7 +488,7 @@ void Key_WriteBindings( int file )
 	char	buf[1024];
 
 	for (i=0 ; i<256 ; i++) {
-		if (key_bindings[i].command && *key_bindings[i].command) {
+		if (key_bindings[i].command && * key_bindings[i].command) {
 			Com_sprintf( buf, sizeof(buf), "bind %s \"%s\"""\r\n", Key_KeynumToString(i), key_bindings[i].command );
 			FS_Write( buf, strlen(buf), file );
 		}

@@ -158,6 +158,16 @@ void Sys_Keyboard_Event (unsigned int Vkey, aboolean down)
 			is_char = atrue;
 			break;
 
+		case 191:
+			key = '/';
+			is_char = atrue;
+			break;
+
+		case 220:
+			key = '\\';
+			is_char = atrue;
+			break;
+
 		default:
 			break;
 			
@@ -226,5 +236,5 @@ void Sys_Keyboard_Event (unsigned int Vkey, aboolean down)
 		}
 	}
 
-	Key_Update_Keystate (key, down, is_char );
+	Key_Update_Keystate (key, down, is_char);
 }

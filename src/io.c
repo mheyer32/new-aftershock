@@ -131,7 +131,7 @@ void FS_Read(void *buffer, int len, int handle)
 	switch (f->type)
 	{
 		case FILE_NORMAL:
-			File_Read (buffer,len,f->fhandle);
+			File_Read (buffer, len, f->fhandle);
 			break;
 
 		case FILE_IN_PAK:
@@ -139,7 +139,7 @@ void FS_Read(void *buffer, int len, int handle)
 				Con_Printf (S_COLOR_YELLOW "WARNING: Could not read file %s\n", f->name);
 			break;
 
-		default :
+		default:
 			Error ("FS_Read: Bad file type!");
 	}
 }
@@ -157,7 +157,7 @@ int FS_Write(const void *buffer, int len, int handle)
 		return 0;
 	}
 
-	f= &files [handle];
+	f= &files[handle];
 
 	if (f->type != FILE_NORMAL)
 		return 0;
@@ -218,7 +218,7 @@ int FS_ReadFile( const char *path, void **buffer )
 
 	FS_FCloseFile( f );
 
-	return( size );
+	return size;
 }
 
 /*
@@ -229,7 +229,7 @@ FS_FreeFile
 void FS_FreeFile( void *buffer )
 {
 	if( !buffer ) {
-		Com_Error( ERR_FATAL, "FS_FreeFile( NULL )\n" );
+		Com_Error(ERR_FATAL, "FS_FreeFile( NULL )\n");
 	}
 
 	fs_load_stack--;

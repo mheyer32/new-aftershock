@@ -63,7 +63,7 @@ NET_SOCKET UDP_OpenSocket(unsigned short port)
 		return(NET_INVALID_SOCKET);
 	}
 
-	return(new_socket);
+	return new_socket;
 }
 
 aboolean UDP_GetLocalhost(void)
