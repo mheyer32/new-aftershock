@@ -1,0 +1,19 @@
+!include <win32.mak>
+
+SRC = util.c bsp.c globals.c vec.c render.c tex.c lightmap.c mesh.c unzip.c pak.c shader.c renderback.c skybox.c entity.c md3.c mapent.c uicommon.c uiglut.c
+OBJ = $(SRC:.c=.obj)
+
+all: aftershock.exe
+
+CFLAGS = $(cflags) -O2 -DWIN32 -I.
+LIBS = opengl32.lib glu32.lib glut32.lib $(guilibs) zlib.lib libjpeg.lib
+
+aftershock.exe: $(OBJ)
+	$(link) -out:$@ $** $(LIBS)
+
+.c.obj:
+	$(cc) $(CFLAGS) $*.c
+
+clean:
+    del *.obj 
+	del aftershock.exe
