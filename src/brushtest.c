@@ -53,7 +53,7 @@ static cplane_t *Find_Plane_Hit (cbrush_t *brush)
 {
 	int i, planenum = 0; 
 	float dot;
-	float bestangle = -1.0;
+	float bestangle = -999999;
 
 	for (i = 0; i < brush->numsides; i++)
 	{

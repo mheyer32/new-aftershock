@@ -266,6 +266,9 @@ void LAN_GetPing( int n, char *buf, int buflen, int *pingtime )
 
 void LAN_GetPingInfo( int n, char *buf, int buflen )
 {
+	if( !buf )
+		return;
+
 	if( (n < 0) || (n >= MAX_PINGREQUESTS) || (!pingresults[n].pingtime) ) {
 		A_strncpyz( buf, "", buflen );
 		return;

@@ -24,6 +24,7 @@
 #include "io.h"
 #include "unzip.h"
 #include "console.h"
+#include "c_var.h"
 
 static file_t		files[MAX_FILES];
 static int			files_used[MAX_FILES];
@@ -32,11 +33,22 @@ static char			basedir[MAX_OSPATH];
 static char			workdir[MAX_OSPATH];
 static int			fs_load_stack;
 
+cvar_t	*fs_game;
+
 char *FS_Add_Basedir (const char *s)
 {
 	static char buf [128];
 
-	sprintf (buf, "%s/%s", basedir, s);
+	Com_sprintf (buf, sizeof(buf), "%s/%s", basedir, s);
+
+	return buf;
+}
+
+char *FS_Add_Gamedir (const char *s)
+{
+	static char buf [128];
+
+	Com_sprintf (buf, sizeof(buf), "%s/%s", basedir, s);
 
 	return buf;
 }
@@ -51,15 +63,25 @@ int Get_FirstFreeFile (void)
 			return i;
 	}
 
-	Error ("Too much files !");
+	Com_Error ( ERR_FATAL, "Too much files !");
 	return 0;
+}
+
+/*
+================
+FS_Flush
+================
+*/
+void FS_Flush( int f )
+{
+	File_FlushBuffers(files[f-1].fhandle);
 }
 
 int FS_OpenFile (const char *path, int *handle, fsMode_t mode)
 {
 	int fnum = Get_FirstFreeFile ();
 	file_t *f = &files[fnum];
-	void * h;
+	void *h;
 	char *buf;
 
 	if (!path || !handle )
@@ -126,9 +148,9 @@ void FS_Read(void *buffer, int len, int handle)
 		return;
 
 	if (!buffer)
-		Error ("FS_Read : buffer = NULL !");
+		Com_Error ( ERR_FATAL, "FS_Read: buffer = NULL !");
 	
-	f = &files [handle - 1];
+	f = &files[handle - 1];
 	
 	switch (f->type)
 	{
@@ -142,7 +164,8 @@ void FS_Read(void *buffer, int len, int handle)
 			break;
 
 		default:
-			Error ("FS_Read: Bad file type!");
+			Com_Error ( ERR_FATAL, "FS_Read: Bad file type!");
+			break;
 	}
 }
 
@@ -151,19 +174,24 @@ int FS_Write(const void *buffer, int len, int handle)
 	file_t *f;
 	int byteswritten = 0;
 
-	if (handle < 1 || handle > MAX_APATH)
-		return 0;
-
-	if (!buffer) {
-		Error ("FS_Write : buffer = NULL !");
+	if (handle < 1 || handle > MAX_APATH) {
+		Con_Printf ("FS_Write: Wrong file handle\n");
 		return 0;
 	}
 
-	f = &files[handle];
+	if (!buffer) {
+		Con_Printf ("FS_Write: buffer = NULL\n");
+		return 0;
+	}
+
+	f = &files[handle-1];
 
 	if (f->type != FILE_NORMAL)
+	{
+		Con_Printf ("FS_Write: Unknown file type\n");
 		return 0;
-	
+	}
+
 	byteswritten = File_Write(buffer, len, f->fhandle);
 
 	return (byteswritten == len);
@@ -255,32 +283,63 @@ void FS_Init (const char *dir)
 	char buf[MAX_OSPATH];
 	char fname[MAX_OSPATH];
 	char buf2[MAX_OSPATH];
+	char dir2[MAX_OSPATH];
 
 	Con_Printf("------- FS_INIT: -------\n");
+
+	fs_game = Cvar_Get( "fs_game", "baseq3", 0 );
 
 	Pak_Init ();
 
 	strcpy (basedir, dir);
 
 	// Find all pk3 files in the base-directory
-	sprintf (buf, "%s/*.pk3", dir);
+	Com_sprintf (buf, sizeof(buf), "%s/*.pk3", dir);
 
 	handle = File_FindFirst (buf, fname, 0, 0);
 
 	if (handle)
 	{
-		sprintf (buf2, "%s/%s", dir, fname);
+		Com_sprintf (buf2, sizeof(buf2), "%s/%s", dir, fname);
 
 		if (!Pak_OpenPak(buf2))
-			Error ("Could not open pk3: %s", fname);
+			Com_Error ( ERR_FATAL, "Could not open pk3: %s", fname);
 	}
 	else {
-		Error ("Could not find any .pk3 files!");
+		Com_Error ( ERR_FATAL, "Could not find any .pk3 files!");
 	}
 	
 	while (File_FindNext(handle, fname, 0, 0))
 	{
-		sprintf (buf2, "%s/%s", dir, fname);
+		Com_sprintf (buf2, sizeof(buf2), "%s/%s", dir, fname);
+		Pak_OpenPak(buf2);
+	}
+
+	File_FindClose(handle);
+
+	if (!strcmp (fs_game->string, "baseq3"))
+		return;
+
+	// Find all pk3 files in the base-directory
+	Com_sprintf (dir2, sizeof(dir2), "%s", "LostArena");
+	Com_sprintf (buf, sizeof(buf), "%s/*.pk3", dir2);
+
+	handle = File_FindFirst (buf, fname, 0, 0);
+
+	if (handle)
+	{
+		Com_sprintf (buf2, sizeof(buf2), "%s/%s", dir2, fname);
+
+		if (!Pak_OpenPak(buf2))
+			Com_Error ( ERR_FATAL, "Could not open pk3: %s", fname);
+	}
+	else {
+		return;
+	}
+	
+	while (File_FindNext(handle, fname, 0, 0))
+	{
+		Com_sprintf (buf2, sizeof(buf2), "%s/%s", dir2, fname);
 		Pak_OpenPak(buf2);
 	}
 
@@ -324,8 +383,7 @@ int FS_GetFileList (const char *path, const char *extension, char *listbuf, int 
 
 	syspath = FS_Add_Basedir (path);
 	
-	sprintf (tmp, "%s/*.%s", syspath, extension);	
-
+	Com_sprintf (tmp, sizeof(tmp), "%s/*.%s", syspath, extension);	
 	handle = File_FindFirst (tmp, fname, 0, 0);
 	
 	if (handle)

@@ -39,7 +39,7 @@ void *File_Open (const char *path, int mode)
 			break;
 
 		default:
-			Con_Printf ("File_Open: Bad mode \n");
+			Con_Printf ("File_Open: Bad mode\n");
 			return 0;
 	}
 
@@ -142,4 +142,9 @@ void File_FindClose(void *handle)
 	if (handle != INVALID_HANDLE_VALUE) {
 		FindClose(handle);
 	}
+}
+
+void File_FlushBuffers( void *handle )
+{
+	FlushFileBuffers( handle );
 }

@@ -20,8 +20,9 @@
 
 void Pak_Init (void);
 void Pak_Shutdown (void);
+void Pak_List (void);
 
-int Pak_OpenPak (const char *path);
+aboolean Pak_OpenPak (const char *path);
 int Pak_OpenFile (const char *path);
 int Pak_GetFileLen (const char *path);
 int Pak_ReadFile (const char *path, int len, void *buf);

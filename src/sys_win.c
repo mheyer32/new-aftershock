@@ -72,7 +72,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	nCmdShow = CmdShow;
 
 	if (!Engine_Init ()) {
-		Error ("Could not Init Engine");
+		Com_Error ( ERR_FATAL, "Could not Init Engine");
 		return 1;
 	}
     

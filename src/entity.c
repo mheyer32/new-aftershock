@@ -30,7 +30,7 @@ void Start_Entity_Parsing (char *entdata, int len)
 		entitypos = entitydata;		
 	}
 	else {
-		Error ("Start_Entity_Parsing: NULL");
+		Com_Error ( ERR_FATAL, "Start_Entity_Parsing: NULL");
 	}
 }
 

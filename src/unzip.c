@@ -43,8 +43,8 @@
 typedef struct {
 	long int pos_in_central_dir;
 	int filenum;
-	char name [MAX_APATH];
-}cacheelem_t ;
+	char name[MAX_APATH];
+} cacheelem_t;
 
 
 
@@ -158,15 +158,9 @@ typedef struct
 	                                    file if we are decompressing it */
 	char			current_file_name[UNZ_MAXFILENAMEINZIP];	/* name of the current file-->avoid unneeded unzLocateFile */
 	
-// Added by Martin Kraus :
-// for caching :
-
-
-     cacheelem_t ** cache;
-     int counts[HASHSIZE];
-	
-
-
+	// Added by Martin Kraus (for caching)
+	cacheelem_t **cache;
+	int counts[HASHSIZE];
 } unz_s;
 
 
@@ -365,47 +359,37 @@ local uLong unzlocal_SearchCentralDir(FILE *fin)
 
 local int hashstring(const char* str)
 {
-	int		hashval = 0;
-	const char*	ofs = str;
+	int	hashval = 0;
+	const char *ofs = str;
 
 	while( *ofs )
 	{
 		hashval += ( int ) * ofs + 1;
 		ofs++;
 	}
+
 	return hashval;
 }
 
-
-
-
-// Generates the cache :
-
-int  Unz_GenCache(unz_s *s)
+// Generates the cache
+int Unz_GenCache( unz_s *s )
 {
 	uLong num_fileSaved;
 	uLong pos_in_central_dirSaved;
 	int  amounts[HASHSIZE];
 	cacheelem_t *filecache;
-	int filecount=0;
-	int i=0,err=0,j=0;
+	int filecount = 0;
+	int i = 0, err = 0, j= 0;
 	int key=0;
 	char szCurrentFileName[UNZ_MAXFILENAMEINZIP+1];
-	unzFile		file = (unzFile)s;
-	int numfilescached=0;
+	unzFile	file = (unzFile)s;
+	int numfilescached = 0;
 
-	
-
-	if (s==NULL)
-	{
-
-		return 0;
-	}
-
-	if (!s->current_file_ok)
+	if( s == NULL )
 		return 0;
 
-
+	if (! s->current_file_ok )
+		return 0;
 
 	num_fileSaved = s->num_file;
 	pos_in_central_dirSaved = s->pos_in_central_dir;
@@ -905,7 +889,7 @@ extern int ZEXPORT unzGoToNextFile (unzFile file)
 	return err;
 }
 
-int Unz_GetStringForDir (unzFile *pak,const char * dir,const char *extension,char * buf ,int bufsize,int *len)
+int Unz_GetStringForDir (unzFile *pak, const char *dir, const char *extension, char *buf, int bufsize, int *len)
 {
 	unz_s *s = (unz_s *)pak;
 	char *token, *bufpos = buf;
@@ -963,6 +947,24 @@ int Unz_FileExists (unzFile *pak, const char *file)
 	}
 
 	return 0;
+}
+
+int Unz_NumEntries (unzFile *pak)
+{
+	int i, j, p = 0;
+	unz_s *s = (unz_s *)pak;
+
+	for (i = 0; i < HASHSIZE; i++)
+	{
+		for (j = 0; j < s->counts[i]; j++)
+		{
+			if (!s->cache[i][j].name[0])
+				continue;
+			p++;
+		}
+	}
+
+	return p;
 }
 
 /*

@@ -54,7 +54,7 @@ void MSG_WriteBits( sizebuf_t *buf, int bits, int n )
 	}
 
 	if( !n || n < -31 || n > 32 ) {
-		Error( "MSG_WriteBits: bad bits %i", n );
+		Com_Error( ERR_FATAL, "MSG_WriteBits: bad bits %i", n );
 	}
 
 	if( n!=32 ) {
@@ -142,7 +142,7 @@ void MSG_WriteString( sizebuf_t *buf, char *s )
 		MSG_Write( buf, "", 1 );
 	} else {
 		if( strlen(s) >= MAX_STRING_CHARS ) {
-			Error( "MSG_WriteString: MAX_STRING_CHARS" );
+			Com_Error( ERR_FATAL, "MSG_WriteString: MAX_STRING_CHARS" );
 		} else {
 			MSG_Write( buf, s, strlen(s)+1 );
 		}
@@ -350,10 +350,10 @@ void *MSG_GetSpace( sizebuf_t *buf, int length )
 	
 	if (buf->cursize + length > buf->maxsize) {
 		if (!buf->allowoverflow)
-			Error ("MSG_GetSpace: overflow without allowoverflow set");
+			Com_Error ( ERR_FATAL, "MSG_GetSpace: overflow without allowoverflow set");
 		
 		if (length > buf->maxsize)
-			Error ("MSG_GetSpace: %i is > full buffer size", length);
+			Com_Error ( ERR_FATAL, "MSG_GetSpace: %i is > full buffer size", length);
 			
 		buf->overflowed = atrue;
 		Con_Printf( "MSG_GetSpace: overflow" );

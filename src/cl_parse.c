@@ -285,7 +285,7 @@ void CL_ParseSnapshot(sizebuf_t * p)
 	{
 		min = s->serverTime/ 60000;
 		sek = (s->serverTime / 1000) -min*60;
-		sprintf(dummy,"ClientCmdNr %i, Time %.4u:%.2u Delta %u\x0D\x0A",s->numServerCommands,min,sek,delta);
+		Com_sprintf(dummy,sizeof(dummy),"ClientCmdNr %i, Time %.4u:%.2u Delta %u\x0D\x0A",s->numServerCommands,min,sek,delta);
 		g_DebugText+=dummy;
 	}
 	*/
@@ -318,7 +318,7 @@ void CL_ParseSnapshot(sizebuf_t * p)
 		b2=MSG_ReadByte (p);	// wird hinetereiander abgespeichert bedeutung unklar
 		/*if (debug)
 		{
-			sprintf(dummy,"Byte %u\x0D\x0A",b2);
+			Com_sprintf(dummy,sizeof(dummy),"Byte %u\x0D\x0A",b2);
 			g_DebugText+=dummy;
 		}*/
 	}
@@ -387,7 +387,7 @@ void CL_ParseSnapshot(sizebuf_t * p)
 				
 				/*if (debug && g_Options.DebugShowPlayerstatus)
 				{
-					sprintf(dummy,"PS_Stats%u:%i\x0D\x0A",i,s->ps.stats[i]);
+					Com_sprintf(dummy,sizeof(dummy),"PS_Stats%u:%i\x0D\x0A",i,s->ps.stats[i]);
 					g_DebugText+=dummy;
 				}
 				*/
@@ -405,7 +405,7 @@ void CL_ParseSnapshot(sizebuf_t * p)
 
 				/*if (debug && g_Options.DebugShowPlayerstatus)
 				{
-					sprintf(dummy,"PS_Persistant%u:%u\x0D\x0A",i,s->ps.persistant[i]);
+					Com_sprintf(dummy,sizeof(dummy),"PS_Persistant%u:%u\x0D\x0A",i,s->ps.persistant[i]);
 					g_DebugText+=dummy;
 				}
 				*/
@@ -422,7 +422,7 @@ void CL_ParseSnapshot(sizebuf_t * p)
 				s->ps.ammo[i] = MSG_ReadShort (p);
 				/*if (debug && g_Options.DebugShowPlayerstatus)
 				{
-					sprintf(dummy,"PS_Ammo%u:%u\x0D\x0A",i,s->ps.ammo[i]);
+					Com_sprintf(dummy,sizeof(dummy),"PS_Ammo%u:%u\x0D\x0A",i,s->ps.ammo[i]);
 					g_DebugText+=dummy;
 				}
 				*/
@@ -438,7 +438,7 @@ void CL_ParseSnapshot(sizebuf_t * p)
 				s->ps.powerups[i] = MSG_ReadLong (p);// ACHTUNG bei powerups 32 Bit lesen nicht 16
 				/*if (debug && g_Options.DebugShowPlayerstatus)
 				{
-					sprintf(dummy,"PS_Powerups%u:%u\x0D\x0a",i,s->ps.powerups[i]);
+					Com_sprintf(dummy,sizeof(dummy),"PS_Powerups%u:%u\x0D\x0a",i,s->ps.powerups[i]);
 					g_DebugText+=dummy;
 				}
 				*/
@@ -502,7 +502,7 @@ void CL_ParseDeltaEntities(sizebuf_t * p, snapshot_t * s, snapshot_t * ds)
 			// " unchanged ds_entity_num"
 			/*if (debug)
 			{
-				sprintf(dummy,"unchanged: %u\x0D\x0A",ds_entity_num);
+				Com_sprintf(dummy,sizeof(dummy),"unchanged: %u\x0D\x0A",ds_entity_num);
 				g_DebugText+=dummy;
 			};*/
 
@@ -530,7 +530,7 @@ void CL_ParseDeltaEntities(sizebuf_t * p, snapshot_t * s, snapshot_t * ds)
 			// "delta: index"
 			if (debug)
 			{
-				sprintf(dummy,"delta: %u",index);
+				Com_sprintf(dummy,sizeof(dummy),"delta: %u",index);
 				g_DebugText+=dummy;
 			}
 
@@ -559,7 +559,7 @@ void CL_ParseDeltaEntities(sizebuf_t * p, snapshot_t * s, snapshot_t * ds)
 			// "baseline <index>
 			if (debug)
 			{
-				sprintf(dummy,"baseline: %u",index);
+				Com_sprintf(dummy,sizeof(dummy),"baseline: %u",index);
 				g_DebugText+=dummy;
 			}
 
@@ -585,7 +585,7 @@ void CL_ParseDeltaEntities(sizebuf_t * p, snapshot_t * s, snapshot_t * ds)
 		// "unchanged: ds_entity_num"
 	/*	if (debug)
 		{
-			sprintf(dummy,"unchanged: %u\x0D\x0A",ds_entity_num);
+			Com_sprintf(dummy,sizeof(dummy),"unchanged: %u\x0D\x0A",ds_entity_num);
 			g_DebugText+=dummy;
 		}
 	*/

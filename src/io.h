@@ -51,5 +51,7 @@ void	FS_Shutdown(void);
 void	FS_Restart(void);
 char	*FS_Add_Basedir(const char * s);
 void	FS_GetWorkingDir(void);
+void	FS_Flush( int f );
+char	*FS_Add_Gamedir (const char *s);
 
 #endif 

@@ -69,11 +69,13 @@ void Error (const char *fmt, ...)
     va_list ap;
 
     va_start(ap, fmt);    
-    sprintf(buf, fmt, ap);
+    Com_sprintf(buf, sizeof(buf), fmt, ap);
     va_end(ap);
 
 	MessageBox(NULL, buf, "ERROR", MB_OK);
- 
+
+	CL_Shutdown();
+	
     exit(1);
 }
 
@@ -121,12 +123,12 @@ aboolean Engine_Init (void)
 	Engine_GetCvars();
 
 	if (!SV_Init("FIXME")) {
-		Error ("Could not initialize server subsystem");
+		Com_Error ( ERR_FATAL, "Could not initialize server subsystem");
 		return afalse;
 	}
 
 	if (!CL_Init()) {
-		Error ("Could not initialize client subsystem");
+		Com_Error ( ERR_FATAL, "Could not initialize client subsystem");
 		return afalse;
 	}
 	
@@ -134,7 +136,7 @@ aboolean Engine_Init (void)
 
 	if (!Net_Init())
 	{
-		Error ("Could not initialize networking");
+		Com_Error ( ERR_FATAL, "Could not initialize networking");
 		return afalse;
 	}
 

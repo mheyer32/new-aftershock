@@ -372,7 +372,7 @@ cvar_t *Cvar_Get( const char *var_name, const char *resetString, int flags )
 	cvar_t *cvar;
 
 	if( !var_name || !resetString ) {
-		Error("Cvar_Get: NULL parameter\n" );
+		Com_Error( ERR_DROP, "Cvar_Get: NULL parameter\n" );
 	}
 
 	if( !var_name || strchr( var_name, '\\' ) || strchr( var_name, '\"' ) || strchr( var_name, ';' ) ) {
@@ -384,7 +384,7 @@ cvar_t *Cvar_Get( const char *var_name, const char *resetString, int flags )
 
 	if( !cvar ) {
 		if( num_cvars == MAX_CVARS ) {
-			Error("MAX_CVARS" );
+			Com_Error( ERR_FATAL, "MAX_CVARS" );
 		}
 
 		cvar					= &cvars[num_cvars++];
@@ -709,7 +709,7 @@ void Cvar_Update( vmCvar_t *cvar )
 	if( !cvar ) return;
 
 	if( cvar->handle < 0 || cvar->handle >= num_cvars ) {
-		Error( "Cvar_Update: handle out of range" );
+		Com_Error( ERR_DROP, "Cvar_Update: handle out of range" );
 	}
 
 	cur = &cvars[cvar->handle];

@@ -37,19 +37,20 @@ void Com_Error(int level, const char *error, ... )
 {
 	char buf [MAX_STRING_CHARS];
 	va_list mark;
-	va_start (mark,error);
-	
-	vsprintf (buf,error,mark);
 
-	switch (level  )
+	va_start (mark, error);
+	vsprintf (buf, error, mark);
+
+	switch (level)
 	{
 		case ERR_FATAL:
 			Error (buf);
 			break;
+
 		case ERR_DROP:					
 		case ERR_DISCONNECT:
 		case ERR_NEED_CD:		
-				break;
+			break;
 	}
 
 }
@@ -62,7 +63,7 @@ void Com_Printf(const char *msg, ... )
 	va_list mark;
 	va_start (mark,msg);
 
-	Con_Printf (msg,mark);
+	Con_Printf (msg, mark);
 
 }
 /*
@@ -72,14 +73,14 @@ COM_SkipPath
 */
 char *COM_SkipPath (char *pathname)
 {
-	char	*last;
-	last = pathname;
+	char	*last = pathname;
+	
 	while (*pathname)
 	{
-		if (*pathname=='/')
-			last = pathname+1;
-		pathname++;
+		if (*pathname == '/')
+			last = ++pathname;
 	}
+
 	return last;
 }
 

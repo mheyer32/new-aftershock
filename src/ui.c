@@ -44,7 +44,12 @@ aboolean LoadUI (void)
 	UI_inst = LoadLibrary(FS_Add_Basedir(UI_name));
 
 	if (!UI_inst) 
-		return 0;
+	{
+		UI_inst = LoadLibrary(FS_Add_Gamedir(UI_name));
+
+		if (!UI_inst) 
+			return 0;
+	}
 
 	UI_entry = (EntryFunc *)GetProcAddress(UI_inst, "dllEntry");
 

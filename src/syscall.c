@@ -186,7 +186,7 @@ int UI_Call (int arg, ...)
 	switch (arg)
 	{
 		case UI_ERROR:
-			Error (va_arg(mark, const char *));
+			Com_Error ( ERR_FATAL, va_arg(mark, const char *));
 			break;
 			
 		case UI_PRINT:
@@ -493,7 +493,7 @@ int GAME_Call (int arg,...)
 			break;
 
 		case G_ERROR:		// ( const char *string );
-			Error (va_arg (mark,const char * ));
+			Com_Error ( ERR_FATAL, va_arg (mark,const char * ));
 			break;
 
 		case G_MILLISECONDS:	// ( void );

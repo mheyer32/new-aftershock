@@ -331,7 +331,7 @@ shaderpass_clampmap(shader_t *shader, shaderpass_t *pass, int numargs,
 		    char **args)
 {
 	pass->tc_gen = TC_GEN_BASE;
-    pass->texref = R_Load_Texture(args[0],shader->flags | SHADER_CLAMP);
+    pass->texref = R_Load_Texture(args[0], shader->flags | SHADER_CLAMP);
 }
 
 static void
@@ -389,9 +389,7 @@ shaderpass_rgbgen(shader_t *shader, shaderpass_t *pass, int numargs,
 static void shaderpass_blendfunc(shader_t *shader, shaderpass_t *pass, int numargs,
 		     char **args)
 {
-    pass->flags |= SHADER_BLEND;
-    
-    if (numargs == 1)
+	if (numargs == 1)
     {
 		if (!strcmp(args[0], "blend"))
 		{
@@ -407,16 +405,20 @@ static void shaderpass_blendfunc(shader_t *shader, shaderpass_t *pass, int numar
 		{
 			pass->blendsrc = pass->blenddst = GL_ONE;
 		}
-		else
+		else {
 			Syntax();
+			return;
+		}
 	}
     else
     {
 		int i;
 		uint_t *blend;
-		for (i=0; i < 2; ++i)
+
+		for (i = 0; i < 2; i++)
 		{
 			blend = i == 0 ? &pass->blendsrc : &pass->blenddst;
+
 			if (!strcmp(args[i], "gl_zero"))
 				*blend = GL_ZERO;
 			else if (!strcmp(args[i], "gl_one"))
@@ -437,10 +439,14 @@ static void shaderpass_blendfunc(shader_t *shader, shaderpass_t *pass, int numar
 				*blend = GL_DST_ALPHA;
 			else if (!strcmp(args[i], "gl_one_minus_dst_alpha"))
 				*blend = GL_ONE_MINUS_DST_ALPHA;
-			else
+			else {
 				Syntax();
+				return;
+			}
 		}
     }
+
+	pass->flags |= SHADER_BLEND;
 }
 
 static void
@@ -691,7 +697,7 @@ aboolean Shader_Init (void)
 	numdirs = FS_GetFileList ("scripts", "shader", dirlist, 256 * MAX_APATH);
 
 	if (!numdirs) {
-		Error ("Could not find any shaders!");
+		Com_Error ( ERR_FATAL, "Could not find any shaders!");
 		free (r_shaders);
 		return afalse;
 	}
@@ -934,7 +940,8 @@ void Shader_Parsetok(shader_t *shader, shaderpass_t *pass, shaderkey_t *keys, ch
 
 			if (key->func)
 				key->func(shader, pass, numargs, args);
-				return;
+
+			return;
 		}
 	}
 

@@ -18,7 +18,7 @@
 #ifndef __RENDER_BACK_H__
 #define __RENDER_BACK_H__
 
-#define MAX_ARRAYS_VERTS 4096
+#define MAX_ARRAYS_VERTS 2000
 #define MAX_ARRAYS_ELEMS MAX_ARRAYS_VERTS * 3 
 
 typedef struct

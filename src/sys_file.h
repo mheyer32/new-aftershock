@@ -27,6 +27,7 @@ size_t File_Write(const void *buf, size_t size, void *stream);
 void *File_FindFirst (const char *path, char *filename, unsigned char musthave, unsigned char canthave);
 unsigned char File_FindNext(void *handle, char *filename, unsigned char musthave, unsigned char canthave);
 void File_FindClose(void *handle);
+void File_FlushBuffers( void *handle );
 
 #endif 
 

@@ -103,7 +103,7 @@ void SV_SetConfigstring(int num, const char *string)
 	int				i;
 
 	if ( num < 0 || num >= MAX_CONFIGSTRINGS ) {
-		Error( "SV_SetConfigstring: bad index %i", num);
+		Com_Error( ERR_FATAL, "SV_SetConfigstring: bad index %i", num);
 		return;
 	}
 
@@ -125,7 +125,7 @@ void SV_SetConfigstring(int num, const char *string)
 		len = strlen( value );
 
 		if ( svs.gamestate.dataCount + len + 1 > MAX_GAMESTATE_CHARS) {
-			Error( "MAX_GAMESTATE_CHARS exceeded" );
+			Com_Error( ERR_FATAL, "MAX_GAMESTATE_CHARS exceeded" );
 		}
 
 		A_strncpyz( configstring, value, size );
@@ -140,7 +140,7 @@ void SV_SetConfigstring(int num, const char *string)
 void SV_GetConfigstring (int num, char *buffer, int bufferSize)
 {
 	if (num < 0 || num >= MAX_CONFIGSTRINGS) {
-		Error( "SV_GetConfigstring: bad index %i", num);
+		Com_Error( ERR_FATAL, "SV_GetConfigstring: bad index %i", num);
 		return;
 	}
 
@@ -173,7 +173,7 @@ void SV_Get_GameState (gameState_t *state)
 static void SV_Startup( void )
 {
 	if( svs.initialized ) {
-		Error("SV_Startup: svs.initialized");
+		Com_Error( ERR_FATAL, "SV_Startup: svs.initialized");
 		return;
 	}
 
@@ -233,11 +233,11 @@ static void SV_Map( const char *mapname )
 
 	if (!LoadGame()) 
 	{
-		Error ("Could not load Game!");
+		Com_Error ( ERR_FATAL, "Could not load Game!");
 		return;
 	}
 
-//	GAME_main(GAME_INIT, 0, 0, 0, 0, 0, 0, 0);
+	GAME_main(GAME_INIT, 0, 0, 0, 0, 0, 0, 0);
 
 	CL_Startup ();
 
@@ -357,7 +357,7 @@ void SV_SetBrushModel(sharedEntity_t *ent, const char *name)
 	cmodel_t	*model;
 
 	if( !ent || !name ) {
-		Error( "SV_SetBrushModel: NULL" );
+		Com_Error( ERR_FATAL, "SV_SetBrushModel: NULL" );
 		return;
 	}
 

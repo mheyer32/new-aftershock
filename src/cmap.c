@@ -64,9 +64,9 @@ static void CM_Load_Planes (void)
 	dplane_t *planes;
 
 	cm.num_planes = CM_ReadLump (LUMP_PLANES, &planes, sizeof (dplane_t ));
-	cm.planes = malloc (cm.num_planes * sizeof (cplane_t ));
+	cm.planes = malloc (cm.num_planes * sizeof (cplane_t));
 
-	for (i = 0; i < cm.num_planes; i++ )
+	for (i = 0; i < cm.num_planes; i++)
 	{
 		cm.planes[i].dist = LittleFloat (planes[i].offset);
 		cm.planes[i].normal[0] = LittleFloat (planes[i].vec[0]);
@@ -101,7 +101,7 @@ static void CM_Load_Nodes (void)
 		cm.nodes[i].maxs[1] = LittleLong (nodes[i].maxs[1]);
 		cm.nodes[i].maxs[2] = LittleLong (nodes[i].maxs[2]);
 
-		cm.nodes[i].plane = &cm.planes[LittleLong (nodes[i].plane)];
+		cm.nodes[i].plane = &cm.planes[LittleLong(nodes[i].plane)];
 	}
 
 	free (nodes);
@@ -388,7 +388,7 @@ aboolean CM_LoadMap (const char *mapname, aboolean load_rdata)
 
 	COM_StripExtension(mapname, buf);
 
-	sprintf (fname, "%s.bsp", buf);
+	Com_sprintf (fname, sizeof(fname), "%s.bsp", buf);
 
 	// read the file
 	filelen = FS_OpenFile (fname, &file, FS_READ);

@@ -62,26 +62,50 @@ static void Cmd_clear(void)
 /* dumps the console buffer to a file */
 static void Cmd_condump(void)
 {
-/*	file_t fp;
+
+	int dumfile;
 	int i;
 	char arg[MAX_TOKEN_CHARS];
+	char chars[CON_BUFFER_SIZE*CON_LINE_WIDTH];
+
+	memset(chars, 0, CON_BUFFER_SIZE*CON_LINE_WIDTH);
 
 	if (Cmd_Argc() > 1) {
 		Cmd_Argv( 1, arg, sizeof(arg) );
-		fp = FileOpen(arg, OPEN_WRITEONLY);
-		if (fp) {
-			for (i = 0; i<console.numFilledLines; i++) {
-				FilePrintf(fp, "%s"LINE_SEPARATOR, console.chars[i]);
+
+		if( !FS_OpenFile(arg, &dumfile, OPEN_WRITEONLY) ) {
+
+			for( i = 0; i<console.numFilledLines; i++ ) {
+
+				if( i < 0 )
+					continue;
+
+				A_strcat(chars, sizeof(chars), console.chars[i]);
+
+				chars[strlen(chars)] = '\r';
+				chars[strlen(chars)] = '\n';
 			}
-			FileFlush(fp);
-			FileClose(fp);
+
+			A_strcat(chars, sizeof(chars), "Dumped console text to");
+			A_strcat(chars, sizeof(chars), arg );
+			A_strcat(chars, sizeof(chars), ".\r\n");
+
+			if( !FS_Write(chars, strlen(chars), dumfile) )
+			{
+				Con_Printf( "Couldn't dump console text to %s.\n", arg );
+				FS_FCloseFile(dumfile);
+				return;
+			}
+
+			FS_Flush(dumfile);
+			FS_FCloseFile(dumfile);
 			Con_Printf( "Dumped console text to %s.\n", arg );
 		} else {
 			Con_Printf( "ERROR: couldn't open\n" );
 		}
 	} else {
 		Con_Printf( "usage: condump <filename>\n" );
-	}*/
+	}
 }
 
 /* echoes a line on the console */
@@ -416,13 +440,10 @@ void Con_Init(void)
 }
 
 void Con_Shutdown(void)
-{/*
-	if( conlog ) {
-		FileFlush( conlog );
-		FileClose( conlog );
-		conlog = 0;
-		Cvar_Set2( "logfile", "0" );
-	}*/
+{
+	FS_Flush(conlog);
+	FS_FCloseFile(conlog);
+	conlog = 0;
 }
 
 void Con_Toggle(void)
@@ -430,11 +451,11 @@ void Con_Toggle(void)
 	if( console.isOpen ) {
 		console.isOpen = afalse;
 		Key_SetCatcher( Key_GetCatcher() & ~KEYCATCH_CONSOLE );
-		Cvar_Set2( "cl_paused", "1",0 );
+		Cvar_Set2( "cl_paused", "1", 0 );
 	} else {
 		console.isOpen = atrue;
 		Key_SetCatcher( Key_GetCatcher() | KEYCATCH_CONSOLE );
-		Cvar_Set2( "cl_paused", "0",0 );
+		Cvar_Set2( "cl_paused", "0", 0 );
 	}
 
 	memset(console.minibuffer,0, CON_MINIBUFFER_SIZE);
@@ -559,30 +580,29 @@ void Con_Printf(const char *format, ...)
 	va_start(args, format);
 	vsprintf(buffer, format, args);
 	va_end(args);
-/*	
-	if(logfile->integer && !conlog) {
+	
+	if (logfile->integer && !conlog) {
 		time_t t;
 		struct tm *local_time;
 
-		conlog = FileOpen("aconsole.log", OPEN_APPEND);
-		if(conlog) {
+		if( !FS_OpenFile( "aconsole.log", &conlog, OPEN_APPEND ) ) {
 			time(&t);
 			local_time = localtime(&t);
 			Con_Printf("Opened log %s\n", asctime(local_time));
 		} else {
-			Cvar_Set2( "logfile", "0" );
-			Con_Printf("can't open the log file %s\n", Sys_GetErrorString());
+			Cvar_Set2( "logfile", "0", 0 );
+			Con_Printf("Coudln't open the log file\n");
 		}
 	} else if(!logfile->integer && conlog) {
-		FileFlush(conlog);
-		FileClose(conlog);
+		FS_Flush(conlog);
+		FS_FCloseFile(conlog);
 		conlog = 0;
 	}
 
-	if(conlog) {
-		FileWriteString(buffer, conlog);
+	if( conlog ) {
+		FS_Write(buffer, strlen(buffer), conlog);
 	}
-*/
+
 	Con_AddToBuffer(buffer);
 }
 

@@ -19,65 +19,97 @@
 #include "pak.h"
 #include "unzip.h"
 #include "console.h"
+#include "command.h"
 
 /*
  * These are facilities to manipulate pk3 files.  It uses Gilles Vollant's
  * unzip extensions to zlib (source included with distribution).
  */
 
-#define MAX_PAKFILES	1024
+typedef struct pak_s
+{
+	char	name[MAX_OSPATH];
+	unzFile pakfile;
+	int		numentries;
+	struct pak_s *next;
+} pak_t;
 
-static unzFile pakfiles[MAX_PAKFILES];
 static unzFile actfile;
-static int pak_numfiles = 0;
+static pak_t   *pakfile;
 
 void Pak_Init (void)
 {
-	pak_numfiles = 0;
-	memset (pakfiles, 0, MAX_PAKFILES * sizeof (unzFile));
+	pakfile = NULL;
+
+	Cmd_AddCommand ("paklist", Pak_List);
 }
 
 void Pak_Shutdown (void)
 {
-	int i;
+	pak_t *pakfile0, *pak = pakfile;
 
-	for (i = 0; i < pak_numfiles; i++)
-		unzClose (pakfiles[i]);
-
-	pak_numfiles = 0;
+	while (pak->next)
+	{
+		pakfile0 = pak;
+		pak = pak->next;
+		free (pakfile0);
+	}
 }
 
-int Pak_OpenPak (const char *path)
+void Pak_List (void)
 {
-	if (!path || !path[0])
-		return 0;
+	pak_t *pak = pakfile;
 
-	if (pak_numfiles == MAX_PAKFILES) {
-		Error ("Pak overflow!");
-		return 0;
+	for ( ; pak->next; pak = pak->next)
+	{
+		Con_Printf ("%s, %i entries\n", pak->name, pak->numentries);
+	}
+}
+
+aboolean Pak_OpenPak (const char *path)
+{
+	pak_t *pak;
+
+	if (!path || !path[0])
+		return afalse;
+
+	pak = (pak_t *)malloc (sizeof(pak_t));
+	memset (pak, 0, sizeof(pak_t));
+
+	pak->pakfile = unzOpen(path);
+
+	if (!pak->pakfile)
+	{
+		free (pak);
+		return afalse;
 	}
 
-	pakfiles[pak_numfiles] = unzOpen(path);
+	pak->numentries = Unz_NumEntries (pak->pakfile);
 
-	if (!pakfiles[pak_numfiles])
-		return 0;
+	if (!pak->numentries)
+	{
+		free (pak);
+		return afalse;
+	}
 
-	pak_numfiles++;
+	A_strncpyz (pak->name, path, MAX_OSPATH);
+	pak->next = pakfile;
+	pakfile = pak;
 
-	return 1;
+	return atrue;
 }
 
 int Pak_OpenFile (const char *path)
 {
-	int i;
+	pak_t *pak;
 
-	for (i = 0; i < pak_numfiles; i++)
+	for (pak = pakfile; pak->next; pak = pak->next)
 	{
-		if (unzLocateFile(pakfiles[i], path, 2) == UNZ_OK)
+		if (unzLocateFile(pak->pakfile, path, 2) == UNZ_OK)
 		{
-			if (unzOpenCurrentFile(pakfiles[i]) == UNZ_OK)
+			if (unzOpenCurrentFile(pak->pakfile) == UNZ_OK)
 			{
-				actfile = pakfiles[i];
+				actfile = pak->pakfile;
 				return 1;
 			}
 		}
@@ -118,12 +150,13 @@ int Pak_ReadFile (const char *path, int len, void *buf)
 int Pak_GetFileList (const char *dir, const char *extension, char *str, int bufsize)
 {
 	int len = 0, alllen = 0;
-	int i, state = 0;
+	int state = 0;
 	int found = 0, allfound = 0;
-	
-	for (i = 0;i < pak_numfiles; i++)
+	pak_t *pak;
+
+	for (pak = pakfile; pak->next; pak = pak->next)
 	{
-		found = Unz_GetStringForDir(pakfiles[i], dir, extension, str + alllen, bufsize - alllen, &len);
+		found = Unz_GetStringForDir(pak->pakfile, dir, extension, str + alllen, bufsize - alllen, &len);
 
 		if (found)
 		{
@@ -138,10 +171,10 @@ int Pak_GetFileList (const char *dir, const char *extension, char *str, int bufs
 
 aboolean Pak_FileExists (const char *file)
 {
-	int i;
+	pak_t *pak;
 
-	for (i = 0; i < pak_numfiles; i++)
-		if (Unz_FileExists(pakfiles[i], file))
+	for (pak = pakfile; pak->next; pak = pak->next)
+		if (Unz_FileExists(pak->pakfile, file))
 			return atrue;
 
 	return afalse;

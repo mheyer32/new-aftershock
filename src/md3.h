@@ -82,8 +82,7 @@ typedef struct
 typedef struct
 {
 	char			name[MAX_APATH];	// tag name
-    vec3_t			pos;
-    mat3x3_t		rot;
+	orientation_t	orient;
 } md3tag_t;
 
 typedef struct

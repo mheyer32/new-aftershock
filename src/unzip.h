@@ -272,18 +272,8 @@ extern int ZEXPORT unzGetLocalExtrafield OF((unzFile file,
 }
 #endif
 
-
-// TEST :
-#define MAXNAMELENGHT 128
-
-
-
 int Unz_GetStringForDir (unzFile * pak,const char * dir,const char *extension,char * buf ,int bufsize,int *len);
 int Unz_FileExists (unzFile * pak, const char * file );
-
-
-
-
-
+int Unz_NumEntries (unzFile *pak);
 
 #endif /* _unz_H */

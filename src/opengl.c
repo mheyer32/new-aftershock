@@ -2443,7 +2443,7 @@ static int GL_ChoosePFD( int colorbits, int depthbits, int stencilbits )
 			}
 	}
 
-	bestpfd = & pfdlist[best];
+	bestpfd = &pfdlist[best];
 
 	if (!(bestpfd->dwFlags & PFD_GENERIC_FORMAT) )
 	{
@@ -2682,6 +2682,11 @@ aboolean GL_CheckExtensions (void)
 	return atrue;
 }
 
+char *Get_OnOffString(int val)
+{
+	return (val) ? "enabled" : "disabled";
+}
+
 aboolean Init_OpenGL (void)
 {
 	PIXELFORMATDESCRIPTOR pfd;
@@ -2876,15 +2881,15 @@ aboolean Init_OpenGL (void)
 
 	Con_Printf ( "---------------------\n" );
 
-	Con_Printf ("rendering primitives: single glDrawElements\n"); // TODO !!!
-	Con_Printf ("texturemode: %s\n", r_textureMode->string);
-	Con_Printf ("picmip:%i\n", r_picmip->integer);
-	Con_Printf ("texture bits:%i\n", r_texturebits->integer);
+	Con_Printf ( "rendering primitives: single glDrawElements\n" ); // TODO !!!
+	Con_Printf ( "texturemode: %s\n", r_textureMode->string );
+	Con_Printf ( "picmip:%i\n", r_picmip->integer );
+	Con_Printf ( "texture bits:%i\n", r_texturebits->integer );
 
-	Con_Printf ("multitexture: %s\n", (r_ext_multitexture->integer) ? "enabled" : "disabled");
-	Con_Printf ("compiled vertex arrays: %s\n", (r_ext_compiled_vertex_array->integer) ? "enabled" : "disabled");
-	Con_Printf ("texenv add: %s\n", (r_ext_texture_env_add->integer) ? "enabled" : "disabled");
-	Con_Printf ("compressed textures: %s\n", (r_ext_compressed_textures->integer) ? "enabled" : "disabled");
+	Con_Printf ( "multitexture: %s\n", Get_OnOffString(r_ext_multitexture->integer));
+	Con_Printf ( "compiled vertex arrays: %s\n", Get_OnOffString(r_ext_compiled_vertex_array->integer));
+	Con_Printf ( "texenv add: %s\n", Get_OnOffString(r_ext_texture_env_add->integer));
+	Con_Printf ( "compressed textures: %s\n", Get_OnOffString(r_ext_compressed_textures->integer));
 
 	// Reset the States
 #if TRACK_GL_STATE

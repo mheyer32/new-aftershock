@@ -17,6 +17,7 @@
  */
 
 #include "a_shared.h"
+#include "matrix.h"
 
 vec3_t	vec3_origin = {0, 0, 0};
 vec3_t	axisDefault[3] = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
@@ -322,8 +323,8 @@ void RotatePointAroundVector( vec3_t dst, const  vec3_t dir, const  vec3_t point
 	zrot[1][0] = -zrot[0][1];		// -sin
 	zrot[1][1] = zrot[0][0];		// cos
 
-	MatrixMultiply( m, zrot, tmpmat );
-	MatrixMultiply( tmpmat, im, rot );
+	Matrix3_Multiply( m, zrot, tmpmat );
+	Matrix3_Multiply( tmpmat, im, rot );
 
 	dst[0] = rot[0][0] * point[0] + rot[0][1] * point[1] + rot[0][2] * point[2];
 	dst[1] = rot[1][0] * point[0] + rot[1][1] * point[1] + rot[1][2] * point[2];
@@ -1154,34 +1155,6 @@ int	PlaneTypeForNormal (vec3_t normal) {
 	
 	return PLANE_NON_AXIAL;
 }
-
-
-/*
-================
-MatrixMultiply
-================
-*/
-void MatrixMultiply(float in1[3][3], float in2[3][3], float out[3][3]) {
-	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] +
-				in1[0][2] * in2[2][0];
-	out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] +
-				in1[0][2] * in2[2][1];
-	out[0][2] = in1[0][0] * in2[0][2] + in1[0][1] * in2[1][2] +
-				in1[0][2] * in2[2][2];
-	out[1][0] = in1[1][0] * in2[0][0] + in1[1][1] * in2[1][0] +
-				in1[1][2] * in2[2][0];
-	out[1][1] = in1[1][0] * in2[0][1] + in1[1][1] * in2[1][1] +
-				in1[1][2] * in2[2][1];
-	out[1][2] = in1[1][0] * in2[0][2] + in1[1][1] * in2[1][2] +
-				in1[1][2] * in2[2][2];
-	out[2][0] = in1[2][0] * in2[0][0] + in1[2][1] * in2[1][0] +
-				in1[2][2] * in2[2][0];
-	out[2][1] = in1[2][0] * in2[0][1] + in1[2][1] * in2[1][1] +
-				in1[2][2] * in2[2][1];
-	out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] +
-				in1[2][2] * in2[2][2];
-}
-
 
 void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up) {
 	float		angle;

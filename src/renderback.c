@@ -80,32 +80,33 @@ colour_t r_actcolor = {255, 255, 255, 255};
 
 extern reference_t transform_ref;
 
+static float turbsin[256];
+static float sintable[1024];
+static float modmat[16];
+
 static float render_func_eval(uint_t func, float *args)
 {
-	float x = args[2] + shadertime * args[3];
+    float x = args[2] + shadertime * args[3];
+	x -= floor(x);
 
 	// Evaluate a number of time based periodic functions
-	if (func == SHADER_FUNC_SIN)
-		return ((float)sin((double)(args[2]*TWOPI + shadertime*args[3])) * args[1] + args[0]);
-	else 
+	switch (func)
 	{
-		x -= (float)floor(x);
-
-		switch (func)
-		{
-			case SHADER_FUNC_TRIANGLE:
-				return (x < 0.5) ? (2.0 * x - 1.0) * args[1] + args[0] : 
-					(-2.0 * x + 2.0) * args[1] + args[0];
-				
-			case SHADER_FUNC_SQUARE:
-				return (x < 0.5) ? args[1] + args[0] : args[0] - args[1];
-				
-			case SHADER_FUNC_SAWTOOTH:
-				return x * args[1] + args[0];
-				
-			case SHADER_FUNC_INVERSESAWTOOTH:
-				return (1.0 - x) * args[1] + args[0];
-		}
+	case SHADER_FUNC_SIN:
+		return sintable[(int)(x * 1024.0f) & 1023] * args[1] + args[0];
+		
+	case SHADER_FUNC_TRIANGLE:
+		return (x < 0.5) ? (2.0 * x - 1.0) * args[1] + args[0] : 
+		(-2.0 * x + 2.0) * args[1] + args[0];
+		
+	case SHADER_FUNC_SQUARE:
+		return (x < 0.5) ? args[1] + args[0] : args[0] - args[1];
+		
+	case SHADER_FUNC_SAWTOOTH:
+		return x * args[1] + args[0];
+		
+	case SHADER_FUNC_INVERSESAWTOOTH:
+		return (1.0 - x) * args[1] + args[0];
 	}
 
     return 0.0;
@@ -113,6 +114,8 @@ static float render_func_eval(uint_t func, float *args)
 
 void R_BackendInit(void)
 {
+	int i;
+
     arrays.verts = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
 	arrays.norms = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
     arrays.tex_st = (vec2_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec2_t));
@@ -131,12 +134,18 @@ void R_BackendInit(void)
 	}
 	else 
 	{
-		int i;
-
 		arrays.stage_tex_st = (vec2_t **)malloc(glconfig.maxActiveTextures * sizeof(vec2_t *));
 		
 		for (i = 0; i < glconfig.maxActiveTextures; i++)
 			arrays.stage_tex_st[i] = (vec2_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec2_t));
+	}
+
+	for (i = 0; i < 1024; i++)
+	{
+		if (i < 256)
+			turbsin[i] = (float)sin(i * (TWOPI / 256.0f));
+
+		sintable[i] = (float)sin(i * (TWOPI / 1024.0f));
 	}
 }
 
@@ -538,79 +547,56 @@ void R_BackendMake_Vertices (shader_t *s)
 
 float *R_BackendMake_TexCoords (shaderpass_t *pass, int stage)
 {
-	int i = arrays.numverts, n;
+	int i = arrays.numverts;
 	vec2_t *in = arrays.tex_st;
 	vec2_t *out = arrays.stage_tex_st[stage];
 	vec2_t *txmod = arrays.texmod_st;
-	vec3_t dir, pos;
-	int j;
-	float rot;
-	float cost;
-	float sint;
-	mat4_t	trans, dest;
 
 	switch (pass->tc_gen)
 	{
 		case TC_GEN_BASE:
 			in = arrays.tex_st;
 			break;
-			
+
 		case TC_GEN_LIGHTMAP:
 			in = arrays.lm_st;
 			break;
-			
-		// FIXME !!!
-		// this is not cube-mapping!
-
-		// TODO !!!
+	
 		case TC_GEN_ENVIRONMENT:
+		{
+			// TODO !!!
+			vec3_t dir;
+			int j;
+
 			in = arrays.stage_tex_st[stage];
-			
-			VectorCopy (r_eyepos, pos);
-
-			if (!transform_ref.matrix_identity)
-			{
-				if (!transform_ref.inv_matrix_calculated)	
-				{
-					if (!Matrix4_Inverse(transform_ref.inv_matrix, transform_ref.matrix))
-						Matrix4_Identity(transform_ref.inv_matrix);
-					
-					transform_ref.inv_matrix_calculated = atrue;	
-				}
-				
-				Matrix_Multiply_Vec3(transform_ref.inv_matrix, pos, pos);
-			}
-
-			Matrix4_Transponse (transform_ref.world_matrix, trans);
-			Matrix4_Multiply (transform_ref.world_matrix, transform_ref.obj_matrix, dest);
 
 			for (j = 0; j < arrays.numverts; j++)
 			{
-#if 1
-				VectorSubtract(pos, arrays.verts[j], dir);
-				VectorNormalizeFast(dir);
+				dir[0] = (arrays.verts[j][0] * modmat[0]) + (arrays.verts[j][1] * modmat[4]) + (arrays.verts[j][2] * modmat[8] ) + modmat[12];
+				dir[1] = (arrays.verts[j][0] * modmat[1]) + (arrays.verts[j][1] * modmat[5]) + (arrays.verts[j][2] * modmat[9] ) + modmat[13];
+				dir[2] = (arrays.verts[j][0] * modmat[2]) + (arrays.verts[j][1] * modmat[6]) + (arrays.verts[j][2] * modmat[10]) + modmat[14];
 
-				in[j][0] = dir[0] + arrays.norms[j][0];
-				in[j][1] = dir[1] + arrays.norms[j][1];
-#else
-				Matrix_Multiply_Vec3 (dest, arrays.norms[j], dir);
+				VectorNormalize (dir);
 
-				in[j][0] = dir[0];
+				in[j][0] = dir[2];
 				in[j][1] = dir[1];
-#endif
 			}
+		}
+		break;
 
-			break;
-			
-		case TC_GEN_VECTOR:		// Is this right ?
+		case TC_GEN_VECTOR:
+		{
+			int j;
 			in = arrays.stage_tex_st[stage];
-				
-			for (j = 0; j < arrays.numverts; j++)
-			{
+
+			for (j = 0;j < arrays.numverts; j++)
+			{ 
 				in[j][0] = DotProduct(pass->tc_gen_s, arrays.verts[j]);
 				in[j][1] = DotProduct(pass->tc_gen_t, arrays.verts[j]);
 			}
-			break;
+		}
+
+		break;
 
 		default:
 			in = arrays.tex_st;
@@ -621,10 +607,11 @@ float *R_BackendMake_TexCoords (shaderpass_t *pass, int stage)
 		(pass->tc_gen != TC_GEN_VECTOR))
 		memcpy (out, in, arrays.numverts * sizeof(vec2_t));
 
-	if (pass->num_tc_mod > 0)
+    if (pass->flags & SHADER_TCMOD)
 	{
 		float t1, t2, p1, p2;
-		float pos;
+		float sint, cost;
+		int n, j;
 
 		for (n = 0; n < pass->num_tc_mod; n++)
 		{
@@ -634,52 +621,55 @@ float *R_BackendMake_TexCoords (shaderpass_t *pass, int stage)
 			{
 				case SHADER_TCMOD_ROTATE:
 				{
-					rot = pass->tc_mod[n].args[0] * shadertime * DEG2RAD;
+					j = (int)(-pass->tc_mod[n].args[0] * shadertime * 1024 / 360.0f);
 					
-					sint = sin(rot);
-					cost = cos(rot);
-					p1 = 0.5f * (1 - cost + sint);
-					p2 = 0.5f * (1 - sint - cost);
+					sint = sintable[j & 1023];
+					cost = sintable[(j + 256) & 1023];
+					p1 = 0.5f - cost * 0.5f + sint * 0.5f;
+					p2 = 0.5f - sint * 0.5f - cost * 0.5f;
 					
 					for (j = 0; j < arrays.numverts; j++)
 					{
-						out[j][0] = txmod[j][0] * cost - txmod[j][1] * sint + p1;
-						out[j][1] = txmod[j][1] * cost + txmod[j][0] * sint + p2;
+						t1 = txmod[j][0];
+						t2 = txmod[j][1];
+						
+						out[j][0] = t1 * cost - t2 * sint + p1;
+						out[j][1] = t2 * cost + t1 * sint + p2;
 					}
 				}
 				break;
 				
 				case SHADER_TCMOD_SCALE:
 				{
+					t1 = pass->tc_mod[n].args[0];
+					t2 = pass->tc_mod[n].args[1];
+
 					for (j = 0; j < arrays.numverts; j++)
 					{
-						out[j][0] = txmod[j][0] * pass->tc_mod[n].args[0];
-						out[j][1] =	txmod[j][1] * pass->tc_mod[n].args[1];
+						out[j][0] = txmod[j][0] * t1;
+						out[j][1] = txmod[j][1] * t2;
 					}
 				}
 				break;
-					
+
 				case SHADER_TCMOD_TURB:
 				{
-					float k;
-
-					pos = pass->tc_mod[n].args[2] + shadertime * pass->tc_mod[n].args[3];
+					t1 = pass->tc_mod[n].args[2] + shadertime * pass->tc_mod[n].args[3];
+					t1 -= floor(t1);
+					t2 = pass->tc_mod[n].args[1];
 
 					for (j = 0; j < arrays.numverts; j++)
 					{
-						k = (arrays.verts[j][0] + arrays.verts[j][2]) / 1024.f + pos;
-						out[j][0] = txmod[j][0] + pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
-
-						k = (arrays.verts[j][1]) / 1024.f + pos;
-						out[j][1] = txmod[j][1] + pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
+						out[j][0] = txmod[j][0] + t2*turbsin[(int)((t1+txmod[j][1]*t2)*256.0f)&255];
+						out[j][1] = txmod[j][1] + t2*turbsin[(int)((t1+txmod[j][0]*t2)*256.0f)&255];
 					}
 				}
-				
 				break;
-					
+			
 				case SHADER_TCMOD_STRETCH:
 				{
-					t1 = 1.0f / (float)render_func_eval(pass->tc_mod_stretch.func, pass->tc_mod_stretch.args);
+					t1 = 1.0f / (float)render_func_eval(pass->tc_mod_stretch.func,
+						pass->tc_mod_stretch.args);
 					t2 = 0.5f - t1 * 0.5f;
 
 					for (j = 0; j < arrays.numverts; j++) {
@@ -687,33 +677,31 @@ float *R_BackendMake_TexCoords (shaderpass_t *pass, int stage)
 						out[j][1] = txmod[j][1] * t1 + t2;
 					}
 				}
-
 				break;
 					
 				case SHADER_TCMOD_SCROLL:
 				{
-					pos = pass->tc_mod[n].args[0] * shadertime;
-					pos -= floor(pos);
-					t1 = (float)pos;
+					t1 = pass->tc_mod[n].args[0] * shadertime;
+					t1 -= floor(t1);
 
-					pos = pass->tc_mod[n].args[1] * shadertime;
-					pos -= floor(pos);
-					t2 = (float)pos;
+					t2 = pass->tc_mod[n].args[1] * shadertime;
+					t2 -= floor(t2);
 
 					for (j = 0; j < arrays.numverts; j++) {
 						out[j][0] = txmod[j][0] + t1;
 						out[j][1] = txmod[j][1] + t2;
 					}
 				}
-				
 				break;
 				
 				case SHADER_TCMOD_TRANSFORM:
 				{
 					for (j = 0; j < arrays.numverts; j++) 
 					{
-						out[j][0] = txmod[j][0] * pass->tc_mod[n].args[0] + txmod[j][1] * pass->tc_mod[n].args[2] + pass->tc_mod[n].args[4];
-						out[j][1] = txmod[j][1] * pass->tc_mod[n].args[1] + txmod[j][0] * pass->tc_mod[n].args[3] + pass->tc_mod[n].args[5];
+						t1 = txmod[j][0];
+						t2 = txmod[j][1];
+						out[j][0] = t1 * pass->tc_mod[n].args[0] + t2 * pass->tc_mod[n].args[2] + pass->tc_mod[n].args[4];
+						out[j][1] = t2 * pass->tc_mod[n].args[1] + t1 * pass->tc_mod[n].args[3] + pass->tc_mod[n].args[5];
 					}
 				}
 				break;
@@ -724,7 +712,7 @@ float *R_BackendMake_TexCoords (shaderpass_t *pass, int stage)
 			}
 		}
 	}
-	
+
 	return *(float **)&out;
 }
 
@@ -751,7 +739,13 @@ byte *R_BackendMake_Colors (shaderpass_t *pass)
 			break;
 
 		case RGB_GEN_IDENTITY:
-			memset (arrays.mod_colour, 255, sizeof(colour_t)*arrays.numverts);
+			for (i = 0; i < arrays.numverts; i++) 
+			{
+				arrays.mod_colour[i][0] = 255;
+				arrays.mod_colour[i][1] = 255;
+				arrays.mod_colour[i][2] = 255;
+			}
+
 			col = arrays.mod_colour;
 			break;
 
@@ -781,7 +775,7 @@ byte *R_BackendMake_Colors (shaderpass_t *pass)
 				arrays.mod_colour[i][0] = 255 - arrays.entity_colour[i][0];
 				arrays.mod_colour[i][1] = 255 - arrays.entity_colour[i][1];
 				arrays.mod_colour[i][2] = 255 - arrays.entity_colour[i][2];
-				arrays.mod_colour[i][2] = 255;
+				arrays.mod_colour[i][3] = 255;
 			}
 			break;
 

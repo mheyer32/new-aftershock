@@ -117,7 +117,7 @@ aboolean CL_Init (void)
 	if (!LoadUI ())
 	{
 		client_prepared = afalse;
-		Error ("FAILED to load UI!");
+		Com_Error ( ERR_DROP, "FAILED to load UI!");
 		return afalse;
 	}
 
@@ -154,13 +154,13 @@ aboolean CL_Shutdown (void)
 void CL_Startup (void)
 {
 	if (!client_prepared) {
-		Error ("CL_Starup: not initialised");
+		Com_Error ( ERR_FATAL, "CL_Starup: not initialised");
 		return;
 	}
 
 	if (!LoadCGAME ())
 	{
-		Error ("Couldn't load cgame");
+		Com_Error ( ERR_FATAL, "Couldn't load cgame");
 		return;
 	}
 
@@ -175,7 +175,7 @@ void CL_Startup (void)
 void CL_End_Gaming (void)
 {
 	if (!cl_running->integer) {
-		Error ("CL_End_Gaming: not running");
+		Com_Error ( ERR_FATAL, "CL_End_Gaming: not running");
 		return;
 	}
 

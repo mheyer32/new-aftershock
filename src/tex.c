@@ -132,7 +132,7 @@ static char *Find_Texture (const char *filename)
 		COM_ExtractFileBase(dirptr, s_base);
 
 		if( !A_stricmp(base, s_base) ) {
-			sprintf(buf, "%s/%s", path, dirptr);
+			Com_sprintf (buf, sizeof(buf), "%s/%s", path, dirptr);
 			return buf;
 		}
 	}
@@ -592,7 +592,7 @@ int R_Load_Texture (const char *name, int flags)
 
 	if (r_num_textures == MAX_TEX) 
 	{
-		Error ("Out of Textures!");
+		Com_Error ( ERR_FATAL, "Out of Textures!");
 		return -1;
 	}
 

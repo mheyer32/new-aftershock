@@ -40,7 +40,7 @@ void MD3_Init (void)
 
 void MD3_Shutdown (void)
 {
-#if 0
+#if 1
 	int i;
 
 	for (i = 0; i < r_md3Modelcount; i++) MD3_Free(i);
@@ -87,20 +87,23 @@ void MD3_Free (int num)
 		{
 			mesh = &mod->meshes[i];
 
+			if (mesh->numverts > 0)
+			{
+				for (i = 0; i < mesh->numframes; i++) {
+					free (mesh->points[i]);
+					free (mesh->norms[i]);
+				}
+
+				free (mesh->norms);
+				free (mesh->points);
+			}
+
 			if (mesh->numelems > 0)
 				free (mesh->elems);
 
 			if (mesh->numtris > 0)
 				free(mesh->tex_st);
 	
-			if (mesh->numverts > 0)
-			{
-				for (i = 0; i < mesh->numframes; i++)
-					free (mesh->points[i]);
-
-				free (mesh->points);
-			}
-
 			if (mesh->numskins > 0)
 				free (mesh->skins);
 
@@ -108,6 +111,8 @@ void MD3_Free (int num)
 				free (mesh);
 		}
 	}
+
+	free (mod);
 }
 
 /*
@@ -149,7 +154,7 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 
 	if (r_md3Modelcount >= MAX_MODELS)
 	{
-//		Error ("R_LoadMD3: too many models\n");
+//		Com_Error ( ERR_FATAL, "R_LoadMD3: too many models\n");
 		return afalse;
 	}
 
@@ -230,7 +235,7 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 			data += sizeof(float);
 
 			// creator
-			memcpy(md3->frames[i].creator, data, 16);
+			A_strncpyz(md3->frames[i].creator, data, 16);
 			data += 16;
 		}
 	} else {
@@ -256,31 +261,31 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 				data += MAX_APATH;
 
 				// position
-				md3->tags[i][j].pos[0] = LittleFloat(*(float *) data);
+				md3->tags[i][j].orient.origin[0] = LittleFloat(*(float *) data);
 				data += sizeof(float);
-				md3->tags[i][j].pos[1] = LittleFloat (*(float *) data);
+				md3->tags[i][j].orient.origin[1] = LittleFloat (*(float *) data);
 				data += sizeof(float);
-				md3->tags[i][j].pos[2] = LittleFloat(*(float *) data);
+				md3->tags[i][j].orient.origin[2] = LittleFloat(*(float *) data);
 				data += sizeof(float);
 
 				// rotation
-				md3->tags[i][j].rot[0][0] = LittleFloat (*(float *) data);
+				md3->tags[i][j].orient.axis[0][0] = LittleFloat (*(float *) data);
 				data += sizeof(float);
-				md3->tags[i][j].rot[0][1] = LittleFloat (*(float *) data);
+				md3->tags[i][j].orient.axis[0][1] = LittleFloat (*(float *) data);
 				data += sizeof(float);
-				md3->tags[i][j].rot[0][2] = LittleFloat (*(float *) data);
+				md3->tags[i][j].orient.axis[0][2] = LittleFloat (*(float *) data);
 				data += sizeof(float);
-				md3->tags[i][j].rot[1][0] = LittleFloat(*(float *) data);
+				md3->tags[i][j].orient.axis[1][0] = LittleFloat(*(float *) data);
 				data += sizeof(float);
-				md3->tags[i][j].rot[1][1] = LittleFloat (*(float *) data);
+				md3->tags[i][j].orient.axis[1][1] = LittleFloat (*(float *) data);
 				data += sizeof(float);
-				md3->tags[i][j].rot[1][2] = LittleFloat (*(float *) data);
+				md3->tags[i][j].orient.axis[1][2] = LittleFloat (*(float *) data);
 				data += sizeof(float);
-				md3->tags[i][j].rot[2][0] = LittleFloat (*(float *) data);
+				md3->tags[i][j].orient.axis[2][0] = LittleFloat (*(float *) data);
 				data += sizeof(float);
-				md3->tags[i][j].rot[2][1] = LittleFloat (*(float *) data);
+				md3->tags[i][j].orient.axis[2][1] = LittleFloat (*(float *) data);
 				data += sizeof(float);
-				md3->tags[i][j].rot[2][2] = LittleFloat (*(float *) data);
+				md3->tags[i][j].orient.axis[2][2] = LittleFloat (*(float *) data);
 				data += sizeof(float);
 			}
 		}
@@ -337,7 +342,7 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 					mesh->skins = NULL;
 				}
 
-				// indizes
+				// indexes
 				if (mesh->numtris && (mesh_header->meshsize > mesh_header->elem_offs)) {
 					mesh->elems = (unsigned int *) malloc(mesh->numtris * 3 * sizeof(unsigned int));
 					mesh->numelems = mesh->numtris*3;
@@ -396,8 +401,8 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 							(*pf)[2] = (float)(*((short *)data)) * MD3_XYZ_SCALE;
 							data += sizeof(short);
 
-							(*pnorms)[0] = (LittleFloat((float)(*data++))) / 256.f;
-							(*pnorms)[1] = (LittleFloat((float)(*data++))) / 256.f;
+							(*pnorms)[0] = (LittleFloat((float)(*data++))) * (1 / 256.f);
+							(*pnorms)[1] = (LittleFloat((float)(*data++))) * (1 / 256.f);
 							(*pnorms)[2] = 0;
 						}
 					}
@@ -464,7 +469,7 @@ static aboolean R_LoadSkin(skin_t *skin, const char *name)
 
 	if (r_md3Skincount >= MAX_SKINS)
 	{
-//		Error ("R_LoadSkin: too many skins\n");
+//		Com_Error ( ERR_FATAL, "R_LoadSkin: too many skins\n");
 		return afalse;
 	}
 

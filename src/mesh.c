@@ -115,7 +115,7 @@ static void Mesh_FindSize(int *numcp, vec3_t *cp, int *size)
     }
 
     if (!found) {
-		Error("Bad mesh control points");
+		Com_Error( ERR_FATAL, "Bad mesh control points");
 		return;
 	}
 
@@ -146,7 +146,7 @@ static void Mesh_FindSize(int *numcp, vec3_t *cp, int *size)
     }
 
     if (!found) {
-		Error("Bad mesh control points");
+		Com_Error( ERR_FATAL, "Bad mesh control points");
 		return;
 	}
 

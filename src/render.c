@@ -194,7 +194,7 @@ void R_GetCvars( void )
 	}
 }
 
-static void R_Draw_World (void);
+void R_Draw_World (void);
 static void R_Setup_Clipplanes (const refdef_t *fd);
 static void R_Recursive_World_Node (int n);
 static void R_Render_Walk_Face (int num);
@@ -263,12 +263,12 @@ void R_Init(void)
 	R_GetCvars( );
 
 	if (!Init_OpenGL()) {
-		Error ("Could not Init OpenGL!");
+		Com_Error ( ERR_FATAL, "Could not Init OpenGL!");
 		return;
 	}
 
 	if (!Shader_Init()) {
-		Error ("Could not Init Shaders!");
+		Com_Error ( ERR_FATAL, "Could not Init Shaders!");
 		return;
 	}
 
@@ -548,20 +548,20 @@ void R_LerpTag(orientation_t *tag, int modnum, int startFrame, int endFrame, flo
 		return;
 
 	R_InterpolateNormal(
-		model->tags[startFrame][tagnum].rot[0],
-		model->tags[endFrame][tagnum].rot[0],
+		model->tags[startFrame][tagnum].orient.axis[0],
+		model->tags[endFrame][tagnum].orient.axis[0],
 		frac, tag->axis[0]);
 	R_InterpolateNormal(
-		model->tags[startFrame][tagnum].rot[1], 
-		model->tags[endFrame][tagnum].rot[1], 
+		model->tags[startFrame][tagnum].orient.axis[1], 
+		model->tags[endFrame][tagnum].orient.axis[1], 
 		frac, tag->axis[1]);
 	R_InterpolateNormal(
-		model->tags[startFrame][tagnum].rot[2], 
-		model->tags[endFrame][tagnum].rot[2], 
+		model->tags[startFrame][tagnum].orient.axis[2], 
+		model->tags[endFrame][tagnum].orient.axis[2], 
 		frac, tag->axis[2]);
 	R_InterpolateNormal(
-		model->tags[startFrame][tagnum].pos, 
-		model->tags[endFrame][tagnum].pos, 
+		model->tags[startFrame][tagnum].orient.origin, 
+		model->tags[endFrame][tagnum].orient.origin, 
 	  frac, tag->origin);
 }
 
@@ -674,7 +674,7 @@ static void R_RenderModel( const refEntity_t *re )
 	for( j = 0, mesh = &model->meshes[0]; j < model->nummeshes; j++, mesh++ ) {
 		shaderref = R_FindMeshShader( re, mesh );
 		
-		if (shaderref < 0) {
+		if ( shaderref < 0 ) {
 			R_FinishModel();
 			return;
 		}
@@ -821,9 +821,9 @@ void R_RenderScene (const refdef_t *fd)
 	transform_ref.world_matrix[9] = 1;
 	transform_ref.world_matrix[10] = 0;
 	transform_ref.world_matrix[11] = 0;
-	transform_ref.world_matrix[12] = -fd->vieworg[0];
-	transform_ref.world_matrix[13] = -fd->vieworg[1];
-	transform_ref.world_matrix[14] = -fd->vieworg[2];
+	transform_ref.world_matrix[12] = fd->vieworg[0];
+	transform_ref.world_matrix[13] = fd->vieworg[1];
+	transform_ref.world_matrix[14] = fd->vieworg[2];
 	transform_ref.world_matrix[15] = 1;
 
 	// Load a rotated matrix
@@ -985,7 +985,7 @@ void R_EndFrame (void)
 }
 
 // TODO
-static void R_Draw_World (void)
+void R_Draw_World (void)
 {
 	int i;
 
@@ -1076,9 +1076,9 @@ static void R_Recursive_World_Node (int n)
 		cleaf_t *leaf = &cm.leaves[~n];
 		int i;
 
-		if (r_eyecluster >= 0)
-			if (!BSP_TESTVIS(r_eyecluster, leaf->cluster)) 
-				return;
+//		if (r_eyecluster >= 0)
+//			if (!BSP_TESTVIS(r_eyecluster, leaf->cluster)) 
+//				return;
 		
 //		if (R_ClipFrustrum (leaf->mins, leaf->maxs))
 //			return;
@@ -1195,7 +1195,7 @@ static int R_Find_Cluster(const vec3_t pos)
     int leaf = -1;
 	float dist;
 	cplane_t *plane;
- 	cnode_t *node = &cm.nodes[0];
+ 	cnode_t *node = cm.nodes;
    
     // Find the leaf/cluster containing the given position
     for (;;)
