@@ -34,18 +34,18 @@ NET_SOCKET IPX_Socket(unsigned short port)
 
 	new_socket = socket(PF_IPX, SOCK_DGRAM, NSPROTO_IPX);
 	if (new_socket == NET_INVALID_SOCKET) {
-		Con_Printf("WARNING: IPX_Socket: socket: %s\n", Net_GetErrorString());
+		Con_Printf(S_COLOR_YELLOW "WARNING: IPX_Socket: socket: %s\n", Net_GetErrorString());
 		return(NET_INVALID_SOCKET);
 	}
 	
 	if(ioctlsocket(new_socket, FIONBIO, &opt) == NET_SOCKET_ERROR) {
-		Con_Printf("WARNING: IPX_Socket: ioctl FIONBIO: %s\n", Net_GetErrorString());
+		Con_Printf(S_COLOR_YELLOW "WARNING: IPX_Socket: ioctl FIONBIO: %s\n", Net_GetErrorString());
 		closesocket(new_socket);
 		return(NET_INVALID_SOCKET);
 	}
 
 	if(setsockopt(new_socket, SOL_SOCKET, SO_BROADCAST, (char *)&opt, sizeof(opt))) {
-		Con_Printf("WARNING: IPX_Socket: setsockopt SO_BROADCAST: %s\n", Net_GetErrorString());
+		Con_Printf(S_COLOR_YELLOW "WARNING: IPX_Socket: setsockopt SO_BROADCAST: %s\n", Net_GetErrorString());
 		closesocket(new_socket);
 		return(NET_INVALID_SOCKET);
 	}
@@ -56,7 +56,7 @@ NET_SOCKET IPX_Socket(unsigned short port)
 	addr.sa_socket = htons(port);
 
 	if (bind(new_socket, (struct sockaddr *) &addr,  sizeof(addr))==NET_INVALID_SOCKET) {
-		Con_Printf("WARNING: IPX_Socket: bind: %s\n", Net_GetErrorString());
+		Con_Printf(S_COLOR_YELLOW "WARNING: IPX_Socket: bind: %s\n", Net_GetErrorString());
 		closesocket(new_socket);
 		return(NET_INVALID_SOCKET);
 	}

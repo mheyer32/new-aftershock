@@ -366,8 +366,10 @@ aboolean CM_LoadMap (const char *mapname, aboolean load_rdata)
 	{
 		if (load_rdata == cm.r_data_loaded)
 			return atrue;
-		else 
+		else {
 			CM_FreeMap ();
+			cm.name[0] = 0;
+		}
 	}
 
 	if (cm.name[0])
@@ -375,7 +377,7 @@ aboolean CM_LoadMap (const char *mapname, aboolean load_rdata)
 
 	COM_StripExtension(mapname, buf);
 
-	sprintf (fname, "maps/%s.bsp", buf);
+	sprintf (fname, "%s.bsp", buf);
 
 	// read the file
 	filelen = FS_OpenFile (fname, &file, FS_READ);

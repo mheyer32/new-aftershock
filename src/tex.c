@@ -604,7 +604,7 @@ int R_Load_Texture (const char *name, int flags)
 
 			if (!Tex_UploadTexture (&data, img_width, img_height, format, flags))
 			{
-				Con_Printf ("WARNING: Could not upload texture %s\n", name);
+				Con_Printf (S_COLOR_YELLOW "WARNING: Could not upload texture %s\n", name);
 				free (data);
 				return -1;
 			}
@@ -633,7 +633,7 @@ int R_Load_Texture (const char *name, int flags)
 
 			if (!Tex_UploadTexture (&data, img_width, img_height, format, flags))
 			{
-				Con_Printf ("WARNING: Could not upload texture %s\n", name);
+				Con_Printf (S_COLOR_YELLOW "WARNING: Could not upload texture %s\n", name);
 				free (data);
 				return -1;
 			}
@@ -659,7 +659,7 @@ int R_Load_Texture (const char *name, int flags)
 		
 		if (!tex_name)
 		{
-			Con_Printf ("WARNING: Could not load texture %s\n", name);
+			Con_Printf (S_COLOR_YELLOW "WARNING: Could not load texture %s\n", name);
 			return -1;
 		}
 
@@ -689,7 +689,7 @@ int R_Load_Texture (const char *name, int flags)
 
 				if (!data)
 				{
-					Con_Printf ("WARNING: Could not load texture %s\n", name);
+					Con_Printf (S_COLOR_YELLOW "WARNING: Could not load texture %s\n", name);
 					return -1;
 				}
 			}
@@ -700,20 +700,20 @@ int R_Load_Texture (const char *name, int flags)
 			
 			if (!data)
 			{
-				Con_Printf ("WARNING: Could not load texture %s\n", name);
+				Con_Printf (S_COLOR_YELLOW "WARNING: Could not load texture %s\n", name);
 				return -1;
 			}
 		}
 		else 
 		{
-			Con_Printf ("WARNING: Could not load texture %s\n", name);
+			Con_Printf (S_COLOR_YELLOW "WARNING: Could not load texture %s\n", name);
 			return -1;
 		}
 	}
 	
 	if (!Tex_UploadTexture (&data, img_width, img_height, format, flags))
 	{
-		Con_Printf ("WARNING: Could not upload texture %s\n", name);
+		Con_Printf (S_COLOR_YELLOW "WARNING: Could not upload texture %s\n", name);
 		free (data);
 		return -1;
 	}

@@ -37,18 +37,18 @@ NET_SOCKET UDP_OpenSocket(unsigned short port)
 
 	new_socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (new_socket == NET_INVALID_SOCKET) {
-		Con_Printf("WARNING: UDP_OpenSocket: socket: %s\n", Net_GetErrorString());
+		Con_Printf(S_COLOR_YELLOW "WARNING: UDP_OpenSocket: socket: %s\n", Net_GetErrorString());
 		return(NET_INVALID_SOCKET);
 	}
 
 	if(ioctlsocket(new_socket, FIONBIO, &opt) == NET_SOCKET_ERROR) {
-		Con_Printf("WARNING: UDP_OpenSocket: ioctl FIONBIO:%s\n", Net_GetErrorString());
+		Con_Printf(S_COLOR_YELLOW "WARNING: UDP_OpenSocket: ioctl FIONBIO:%s\n", Net_GetErrorString());
 		closesocket(new_socket);
 		return(NET_INVALID_SOCKET);
 	}
 
 	if(setsockopt(new_socket, SOL_SOCKET, SO_BROADCAST, (char *)&opt, sizeof(opt))) {
-		Con_Printf("WARNING: UDP_OpenSocket: setsockopt SO_BROADCAST: %s\n", Net_GetErrorString());
+		Con_Printf(S_COLOR_YELLOW "WARNING: UDP_OpenSocket: setsockopt SO_BROADCAST: %s\n", Net_GetErrorString());
 		closesocket(new_socket);
 		return(NET_INVALID_SOCKET);
 	}

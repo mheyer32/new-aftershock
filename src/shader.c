@@ -75,9 +75,13 @@ static void shader_cull(shader_t *shader, shaderpass_t *pass, int numargs, char 
 			shader->cull = SHADER_CULL_FRONT;
 		else if (!A_stricmp (args[1], "back"))
 			shader->cull = SHADER_CULL_BACK;
+
+		shader->flags |= SHADER_DOCULL;
 	}
-	else
+	else {
 		shader->cull = SHADER_CULL_FRONT;
+		shader->flags |= SHADER_DOCULL;
+	}
 }
 
 static void shader_surfaceparm(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
@@ -201,7 +205,7 @@ static void shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numa
 	else 
 	{
 		shader->deform_vertices = DEFORMV_NONE;
-		Con_Printf ("WARNING: Unknown deformv param: %s\n", args[0]);
+		Con_Printf (S_COLOR_YELLOW "WARNING: Unknown deformv param: %s\n", args[0]);
 	}
 }
 
@@ -301,6 +305,9 @@ static void shaderpass_map(shader_t *shader, shaderpass_t *pass, int numargs, ch
     {
 		pass->tc_gen = TC_GEN_BASE;
 		pass->texref = R_Load_Texture(args[0], shader->flags);
+
+		if (pass->texref == -1)
+			Con_Printf (S_COLOR_YELLOW "Shader %s has a stage with no image\n", shader->name);
     }
 }
 
@@ -377,7 +384,7 @@ shaderpass_rgbgen(shader_t *shader, shaderpass_t *pass, int numargs,
 		pass->rgbgen = RGB_GEN_EXACT_VERTEX;
 	}
 	else {
-		Con_Printf ("WARNING: Unknown rgbgen param: %s\n", args[0]);
+		Con_Printf (S_COLOR_YELLOW "WARNING: Unknown rgbgen param: %s\n", args[0]);
 	}
 }
 
@@ -481,7 +488,7 @@ shaderpass_alphafunc(shader_t *shader, shaderpass_t *pass, int numargs,
     }
     else
 	{
-		Con_Printf ("WARNING: Unknown alphafunc param: %s\n", args[0]);
+		Con_Printf (S_COLOR_YELLOW "WARNING: Unknown alphafunc param: %s\n", args[0]);
 		return;
 	}
 
@@ -575,7 +582,7 @@ shaderpass_tcmod(shader_t *shader, shaderpass_t *pass, int numargs,
 	}
 	else 
 	{
-		Con_Printf ("WARNING: Unknown tc_mod: %s\n", args[0]);
+		Con_Printf (S_COLOR_YELLOW "WARNING: Unknown tc_mod: %s\n", args[0]);
 		pass->tc_mod[pass->num_tc_mod].type = -1;
 		return;
 	}
@@ -869,7 +876,7 @@ void Shader_Readpass(shader_t *shader, shaderpass_t *pass, char ** ptr)
     pass->depthfunc = GL_LEQUAL;
     pass->rgbgen = RGB_GEN_NONE;
     pass->num_tc_mod = 0;
-	pass->alpha_gen =ALPHA_GEN_DEFAULT;
+	pass->alpha_gen = ALPHA_GEN_DEFAULT;
 	pass->tc_gen = TC_GEN_BASE;
 	pass->tc_mod[0].type = SHADER_TCMOD_NONE;
 	pass->num_tc_mod = 0;

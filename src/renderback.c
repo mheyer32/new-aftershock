@@ -71,7 +71,7 @@ void Render_Backend_Init(void)
 	arrays.lm_st = (texcoord_t *)malloc(MAX_ARRAYS_VERTS * sizeof(texcoord_t));
 	arrays.elems = (int *)malloc(MAX_ARRAYS_ELEMS * sizeof(int));
     arrays.colour = (colour_t *)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));
-	arrays.mod_colour= (colour_t *)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));
+	arrays.mod_colour = (colour_t *)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));
 	arrays.entity_colour = 	(colour_t *)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));	
 
 	if (!r_allowExtensions->integer)
@@ -254,7 +254,7 @@ static void render_pushface(cface_t *face)
     for (i = 0; i < face->numverts; i++)
 	{
 		VectorCopy(vert->v_point, arrays.verts[arrays.numverts]);
-		VectorCopy(vert->v_norm, arrays.norms [arrays.numverts]);
+		VectorCopy(vert->v_norm, arrays.norms[arrays.numverts]);
 		Vector2Copy(vert->tex_st, arrays.tex_st[arrays.numverts]);
 		Vector2Copy(vert->lm_st, arrays.lm_st[arrays.numverts]);
 		Vector4Copy(vert->colour, arrays.colour[arrays.numverts]);

@@ -416,7 +416,7 @@ cvar_t *Cvar_Get( const char *var_name, const char *resetString, int flags )
 		cvar->resetString = A_CopyStr( resetString );
 	} else {
 		if( resetString[0] && strcmp( cvar->resetString, resetString ) ) {
-			Con_Printf( "Warning: cvar %s given initial values \"%s\" and \"%s\"\n", cvar->name, cvar->resetString, resetString );
+			Con_Printf( S_COLOR_YELLOW "WARNING: cvar %s given initial values \"%s\" and \"%s\"\n", cvar->name, cvar->resetString, resetString );
 		}
 	}
 

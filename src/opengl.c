@@ -1586,209 +1586,188 @@ void APIENTRY GL_Perspective( GLdouble fovy, GLdouble aspect,
 }
 
 
-
-
-
 // some wrapping -functions whitch track the state :
 // i`m tracking only  the important states 
 #define TRACK_GL_STATE 1
 
-
 #define MAX_TEX_UNITS 32
 
 #if TRACK_GL_STATE
-static int Cull_Face_Enabled =1;
-static char Tex_Unit_Enabled [MAX_TEX_UNITS];
+static int Cull_Face_Enabled = 1;
+static char Tex_Unit_Enabled[MAX_TEX_UNITS];
 static int Tex_IDs [MAX_TEX_UNITS];
-static int Active_Tex_Unit=0;
-static int Blending_Enabled =0;
-static int Alpha_Test_Enabled =0;
-static int Polygon_Offset_Enabled=0;
+static int Active_Tex_Unit = 0;
+static int Blending_Enabled = 0;
+static int Alpha_Test_Enabled = 0;
+static int Polygon_Offset_Enabled = 0;
+static int DepthMask_State = GL_TRUE;
 
-static int 	DepthMask_State=GL_TRUE;
 #endif 
 
-void GL_Enable (int param )
+void GL_Enable (int param)
 {
-	
 #if TRACK_GL_STATE
-	switch (param )
+	switch (param)
 	{
+		case GL_CULL_FACE:
+			if (!Cull_Face_Enabled)
+			{
+				glEnable (param);
+				Cull_Face_Enabled = 1;
+			}
+			break;
 
-	case GL_CULL_FACE:
-		if (!Cull_Face_Enabled)
-		{
-			glEnable (param);
-			Cull_Face_Enabled=1;
-		}
-		break;
+		case GL_TEXTURE_2D:
+			if (!Tex_Unit_Enabled [Active_Tex_Unit])
+			{
+				glEnable(param);
+				Tex_Unit_Enabled[Active_Tex_Unit] = 1;
+			}
+			break;
 
-	case GL_TEXTURE_2D :
-		if (!Tex_Unit_Enabled [Active_Tex_Unit])
-		{
-			glEnable(param );
-			Tex_Unit_Enabled [Active_Tex_Unit]=1;
-		}
-		break;
+		case GL_BLEND:
+			if (!Blending_Enabled)
+			{
+				glEnable (param);
+				Blending_Enabled = 1;
+			}
+			break;
 
-	case GL_BLEND :
-		if (!Blending_Enabled )
-		{
-			glEnable (param);
-			Blending_Enabled=1;
-		}
-		break;
+		case GL_ALPHA_TEST:
+			if (!Alpha_Test_Enabled)
+			{
+				glEnable (param);
+				Alpha_Test_Enabled = 1;
+			}
+			break;
 
-	case GL_ALPHA_TEST:
-		if (!Alpha_Test_Enabled)
-		{
-			glEnable (param );
-			Alpha_Test_Enabled=1;
-		}
-		break;
+		case GL_POLYGON_OFFSET:
+			if (!Polygon_Offset_Enabled)
+			{
+				glEnable(param);
+				Polygon_Offset_Enabled = 1;
+			}
+			break;
 
-	case GL_POLYGON_OFFSET:
-		if (!Polygon_Offset_Enabled)
-		{
-			glEnable (param);
-			Polygon_Offset_Enabled=1;
-		}
-
-	default :
-		glEnable( param );
-		break;
-
+		default:
+			glEnable(param);
+			break;
 	}
 #else 
 	glEnable (param);
-
 #endif 
-
-
 }
 
 
-void GL_Disable (int param )
+void GL_Disable (int param)
 {
-
 #if TRACK_GL_STATE
 	switch (param )
 	{
+		case GL_CULL_FACE:
+			if (Cull_Face_Enabled)
+			{
+				glDisable (param);
+				Cull_Face_Enabled = 0;
+			}
+			break;
 
-	case GL_CULL_FACE:
-		if (Cull_Face_Enabled)
-		{
-			glDisable (param);
-			Cull_Face_Enabled=0;
-		}
-		break;
+		case GL_TEXTURE_2D:
+			if (Tex_Unit_Enabled[Active_Tex_Unit])
+			{
+				glDisable(param);
+				Tex_Unit_Enabled[Active_Tex_Unit] = 0;
+			}
+			break;
 
-	case GL_TEXTURE_2D :
-		if (Tex_Unit_Enabled [Active_Tex_Unit])
-		{
-			glDisable(param );
-			Tex_Unit_Enabled [Active_Tex_Unit]=0;
-		}
-		break;
+		case GL_BLEND:
+			if (Blending_Enabled)
+			{
+				glDisable (param);
+				Blending_Enabled = 0;
+			}
+			break;
 
-	case GL_BLEND :
-		if (Blending_Enabled )
-		{
-			glDisable (param);
-			Blending_Enabled=0;
-		}
-		break;
+		case GL_ALPHA_TEST:
+			if (Alpha_Test_Enabled)
+			{
+				glDisable (param);
+				Alpha_Test_Enabled = 0;
+			}
+			break;
 
-	case GL_ALPHA_TEST:
-		if (Alpha_Test_Enabled)
-		{
-			glDisable (param );
-			Alpha_Test_Enabled=0;
-		}
-		break;
+		case GL_POLYGON_OFFSET:
+			if (Polygon_Offset_Enabled)
+			{
+				glDisable (param);
+				Polygon_Offset_Enabled = 0;
+			}
+			break;
 
-	case GL_POLYGON_OFFSET:
-		if (Polygon_Offset_Enabled)
-		{
-			glDisable (param);
-			Polygon_Offset_Enabled=0;
-		}
-
-	default :
-		glDisable( param );
-		break;
-
+		default:
+			glDisable(param);
+			break;
 	}
 #else 
 	glDisable (param);
 #endif 
-
-
-
 }
 
-static int CullMode =0; 
+static int CullMode = 0; 
 
-
-void GL_CullFace (int mode )
+void GL_CullFace (int mode)
 {
-
 #if TRACK_GL_STATE
-	if (mode != CullMode )
+	if (mode != CullMode)
 	{
-		glCullFace (mode );
-		CullMode = mode ;
-
+		glCullFace (mode);
+		CullMode = mode;
 	}
-
 #else
 	glCullFace (mode );
 #endif 
-
-
-
 }
 
-void GL_ActiveTextureARB (int param )
+void GL_ActiveTextureARB (int param)
 {
 #if TRACK_GL_STATE
-	int num = param - GL_TEXTURE0_ARB ;
+	int num = param - GL_TEXTURE0_ARB;
 
-	if (num != Active_Tex_Unit )
+	if (num != Active_Tex_Unit)
 	{
-		glActiveTextureARB ( param );
-		Active_Tex_Unit = num ;
-		
+		glActiveTextureARB (param);
+		Active_Tex_Unit = num;
 	}
 #else 
-	glActiveTextureARB (param );
+	glActiveTextureARB (param);
 #endif 
-
 }
 
 #if TRACK_GL_STATE
-static float  Tex_Env_Mode[MAX_TEX_UNITS ];
+static float  Tex_Env_Mode[MAX_TEX_UNITS];
 
-static float Combine_Rgb_Ext[MAX_TEX_UNITS ] ;
-static float Combine_Alpha_Ext[MAX_TEX_UNITS ] ;
-static float Source0_Rgb_Ext[MAX_TEX_UNITS ];
-static float Source1_Rgb_Ext[MAX_TEX_UNITS ];
-static float Source2_Rgb_Ext[MAX_TEX_UNITS ];
-static float Source0_Alpha_Ext[MAX_TEX_UNITS ];
-static float Source1_Alpha_Ext[MAX_TEX_UNITS ];
-static float Source2_Alpha_Ext[MAX_TEX_UNITS ];
-static float Operand0_Rgb_Ext[MAX_TEX_UNITS ];
-static float Operand1_Rgb_Ext[MAX_TEX_UNITS ];
-static float Operand2_Rgb_Ext[MAX_TEX_UNITS ];
-static float Operand0_Alpha_Ext[MAX_TEX_UNITS ];
-static float Operand1_Alpha_Ext[MAX_TEX_UNITS ];
-static float Operand2_Alpha_Ext[MAX_TEX_UNITS ];
-static float Rgb_Scale_Ext[MAX_TEX_UNITS ];
-static float Alpha_Scale [MAX_TEX_UNITS ]; 
-// I think this will get important when using TEX_ENV_COMBINE 
+static float Combine_Rgb_Ext[MAX_TEX_UNITS];
+static float Combine_Alpha_Ext[MAX_TEX_UNITS];
+static float Source0_Rgb_Ext[MAX_TEX_UNITS];
+static float Source1_Rgb_Ext[MAX_TEX_UNITS];
+static float Source2_Rgb_Ext[MAX_TEX_UNITS];
+static float Source0_Alpha_Ext[MAX_TEX_UNITS];
+static float Source1_Alpha_Ext[MAX_TEX_UNITS];
+static float Source2_Alpha_Ext[MAX_TEX_UNITS];
+static float Operand0_Rgb_Ext[MAX_TEX_UNITS];
+static float Operand1_Rgb_Ext[MAX_TEX_UNITS];
+static float Operand2_Rgb_Ext[MAX_TEX_UNITS];
+static float Operand0_Alpha_Ext[MAX_TEX_UNITS];
+static float Operand1_Alpha_Ext[MAX_TEX_UNITS];
+static float Operand2_Alpha_Ext[MAX_TEX_UNITS];
+static float Rgb_Scale_Ext[MAX_TEX_UNITS];
+static float Alpha_Scale[MAX_TEX_UNITS];
+
+// I think this will get important when using TEX_ENV_COMBINE
+
 #endif 
 
-void GL_TexEnvf (int target ,int pname ,float param )
+void GL_TexEnvf (int target, int pname, float param)
 {
 	
 #if TRACK_GL_STATE
@@ -1926,16 +1905,12 @@ void GL_TexEnvf (int target ,int pname ,float param )
 
 		break;
 
-
 	default :
 		break;
-
 	}
 #else 
 	glTexEnvf (target,pname ,param );
 #endif 
-
-
 }
 
 #if TRACK_GL_STATE
@@ -3101,15 +3076,11 @@ int Init_OpenGL (void)
  	memset (Rgb_Scale_Ext,0,sizeof (float ) *MAX_TEX_UNITS );
  	memset (Alpha_Scale ,0,sizeof (float ) *MAX_TEX_UNITS ); 
 
-
 #endif 
 
 	opengl_initialized=1;
 
 	return 1;
-
-
-
 }
 
 int Restart_Opengl (void )
@@ -3121,14 +3092,10 @@ int Restart_Opengl (void )
 	Error ("Could not restart OpenGL ");
 
 	return 0;
-
-
 }
 
 int Shutdown_OpenGL (void )
 {
-
-	
 	if (!opengl_initialized) 
 		return 1;
 
@@ -3144,6 +3111,4 @@ int Shutdown_OpenGL (void )
 	opengl_initialized=0;
 
 	return 1;
-
-
 }

@@ -430,6 +430,10 @@ SOURCE=.\sys_main.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\sys_mem.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\sys_network.h
 # End Source File
 # Begin Source File

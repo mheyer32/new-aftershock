@@ -37,20 +37,18 @@ typedef struct {
 	void *fhandle;
 } file_t;
 
-int FS_OpenFile(const char *path, int  *handle,fsMode_t mode) ;
-void FS_Read(void *buffer,int len,int  handle) ;
-int FS_Write( const void *buffer, int len, int  handle );
-int  FS_GetFileList (const char *path, const char *extension,char *listbuf,int bufsize);
-void FS_FCloseFile( int  handle ) ;
-int FS_Search (const char *path ,char * buf);
-int FS_FileExists (char * file );
-int FS_FileSize (const char * name );
-
-void FS_Init (const char *dir );
-void FS_Shutdown(void);
-
-void FS_Restart(void);
-
-char *FS_Add_Basedir (const char * s);
+int		FS_LoadStack(void);
+int		FS_OpenFile(const char *path, int *handle, fsMode_t mode);
+void	FS_Read(void *buffer, int len,int handle);
+int		FS_Write(const void *buffer, int len, int handle);
+int		FS_GetFileList(const char *path, const char *extension, char *listbuf, int bufsize);
+void	FS_FCloseFile(int handle);
+int		FS_Search(const char *path, char * buf);
+int		FS_FileExists(char *file);
+int		FS_FileSize(const char *name);
+void	FS_Init(const char *dir);
+void	FS_Shutdown(void);
+void	FS_Restart(void);
+char	*FS_Add_Basedir(const char * s);
 
 #endif 

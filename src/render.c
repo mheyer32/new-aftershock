@@ -24,6 +24,7 @@
 #include "renderback.h"
 #include "opengl.h"
 #include "md3.h"
+#include "mesh.h"
 #include "c_var.h"
 #include "io.h"
 #include "matrix.h"
@@ -275,12 +276,12 @@ void R_Init(void)
 	R_GetCvars( );
 
 	if (!Init_OpenGL()) {
-		Error ("Could not Init OpenGL !");
+		Error ("Could not Init OpenGL!");
 		return;
 	}
 
 	if (!Shader_Init()) {
-		Error ("Could not Init Shaders !");
+		Error ("Could not Init Shaders!");
 		return;
 	}
 
@@ -1018,9 +1019,9 @@ void R_LoadWorldMap (const char *mapname)
 		R_FreeWorldMap ();
 
 	if (!cm.name[0])
-	if (!CM_LoadMap (mapname, 1))
+	if (!CM_LoadMap (mapname, atrue))
 	{
-		Con_Printf ("WARNING: R_LoadWorldMap: CM_LoadMap failed!\n");
+		Con_Printf (S_COLOR_YELLOW "WARNING: R_LoadWorldMap: CM_LoadMap failed!\n");
 		return;
 	}
 
@@ -1039,6 +1040,7 @@ void R_LoadWorldMap (const char *mapname)
 
 	r_WorldMap_loaded = atrue;
 
+	Mesh_CreateAll();
     SkyboxCreate();
 }
 
@@ -1050,6 +1052,7 @@ void R_FreeWorldMap (void)
 	R_Free_Lightmaps ();
 	
 	SkyboxFree();
+	Mesh_FreeAll();
 
 	free(facelist.faces);
     free(translist.faces);
@@ -1113,8 +1116,6 @@ void R_Draw_World (void)
 		Render_Backend_Sky(numsky, skylist);
 	}
 
-	Con_Printf ("%i\n", facelist.numfaces);
-
     // Draw normal faces
 	Render_Backend(&facelist);
 }
@@ -1126,33 +1127,32 @@ void R_Setup_Clipplanes (const refdef_t * fd )
 	float half_pi_minus_half_fov_y = M_PI_2 - fd->fov_y * M_PI / 360.f;
 
 	// TODO !!!
-	/* rotate VPN right by FOV_X/2 degrees */
+	// rotate VPN right by FOV_X/2 degrees
 	RotatePointAroundVector( clipplanes[0].normal, fd->viewaxis[2], fd->viewaxis[1], -half_pi_minus_half_fov_x);
 
-	/* rotate VPN left by FOV_X/2 degrees */
+	// rotate VPN left by FOV_X/2 degrees
 	RotatePointAroundVector( clipplanes[1].normal, fd->viewaxis[2], fd->viewaxis[1], half_pi_minus_half_fov_x);
 
-	/* rotate VPN up by FOV_Y/2 degrees */
+	// rotate VPN up by FOV_Y/2 degrees
 	RotatePointAroundVector( clipplanes[2].normal, fd->viewaxis[0], fd->viewaxis[1], half_pi_minus_half_fov_y);
 
-	/* rotate VPN down by FOV_Y/2 degrees */
+	// rotate VPN down by FOV_Y/2 degrees
 	RotatePointAroundVector( clipplanes[3].normal, fd->viewaxis[0], fd->viewaxis[1], -half_pi_minus_half_fov_y);
-
 
 	clipplanes[0].type = 3;
 	clipplanes[0].dist = DotProduct (fd->vieworg,clipplanes[0].normal);
 	SetPlaneSignbits (&clipplanes[0]);
 
 	clipplanes[1].type = 3;
-	clipplanes[1].dist = DotProduct (fd->vieworg,clipplanes[1].normal);
+	clipplanes[1].dist = DotProduct (fd->vieworg, clipplanes[1].normal);
 	SetPlaneSignbits (&clipplanes[1]);
 
 	clipplanes[2].type = 3;
-	clipplanes[2].dist = DotProduct (fd->vieworg,clipplanes[2].normal);
+	clipplanes[2].dist = DotProduct (fd->vieworg, clipplanes[2].normal);
 	SetPlaneSignbits (&clipplanes[2]);
 
 	clipplanes[3].type = 3;
-	clipplanes[3].dist = DotProduct (fd->vieworg,clipplanes[3].normal);
+	clipplanes[3].dist = DotProduct (fd->vieworg, clipplanes[3].normal);
 	SetPlaneSignbits (&clipplanes[3]);
 }
 
@@ -1178,16 +1178,14 @@ void R_Recursive_World_Node (int n)
 		cleaf_t *leaf = &cm.leaves[~n];
 		int i;
 
-		if (r_eyecluster >= 0)
-		if (! BSP_TESTVIS(r_eyecluster, leaf->cluster)) return;
+//		if (r_eyecluster >= 0)
+//		if (! BSP_TESTVIS(r_eyecluster, leaf->cluster)) return;
 		
 //		if (R_ClipFrustrum (leaf->mins, leaf->maxs))
 //			return;
 
-		i = leaf->firstface;
-
 		for (i = 0; i < leaf->numfaces; i++)
-			R_Render_Walk_Face (cm.lfaces[i + leaf->firstface]);
+			R_Render_Walk_Face (cm.lfaces[leaf->firstface + i]);
 	}
 	else
 	{
@@ -1238,15 +1236,13 @@ void R_Render_Walk_Face (int num)
 		case FACETYPE_NORMAL:
 		case FACETYPE_TRISURF:
 			// CULL the face : (this is not exact but it looks right )
-			/*if (r_shaders[map.shadernums[face->shadernum]].flags & SHADER_DOCULL);
-				if (face->v_norm[0]*(face->verts->v_point[0]-r_eyepos[0])
-					+face->v_norm[1]*(face->verts->v_point[1]-r_eyepos[1])
-					+face->v_norm[2]*(face->verts->v_point[2]-r_eyepos[2])>0)return;
+			if (r_shaders[cm.shaderrefs[face->shadernum].shadernum].flags & SHADER_DOCULL);
+				if (face->verts->v_norm[0]*(face->verts->v_point[0]-r_eyepos[0])
+					+face->verts->v_norm[1]*(face->verts->v_point[1]-r_eyepos[1])
+					+face->verts->v_norm[2]*(face->verts->v_point[2]-r_eyepos[2])>0)return;
+		break;
 
-			*/
-			break;
-
-		case FACETYPE_MESH :
+		case FACETYPE_MESH:
 	//		if (R_ClipFrustrum (face->mins,face->maxs))
 	//			return ;
 			break;
@@ -1277,7 +1273,7 @@ int R_TestVis (const vec3_t p1, const vec3_t p2)
 }
 
 // TODO !!!
-unsigned int SortKey (cface_t * face )
+unsigned int SortKey (cface_t *face)
 {
 /*
 	return (r_shaders[cs.shadernums[face->shadernum]].sort << 29 ) + // Needs 4 Bits 
@@ -1285,12 +1281,13 @@ unsigned int SortKey (cface_t * face )
 		(face->shadernum << 7 ) + // 9 Bits 
 		(face->lm_texnum ) ;  // 6 Bits
 */		
+/*
 	return (r_shaders[face->shadernum].sort << 29) + // Needs 4 Bits 
 		(r_shaders[face->shadernum].sortkey << 21) + // 8 Bits
 		(face->shadernum << 7) + // 9 Bits 
 		(face->lightmapnum);  // 6 Bits
-
-//	return 0;
+*/
+	return 0;
 }
 
 static int R_Find_Cluster(const vec3_t pos)

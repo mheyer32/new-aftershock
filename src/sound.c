@@ -112,11 +112,9 @@ aboolean S_Init (void)
 
 	S_GetCvars();
 
-	return afalse;
-
 	if (FSOUND_GetVersion() < FMOD_VERSION)
 	{
-		Con_Printf("WARNING: You are using the wrong FMOD DLL version!  You should be using FMOD %.02f\n", FMOD_VERSION);
+		Con_Printf(S_COLOR_YELLOW "WARNING: You are using the wrong FMOD DLL version!  You should be using FMOD %.02f\n", FMOD_VERSION);
 		return afalse;
 	}
 
@@ -128,7 +126,7 @@ aboolean S_Init (void)
 
 	if (!FSOUND_Init(khz, NUM_CHANNELS, 0))
 	{
-		Con_Printf ("WARNING: Could not initialize Sound!\n");
+		Con_Printf (S_COLOR_YELLOW "WARNING: Could not initialize Sound!\n");
 		return afalse;
 	}
 
@@ -251,9 +249,9 @@ sfxHandle_t	S_RegisterSound ( const char *sample )		// returns buzz if not found
 	}
 
 	// check overflow
-	if (s_num_samples == MAX_SAMPLES )
+	if (s_num_samples >= MAX_SAMPLES)
 	{
-		Con_Printf ("WARNING: Out of sample-space! Could not register %s!\n", sample);
+		Con_Printf (S_COLOR_YELLOW "WARNING: Out of sample-space! Could not register %s!\n", sample);
 		return -1;
 	}
 
@@ -261,7 +259,7 @@ sfxHandle_t	S_RegisterSound ( const char *sample )		// returns buzz if not found
 
 	if (!file || !f_len )
 	{
-		Con_Printf ("WARNING: Could not register sound %s\n",sample);
+		Con_Printf (S_COLOR_YELLOW "WARNING: Could not register sound %s\n",sample);
 		return 0;
 	}
 

@@ -16,18 +16,19 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-
 #include "a_shared.h"
 #include "sys_file.h"
+#include "sys_mem.h"
 #include "pak.h"
 #include "io.h"
 #include "unzip.h"
 #include "console.h"
 
-static file_t files [MAX_FILES];
-static int files_used [MAX_FILES];
-static int num_files = 0;
-static char basedir [MAX_OSPATH];
+static file_t		files [MAX_FILES];
+static int			files_used [MAX_FILES];
+static int			num_files = 0;
+static char			basedir [MAX_OSPATH];
+static int			fs_load_stack;
 
 char *FS_Add_Basedir (const char *s)
 {
@@ -52,7 +53,7 @@ int Get_FirstFreeFile (void)
 	return 0;
 }
 
-int FS_OpenFile (const char *path, int *handle,fsMode_t mode)
+int FS_OpenFile (const char *path, int *handle, fsMode_t mode)
 {
 	int fnum = Get_FirstFreeFile ();
 	file_t *f = &files[fnum];
@@ -111,7 +112,7 @@ int FS_OpenFile (const char *path, int *handle,fsMode_t mode)
 
 	*handle = 0;
 	
-	Con_Printf ("WARNING: Could not open file: %s\n", path);
+	Con_Printf (S_COLOR_YELLOW "WARNING: Could not open file: %s\n", path);
 	return 0;
 }
 
@@ -135,7 +136,7 @@ void FS_Read(void *buffer, int len, int handle)
 
 		case FILE_IN_PAK:
 			if (!Pak_ReadFile (f->name,len,buffer))
-				Con_Printf ("WARNING: Could not read file %s\n", f->name);
+				Con_Printf (S_COLOR_YELLOW "WARNING: Could not read file %s\n", f->name);
 			break;
 
 		default :
@@ -181,6 +182,66 @@ void FS_FCloseFile(int handle)
 	files_used [handle - 1] = 0;
 }
 
+/*
+===========
+FS_ReadFile
+===========
+*/
+int FS_ReadFile( const char *path, void **buffer )
+{
+	int				size;
+	fileHandle_t	f;
+
+	if( !path || !path[0] ) {
+		Com_Error( ERR_FATAL, "FS_ReadFile with empty name\n" );
+	}
+
+	size = FS_OpenFile( path, &f, OPEN_READONLY );
+	if( !f ) {
+		if( buffer ) {
+			*buffer = NULL;
+		}
+		return( -1 );
+	}
+
+	if( !buffer ) {
+		FS_FCloseFile( f );
+		return( size );
+	}
+
+	fs_load_stack++;
+
+	*buffer = Hunk_AllocateTempMemory( size+1 );
+
+	FS_Read( *buffer, size, f );
+	((byte *)(*buffer))[size] = 0;
+
+	FS_FCloseFile( f );
+
+	return( size );
+}
+
+/*
+===========
+FS_FreeFile
+===========
+*/
+void FS_FreeFile( void *buffer )
+{
+	if( !buffer ) {
+		Com_Error( ERR_FATAL, "FS_FreeFile( NULL )\n" );
+	}
+
+	fs_load_stack--;
+
+	Hunk_FreeTempMemory( buffer );
+
+	if( !fs_load_stack ) {
+		Hunk_ClearTempMemory();
+	}
+}
+
+
 void FS_Shutdown(void)
 {
 	Pak_Shutdown ();
@@ -188,9 +249,9 @@ void FS_Shutdown(void)
 
 void FS_Init (const char *dir)
 {
-	void * handle;
-	char buf [MAX_OSPATH];
-	char fname [MAX_OSPATH];
+	void *handle;
+	char buf[MAX_OSPATH];
+	char fname[MAX_OSPATH];
 	char buf2[MAX_OSPATH];
 
 	Con_Printf("------- FS_INIT: -------\n");
@@ -199,10 +260,10 @@ void FS_Init (const char *dir)
 
 	strcpy (basedir, dir);
 
-	// Find all pk3 files in the base-directory :
+	// Find all pk3 files in the base-directory
 	sprintf (buf, "%s/*.pk3", dir);
 
-	handle=File_FindFirst (buf, fname, 0, 0);
+	handle = File_FindFirst (buf, fname, 0, 0);
 
 	if (handle)
 	{
@@ -280,6 +341,16 @@ int FS_FileSize (const char *name)
 	FS_FCloseFile(file);
 
 	return len;
+}
+
+/*
+================
+FS_LoadStack
+================
+*/
+int FS_LoadStack( void )
+{
+	return( fs_load_stack );
 }
 
 /*

@@ -34,6 +34,7 @@ cvar_t			*sv_hostname;
 cvar_t			*sv_maxclients;
 cvar_t          *sv_privateClients;
 cvar_t          *sv_keywords;
+cvar_t			*sv_fps;
 cvar_t          *timelimit;
 cvar_t          *fraglimit;
 cvar_t          *dmflags;
@@ -62,6 +63,7 @@ static cvarTable_t cvarTable[] = {
 	{ &sv_maxclients, "sv_maxclients", "8", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_LATCH },
 	{ &sv_privateClients, "sv_privateClients", "0", CVAR_SERVERINFO},
 	{ &sv_keywords, "sv_keywords", "", CVAR_SERVERINFO},
+	{ &sv_fps, "sv_fps", "20", CVAR_TEMP},
 	{ &timelimit, "timelimit", "0", CVAR_ARCHIVE | CVAR_SERVERINFO },
 	{ &fraglimit, "fraglimit", "15", CVAR_ARCHIVE | CVAR_SERVERINFO},
 	{ &dmflags, "dmflags","0", CVAR_ARCHIVE | CVAR_SERVERINFO },
@@ -212,7 +214,12 @@ static void SV_Map( const char *mapname )
 
 	Cvar_Set( "nextmap", va( "map %s", mapname ) );
 
-	CM_LoadMap( va( "maps/%s.bsp", mapname ), afalse );
+	if (!CM_LoadMap (va( "maps/%s.bsp", mapname ), atrue ))
+	{
+		Con_Printf ("Could not load map %s\n", mapname);
+		SV_Shutdown();
+		return;
+	}
 
 	Cvar_Set( "mapname", mapname );
 
@@ -220,8 +227,8 @@ static void SV_Map( const char *mapname )
 
 	memset(buf, 0, sizeof(buf));
 
-	SV_MakeServerinfo(buf);
-	SV_SetConfigstring( CS_SERVERINFO, buf );
+	SV_MakeServerinfo (buf);
+	SV_SetConfigstring (CS_SERVERINFO, buf);
 
 	if (!LoadGame()) 
 	{
@@ -229,11 +236,11 @@ static void SV_Map( const char *mapname )
 		return;
 	}
 
-	GAME_main(GAME_INIT, 0, 0, 0, 0, 0, 0, 0);
+//	GAME_main(GAME_INIT, 0, 0, 0, 0, 0, 0, 0);
 
 	CL_Startup ();
 
-	Com_Printf( "-----------------------------------\n" );
+	Com_Printf ("-----------------------------------\n");
 }
 
 static void Cmd_map (void)
@@ -318,6 +325,9 @@ aboolean SV_Init (char *map)
 
 void SV_Frame (int millisec)
 {
+	if( sv_fps->integer < 1 ) {
+		Cvar_Set( "sv_fps", "10" );
+	}
 
 }
 

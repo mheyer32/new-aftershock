@@ -222,7 +222,7 @@ aboolean Net_Init( void )
 #ifdef _WIN32
 	failed = WSAStartup( WINSOCK_VERSION, &wsaData );
 	if( failed ) {
-		Con_Printf( "WARNING: Winsock initialization failed, returned %d\n", failed );
+		Con_Printf(S_COLOR_YELLOW "WARNING: Winsock initialization failed, returned %d\n", failed );
 		return afalse;
 	} else {
 		Con_Printf( "Winsock initialized\n" );

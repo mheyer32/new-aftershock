@@ -25,7 +25,7 @@
  * unzip extensions to zlib (source included with distribution).
  */
 
-#define MAX_PAKFILES 64
+#define MAX_PAKFILES	1024
 
 static unzFile pakfiles[MAX_PAKFILES];
 static unzFile actfile;
