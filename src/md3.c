@@ -40,9 +40,11 @@ void MD3_Init (void)
 
 void MD3_Shutdown (void)
 {
+#if 0
 	int i;
 
 	for (i = 1; i < r_md3Modelcount; i++) MD3_Free(i);
+#endif
 
 	r_md3Modelcount = 1;
 	r_md3Skincount = 1;

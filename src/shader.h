@@ -206,6 +206,8 @@ typedef struct
     float deform_params[SHADER_DEFORM_MAX][4];
 	float fog_params[4];
     shaderfunc_t deformv_wavefunc[SHADER_DEFORM_MAX];
+    shaderfunc_t movev_wavefunc[SHADER_DEFORM_MAX];
+    shaderfunc_t bulgev_wavefunc[SHADER_DEFORM_MAX];
 } shader_t;
 
 

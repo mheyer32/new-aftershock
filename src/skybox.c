@@ -21,7 +21,6 @@
 
 #include "cmap.h"
 #include "skybox.h"
-#include <math.h>
 
 #define SIDE_SIZE 9
 #define POINTS_LEN (SIDE_SIZE*SIDE_SIZE)
@@ -30,22 +29,24 @@
 #define SPHERE_RAD  10.0
 #define EYE_RAD      9.0
 
-#define SCALE_S 4.0  // Arbitrary (?) texture scaling factors
-#define SCALE_T 4.0 
+#define SCALE_S		4.0  // Arbitrary (?) texture scaling factors
+#define SCALE_T		4.0 
+
+#define BOX_SIZE	1.0f
+#define BOX_STEP	0.25f
 
 static void Gen_BoxSide(int side, vec3_t orig, vec3_t drow, vec3_t dcol);
 static void Gen_Box(void);
 static void Gen_Elems(void);
 
-void SkyboxCreate(void)
+void SkyboxCreate (void)
 {
     int i;
 
     // Alloc space for skybox verts, etc.
     r_skybox = (skybox_t *)malloc(sizeof(skybox_t));
     r_skybox->points[0] = (vec3_t *)malloc(5 * POINTS_LEN * sizeof(vec3_t));
-    r_skybox->tex_st[0] = (vec2_t *)malloc(5 * POINTS_LEN *
-					      sizeof(vec2_t));
+    r_skybox->tex_st[0] = (vec2_t *)malloc(5 * POINTS_LEN * sizeof(vec2_t));
     r_skybox->elems = (uint_t *)malloc(ELEM_LEN * sizeof(uint_t));
 
     r_skybox->numpoints = POINTS_LEN;
@@ -61,8 +62,7 @@ void SkyboxCreate(void)
     Gen_Elems();
 }
     
-
-void SkyboxFree(void)
+void SkyboxFree (void)
 {
     free(r_skybox->points[0]);
     free(r_skybox->tex_st[0]);
@@ -70,16 +70,15 @@ void SkyboxFree(void)
     free(r_skybox);    
 }
 
-static void Gen_Elems(void)
+static void Gen_Elems (void)
 {
     int u, v;
-    uint_t *e;
+    uint_t *e = r_skybox->elems;
 
     // Box elems in tristrip order
-    e = r_skybox->elems;
-    for (v = 0; v < SIDE_SIZE-1; ++v)
+    for (v = 0; v < SIDE_SIZE-1; v++)
     {
-		for (u = 0; u < SIDE_SIZE-1; ++u)
+		for (u = 0; u < SIDE_SIZE-1; u++)
 		{
 			*e++ = v * SIDE_SIZE + u;
 			*e++ = (v+1) * SIDE_SIZE + u;
@@ -91,70 +90,68 @@ static void Gen_Elems(void)
     }
 }
     
-static void Gen_Box(void)
+static void Gen_Box (void)
 {
     vec3_t orig, drow, dcol;
-    float size = 1.0f;
-    float step = 0.25f;
     
     // Top
-    orig[0] = -size;
-    orig[1] = size;
-    orig[2] = size;
-    drow[0] = 0.0;
-    drow[1] = -step;
-    drow[2] = 0.0;
-    dcol[0] = step;
-    dcol[1] = 0.0;
-    dcol[2] = 0.0;
+    orig[0] = -BOX_SIZE;
+    orig[1] = BOX_SIZE;
+    orig[2] = BOX_SIZE;
+    drow[0] = 0.0f;
+    drow[1] = -BOX_STEP;
+    drow[2] = 0.0f;
+    dcol[0] = BOX_STEP;
+    dcol[1] = 0.0f;
+    dcol[2] = 0.0f;
     Gen_BoxSide(SKYBOX_TOP, orig, drow, dcol);
 
     // Front
-    orig[0] = size;
-    orig[1] = size;
-    orig[2] = size;
-    drow[0] = 0.0;
-    drow[1] = 0.0;
-    drow[2] = -step;
-    dcol[0] = -step;
-    dcol[1] = 0.0;
-    dcol[2] = 0.0;
+    orig[0] = BOX_SIZE;
+    orig[1] = BOX_SIZE;
+    orig[2] = BOX_SIZE;
+    drow[0] = 0.0f;
+    drow[1] = 0.0f;
+    drow[2] = -BOX_STEP;
+    dcol[0] = -BOX_STEP;
+    dcol[1] = 0.0f;
+    dcol[2] = 0.0f;
     Gen_BoxSide(SKYBOX_FRONT, orig, drow, dcol);
 
     // Right
-    orig[0] = size;
-    orig[1] = -size;
-    orig[2] = size;
-    drow[0] = 0.0;
-    drow[1] = 0.0;
-    drow[2] = -step;
-    dcol[0] = 0.0;
-    dcol[1] = step;
-    dcol[2] = 0.0;
+    orig[0] = BOX_SIZE;
+    orig[1] = -BOX_SIZE;
+    orig[2] = BOX_SIZE;
+    drow[0] = 0.0f;
+    drow[1] = 0.0f;
+    drow[2] = -BOX_STEP;
+    dcol[0] = 0.0f;
+    dcol[1] = BOX_STEP;
+    dcol[2] = 0.0f;
     Gen_BoxSide(SKYBOX_RIGHT, orig, drow, dcol);
 
     // Back
-    orig[0] = -size;
-    orig[1] = -size;
-    orig[2] = size;
-    drow[0] = 0.0;
-    drow[1] = 0.0;
-    drow[2] = -step;
-    dcol[0] = step;
-    dcol[1] = 0.0;
-    dcol[2] = 0.0;
+    orig[0] = -BOX_SIZE;
+    orig[1] = -BOX_SIZE;
+    orig[2] = BOX_SIZE;
+    drow[0] = 0.0f;
+    drow[1] = 0.0f;
+    drow[2] = -BOX_STEP;
+    dcol[0] = BOX_STEP;
+    dcol[1] = 0.0f;
+    dcol[2] = 0.0f;
     Gen_BoxSide(SKYBOX_BACK, orig, drow, dcol);
 
     // Left
-    orig[0] = -size;
-    orig[1] = size;
-    orig[2] = size;
-    drow[0] = 0.0;
-    drow[1] = 0.0;
-    drow[2] = -step;
-    dcol[0] = 0.0;
-    dcol[1] = -step;
-    dcol[2] = 0.0;
+    orig[0] = -BOX_SIZE;
+    orig[1] = BOX_SIZE;
+    orig[2] = BOX_SIZE;
+    drow[0] = 0.0f;
+    drow[1] = 0.0f;
+    drow[2] = -BOX_STEP;
+    dcol[0] = 0.0f;
+    dcol[1] = -BOX_STEP;
+    dcol[2] = 0.0f;
     Gen_BoxSide(SKYBOX_LEFT, orig, drow, dcol);
 }
 
@@ -171,11 +168,10 @@ through the box verts to the sphere to find the
 texture coordinates.
 ================
 */
-static void Gen_BoxSide(int side, vec3_t orig, vec3_t drow, vec3_t dcol)
+static void Gen_BoxSide (int side, vec3_t orig, vec3_t drow, vec3_t dcol)
 {
     vec3_t pos, w, row, *v;
     vec2_t *tc;
-    float p;
     int r, c;
     float d, b, t;
 
@@ -186,20 +182,18 @@ static void Gen_BoxSide(int side, vec3_t orig, vec3_t drow, vec3_t dcol)
     tc = &r_skybox->tex_st[side][0];
     VectorCopy(orig, row);
 
-    for (r = 0; r < SIDE_SIZE; ++r)
+    for (r = 0; r < SIDE_SIZE; r++)
     {
 		VectorCopy(row, pos);
-		for (c = 0; c < SIDE_SIZE; ++c)
+
+		for (c = 0; c < SIDE_SIZE; c++)
 		{
 			// pos points from eye to vertex on box
 			VectorCopy(pos, (*v));
 			VectorCopy(pos, w);
 
 			// Normalize pos -> w
-			p = 1 / sqrt(DotProduct(w, w));
-			w[0] *= p;
-			w[1] *= p;
-			w[2] *= p;
+			VectorNormalize (w);
 
 			// Find distance along w to sphere
 			t = sqrt(d*d*(w[2]*w[2]-1.0) + b*b) - d*w[2];

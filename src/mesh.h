@@ -24,6 +24,7 @@
 typedef struct
 {
     int				size[2];    // Mesh dimensions, u&v
+    int				msize;		// Multiplied mesh dimensions, u*v
     vec3_t			*points;
     colour_t		*colour;
     texcoord_t		*tex_st;

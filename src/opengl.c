@@ -30,7 +30,7 @@
 glconfig_t glconfig;
 ext_info_t gl_ext_info;
 
-static int opengl_initialized =0;
+static aboolean opengl_initialized = afalse;
 
 #if !defined _WIN32
 
@@ -44,539 +44,516 @@ static int opengl_initialized =0;
 
 #endif 
 
-HINSTANCE GL_dll=NULL;
+HINSTANCE GL_dll = NULL;
 
-
-
-
- void (	APIENTRY * glAccum) (GLenum op, GLfloat value);
-static  void (APIENTRY * glAlphaFunc) (GLenum func, GLclampf ref);
- GLboolean (APIENTRY *glAreTexturesResident) (GLsizei n, const GLuint *textures, GLboolean *residences);
- void (APIENTRY *glArrayElement )(GLint i);
- void (APIENTRY *glBegin )(GLenum mode);
-static  void (APIENTRY *glBindTexture )(GLenum target, GLuint texture);
- void (APIENTRY *glBitmap )(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap);
-static  void (APIENTRY *glBlendFunc) (GLenum sfactor, GLenum dfactor);
- void (APIENTRY *glCallList) (GLuint list);
- void (APIENTRY *glCallLists) (GLsizei n, GLenum type, const GLvoid *lists);
- void (APIENTRY *glClear) (GLbitfield mask);
- void (APIENTRY *glClearAccum) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
- void (APIENTRY *glClearColor) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
- void (APIENTRY *glClearDepth) (GLclampd depth);
- void (APIENTRY *glClearIndex) (GLfloat c);
- void (APIENTRY *glClearStencil) (GLint s);
- void (APIENTRY *glClipPlane) (GLenum plane, const GLdouble *equation);
- void (APIENTRY *glColor3b) (GLbyte red, GLbyte green, GLbyte blue);
- void (APIENTRY *glColor3bv) (const GLbyte *v);
- void (APIENTRY *glColor3d) (GLdouble red, GLdouble green, GLdouble blue);
- void (APIENTRY *glColor3dv) (const GLdouble *v);
- void (APIENTRY *glColor3f) (GLfloat red, GLfloat green, GLfloat blue);
- void (APIENTRY *glColor3fv) (const GLfloat *v);
- void (APIENTRY *glColor3i) (GLint red, GLint green, GLint blue);
- void (APIENTRY *glColor3iv) (const GLint *v);
- void (APIENTRY *glColor3s) (GLshort red, GLshort green, GLshort blue);
- void (APIENTRY *glColor3sv) (const GLshort *v);
- void (APIENTRY *glColor3ub) (GLubyte red, GLubyte green, GLubyte blue);
- void (APIENTRY *glColor3ubv) (const GLubyte *v);
- void (APIENTRY *glColor3ui) (GLuint red, GLuint green, GLuint blue);
- void (APIENTRY *glColor3uiv) (const GLuint *v);
- void (APIENTRY *glColor3us) (GLushort red, GLushort green, GLushort blue);
- void (APIENTRY *glColor3usv) (const GLushort *v);
- void (APIENTRY *glColor4b)(GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha);
- void (APIENTRY *glColor4bv) (const GLbyte *v);
- void (APIENTRY *glColor4d) (GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha);
- void (APIENTRY *glColor4dv) (const GLdouble *v);
- void (APIENTRY *glColor4f) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
- void (APIENTRY *glColor4fv) (const GLfloat *v);
- void (APIENTRY *glColor4i) (GLint red, GLint green, GLint blue, GLint alpha);
- void (APIENTRY *glColor4iv) (const GLint *v);
- void (APIENTRY *glColor4s) (GLshort red, GLshort green, GLshort blue, GLshort alpha);
- void (APIENTRY *glColor4sv) (const GLshort *v);
- void (APIENTRY *glColor4ub) (GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha);
- void (APIENTRY *glColor4ubv) (const GLubyte *v);
- void (APIENTRY *glColor4ui) (GLuint red, GLuint green, GLuint blue, GLuint alpha);
- void (APIENTRY *glColor4uiv) (const GLuint *v);
- void (APIENTRY *glColor4us) (GLushort red, GLushort green, GLushort blue, GLushort alpha);
- void (APIENTRY *glColor4usv) (const GLushort *v);
- void (APIENTRY *glColorMask) (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
- void (APIENTRY *glColorMaterial) (GLenum face, GLenum mode);
- void (APIENTRY *glColorPointer) (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
- void (APIENTRY *glCopyPixels) (GLint x, GLint y, GLsizei width, GLsizei height, GLenum type);
- void (APIENTRY *glCopyTexImage1D) (GLenum target, GLint level, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLint border);
- void (APIENTRY *glCopyTexImage2D) (GLenum target, GLint level, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
- void (APIENTRY *glCopyTexSubImage1D )(GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width);
- void (APIENTRY *glCopyTexSubImage2D )(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
-static  void (APIENTRY *glCullFace) (GLenum mode);
- void (APIENTRY *glDeleteLists) (GLuint list, GLsizei range);
- void (APIENTRY *glDeleteTextures )(GLsizei n, const GLuint *textures);
+void (APIENTRY *glAccum) (GLenum op, GLfloat value);
+static void (APIENTRY * glAlphaFunc) (GLenum func, GLclampf ref);
+GLboolean (APIENTRY *glAreTexturesResident) (GLsizei n, const GLuint *textures, GLboolean *residences);
+void (APIENTRY *glArrayElement)(GLint i);
+void (APIENTRY *glBegin)(GLenum mode);
+static void (APIENTRY *glBindTexture )(GLenum target, GLuint texture);
+void (APIENTRY *glBitmap)(GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap);
+static void (APIENTRY *glBlendFunc) (GLenum sfactor, GLenum dfactor);
+void (APIENTRY *glCallList) (GLuint list);
+void (APIENTRY *glCallLists) (GLsizei n, GLenum type, const GLvoid *lists);
+void (APIENTRY *glClear) (GLbitfield mask);
+void (APIENTRY *glClearAccum) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+void (APIENTRY *glClearColor) (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
+void (APIENTRY *glClearDepth) (GLclampd depth);
+void (APIENTRY *glClearIndex) (GLfloat c);
+void (APIENTRY *glClearStencil) (GLint s);
+void (APIENTRY *glClipPlane) (GLenum plane, const GLdouble *equation);
+void (APIENTRY *glColor3b) (GLbyte red, GLbyte green, GLbyte blue);
+void (APIENTRY *glColor3bv) (const GLbyte *v);
+void (APIENTRY *glColor3d) (GLdouble red, GLdouble green, GLdouble blue);
+void (APIENTRY *glColor3dv) (const GLdouble *v);
+void (APIENTRY *glColor3f) (GLfloat red, GLfloat green, GLfloat blue);
+void (APIENTRY *glColor3fv) (const GLfloat *v);
+void (APIENTRY *glColor3i) (GLint red, GLint green, GLint blue);
+void (APIENTRY *glColor3iv) (const GLint *v);
+void (APIENTRY *glColor3s) (GLshort red, GLshort green, GLshort blue);
+void (APIENTRY *glColor3sv) (const GLshort *v);
+void (APIENTRY *glColor3ub) (GLubyte red, GLubyte green, GLubyte blue);
+void (APIENTRY *glColor3ubv) (const GLubyte *v);
+void (APIENTRY *glColor3ui) (GLuint red, GLuint green, GLuint blue);
+void (APIENTRY *glColor3uiv) (const GLuint *v);
+void (APIENTRY *glColor3us) (GLushort red, GLushort green, GLushort blue);
+void (APIENTRY *glColor3usv) (const GLushort *v);
+void (APIENTRY *glColor4b)(GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha);
+void (APIENTRY *glColor4bv) (const GLbyte *v);
+void (APIENTRY *glColor4d) (GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha);
+void (APIENTRY *glColor4dv) (const GLdouble *v);
+void (APIENTRY *glColor4f) (GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+void (APIENTRY *glColor4fv) (const GLfloat *v);
+void (APIENTRY *glColor4i) (GLint red, GLint green, GLint blue, GLint alpha);
+void (APIENTRY *glColor4iv) (const GLint *v);
+void (APIENTRY *glColor4s) (GLshort red, GLshort green, GLshort blue, GLshort alpha);
+void (APIENTRY *glColor4sv) (const GLshort *v);
+void (APIENTRY *glColor4ub) (GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha);
+void (APIENTRY *glColor4ubv) (const GLubyte *v);
+void (APIENTRY *glColor4ui) (GLuint red, GLuint green, GLuint blue, GLuint alpha);
+void (APIENTRY *glColor4uiv) (const GLuint *v);
+void (APIENTRY *glColor4us) (GLushort red, GLushort green, GLushort blue, GLushort alpha);
+void (APIENTRY *glColor4usv) (const GLushort *v);
+void (APIENTRY *glColorMask) (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
+void (APIENTRY *glColorMaterial) (GLenum face, GLenum mode);
+void (APIENTRY *glColorPointer) (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+void (APIENTRY *glCopyPixels) (GLint x, GLint y, GLsizei width, GLsizei height, GLenum type);
+void (APIENTRY *glCopyTexImage1D) (GLenum target, GLint level, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLint border);
+void (APIENTRY *glCopyTexImage2D) (GLenum target, GLint level, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border);
+void (APIENTRY *glCopyTexSubImage1D )(GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width);
+void (APIENTRY *glCopyTexSubImage2D )(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height);
+static void (APIENTRY *glCullFace) (GLenum mode);
+void (APIENTRY *glDeleteLists) (GLuint list, GLsizei range);
+void (APIENTRY *glDeleteTextures )(GLsizei n, const GLuint *textures);
 static void (APIENTRY *glDepthFunc )(GLenum func);
 static void (APIENTRY *glDepthMask )(GLboolean flag);
- void (APIENTRY *glDepthRange) (GLclampd zNear, GLclampd zFar);
+void (APIENTRY *glDepthRange) (GLclampd zNear, GLclampd zFar);
 static void (APIENTRY *glDisable )(GLenum cap);
 static void (APIENTRY *glDisableClientState) (GLenum array);
- void (APIENTRY *glDrawArrays) (GLenum mode, GLint first, GLsizei count);
- void (APIENTRY *glDrawBuffer) (GLenum mode);
- void (APIENTRY *glDrawElements) (GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
- void (APIENTRY *glDrawPixels) (GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
- void (APIENTRY *glEdgeFlag) (GLboolean flag);
- void (APIENTRY *glEdgeFlagPointer) (GLsizei stride, const GLvoid *pointer);
- void (APIENTRY *glEdgeFlagv) (const GLboolean *flag);
- void (APIENTRY *glEnable) (GLenum cap);
+void (APIENTRY *glDrawArrays) (GLenum mode, GLint first, GLsizei count);
+void (APIENTRY *glDrawBuffer) (GLenum mode);
+void (APIENTRY *glDrawElements) (GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
+void (APIENTRY *glDrawPixels) (GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
+void (APIENTRY *glEdgeFlag) (GLboolean flag);
+void (APIENTRY *glEdgeFlagPointer) (GLsizei stride, const GLvoid *pointer);
+void (APIENTRY *glEdgeFlagv) (const GLboolean *flag);
+void (APIENTRY *glEnable) (GLenum cap);
 static void (APIENTRY *glEnableClientState) (GLenum array);
- void (APIENTRY *glEnd )(void);
- void (APIENTRY *glEndList) (void);
- void (APIENTRY *glEvalCoord1d) (GLdouble u);
- void (APIENTRY *glEvalCoord1dv) (const GLdouble *u);
- void (APIENTRY *glEvalCoord1f) (GLfloat u);
- void (APIENTRY *glEvalCoord1fv) (const GLfloat *u);
- void (APIENTRY *glEvalCoord2d)(GLdouble u, GLdouble v);
- void (APIENTRY *glEvalCoord2dv) (const GLdouble *u);
- void (APIENTRY *glEvalCoord2f) (GLfloat u, GLfloat v);
- void (APIENTRY *glEvalCoord2fv) (const GLfloat *u);
- void (APIENTRY *glEvalMesh1) (GLenum mode, GLint i1, GLint i2);
- void (APIENTRY *glEvalMesh2) (GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2);
- void (APIENTRY *glEvalPoint1) (GLint i);
- void (APIENTRY *glEvalPoint2) (GLint i, GLint j);
- void (APIENTRY *glFeedbackBuffer) (GLsizei size, GLenum type, GLfloat *buffer);
- void (APIENTRY *glFinish )(void);
- void (APIENTRY *glFlush )(void);
- void (APIENTRY *glFogf )(GLenum pname, GLfloat param);
- void (APIENTRY *glFogfv) (GLenum pname, const GLfloat *params);
- void (APIENTRY *glFogi )(GLenum pname, GLint param);
- void (APIENTRY *glFogiv) (GLenum pname, const GLint *params);
- void (APIENTRY *glFrontFace) (GLenum mode);
- void (APIENTRY *glFrustum) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar);
- GLuint (APIENTRY *glGenLists) (GLsizei range);
- void (APIENTRY *glGenTextures) (GLsizei n, GLuint *textures);
- void (APIENTRY *glGetBooleanv) (GLenum pname, GLboolean *params);
- void (APIENTRY *glGetClipPlane) (GLenum plane, GLdouble *equation);
- void (APIENTRY *glGetDoublev) (GLenum pname, GLdouble *params);
- GLenum (APIENTRY *glGetError) (void);
- void (APIENTRY *glGetFloatv) (GLenum pname, GLfloat *params);
- void (APIENTRY *glGetIntegerv) (GLenum pname, GLint *params);
- void (APIENTRY *glGetLightfv) (GLenum light, GLenum pname, GLfloat *params);
- void (APIENTRY *glGetLightiv) (GLenum light, GLenum pname, GLint *params);
- void (APIENTRY *glGetMapdv) (GLenum target, GLenum query, GLdouble *v);
- void (APIENTRY *glGetMapfv) (GLenum target, GLenum query, GLfloat *v);
- void (APIENTRY *glGetMapiv) (GLenum target, GLenum query, GLint *v);
- void (APIENTRY *glGetMaterialfv) (GLenum face, GLenum pname, GLfloat *params);
- void (APIENTRY *glGetMaterialiv) (GLenum face, GLenum pname, GLint *params);
- void (APIENTRY *glGetPixelMapfv) (GLenum map, GLfloat *values);
- void (APIENTRY *glGetPixelMapuiv) (GLenum map, GLuint *values);
- void (APIENTRY *glGetPixelMapusv) (GLenum map, GLushort *values);
- void (APIENTRY *glGetPointerv) (GLenum pname, GLvoid* *params);
- void (APIENTRY *glGetPolygonStipple) (GLubyte *mask);
- const GLubyte * (APIENTRY *glGetString) (GLenum name);
- void (APIENTRY *glGetTexEnvfv )(GLenum target, GLenum pname, GLfloat *params);
- void (APIENTRY *glGetTexEnviv )(GLenum target, GLenum pname, GLint *params);
- void (APIENTRY *glGetTexGendv )(GLenum coord, GLenum pname, GLdouble *params);
- void (APIENTRY *glGetTexGenfv )(GLenum coord, GLenum pname, GLfloat *params);
- void (APIENTRY *glGetTexGeniv )(GLenum coord, GLenum pname, GLint *params);
- void (APIENTRY *glGetTexImage )(GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels);
- void (APIENTRY *glGetTexLevelParameterfv) (GLenum target, GLint level, GLenum pname, GLfloat *params);
- void (APIENTRY *glGetTexLevelParameteriv) (GLenum target, GLint level, GLenum pname, GLint *params);
- void (APIENTRY *glGetTexParameterfv) (GLenum target, GLenum pname, GLfloat *params);
- void (APIENTRY *glGetTexParameteriv) (GLenum target, GLenum pname, GLint *params);
- void (APIENTRY *glHint )(GLenum target, GLenum mode);
- void (APIENTRY *glIndexMask )(GLuint mask);
- void (APIENTRY *glIndexPointer) (GLenum type, GLsizei stride, const GLvoid *pointer);
- void (APIENTRY *glIndexd )(GLdouble c);
- void (APIENTRY *glIndexdv) (const GLdouble *c);
- void (APIENTRY *glIndexf) (GLfloat c);
- void (APIENTRY *glIndexfv) (const GLfloat *c);
- void (APIENTRY *glIndexi) (GLint c);
- void (APIENTRY *glIndexiv) (const GLint *c);
- void (APIENTRY *glIndexs) (GLshort c);
- void (APIENTRY *glIndexsv) (const GLshort *c);
- void (APIENTRY *glIndexub) (GLubyte c);
- void (APIENTRY *glIndexubv) (const GLubyte *c);
- void (APIENTRY *glInitNames) (void);
- void (APIENTRY *glInterleavedArrays) (GLenum format, GLsizei stride, const GLvoid *pointer);
- GLboolean (APIENTRY *glIsEnabled) (GLenum cap);
- GLboolean (APIENTRY *glIsList) (GLuint list);
- GLboolean (APIENTRY *glIsTexture )(GLuint texture);
- void (APIENTRY *glLightModelf) (GLenum pname, GLfloat param);
- void (APIENTRY *glLightModelfv) (GLenum pname, const GLfloat *params);
- void (APIENTRY *glLightModeli) (GLenum pname, GLint param);
- void (APIENTRY *glLightModeliv) (GLenum pname, const GLint *params);
- void (APIENTRY *glLightf) (GLenum light, GLenum pname, GLfloat param);
- void (APIENTRY	*glLightfv) (GLenum light, GLenum pname, const GLfloat *params);
- void (APIENTRY *glLighti) (GLenum light, GLenum pname, GLint param);
- void (APIENTRY *glLightiv) (GLenum light, GLenum pname, const GLint *params);
- void (APIENTRY *glLineStipple) (GLint factor, GLushort pattern);
- void (APIENTRY *glLineWidth) (GLfloat width);
- void (APIENTRY *glListBase) (GLuint base);
- void (APIENTRY *glLoadIdentity) (void);
- void (APIENTRY *glLoadMatrixd)(const GLdouble *m);
- void (APIENTRY *glLoadMatrixf) (const GLfloat *m);
- void (APIENTRY *glLoadName) (GLuint name);
- void (APIENTRY *glLogicOp) (GLenum opcode);
- void (APIENTRY *glMap1d) (GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *points);
- void (APIENTRY *glMap1f) (GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat *points);
- void (APIENTRY *glMap2d) (GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble *points);
- void (APIENTRY *glMap2f) (GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat *points);
- void (APIENTRY *glMapGrid1d) (GLint un, GLdouble u1, GLdouble u2);
- void (APIENTRY *glMapGrid1f) (GLint un, GLfloat u1, GLfloat u2);
- void (APIENTRY *glMapGrid2d) (GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2);
- void (APIENTRY *glMapGrid2f) (GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2);
- void (APIENTRY *glMaterialf) (GLenum face, GLenum pname, GLfloat param);
- void (APIENTRY *glMaterialfv) (GLenum face, GLenum pname, const GLfloat *params);
- void (APIENTRY *glMateriali) (GLenum face, GLenum pname, GLint param);
- void (APIENTRY *glMaterialiv) (GLenum face, GLenum pname, const GLint *params);
- void (APIENTRY *glMatrixMode) (GLenum mode);
- void (APIENTRY *glMultMatrixd) (const GLdouble *m);
- void (APIENTRY *glMultMatrixf) (const GLfloat *m);
- void (APIENTRY *glNewList) (GLuint list, GLenum mode);
- void (APIENTRY *glNormal3b) (GLbyte nx, GLbyte ny, GLbyte nz);
- void (APIENTRY *glNormal3bv) (const GLbyte *v);
- void (APIENTRY *glNormal3d) (GLdouble nx, GLdouble ny, GLdouble nz);
- void (APIENTRY *glNormal3dv) (const GLdouble *v);
- void (APIENTRY *glNormal3f) (GLfloat nx, GLfloat ny, GLfloat nz);
- void (APIENTRY *glNormal3fv) (const GLfloat *v);
- void (APIENTRY *glNormal3i )(GLint nx, GLint ny, GLint nz);
- void (APIENTRY *glNormal3iv) (const GLint *v);
- void (APIENTRY *glNormal3s) (GLshort nx, GLshort ny, GLshort nz);
- void (APIENTRY *glNormal3sv) (const GLshort *v);
- void (APIENTRY *glNormalPointer) (GLenum type, GLsizei stride, const GLvoid *pointer);
- void (APIENTRY *glOrtho) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar);
- void (APIENTRY *glPassThrough )(GLfloat token);
- void (APIENTRY *glPixelMapfv) (GLenum map, GLsizei mapsize, const GLfloat *values);
- void (APIENTRY *glPixelMapuiv) (GLenum map, GLsizei mapsize, const GLuint *values);
- void (APIENTRY *glPixelMapusv) (GLenum map, GLsizei mapsize, const GLushort *values);
- void (APIENTRY *glPixelStoref) (GLenum pname, GLfloat param);
- void (APIENTRY *glPixelStorei) (GLenum pname, GLint param);
- void (APIENTRY *glPixelTransferf) (GLenum pname, GLfloat param);
- void (APIENTRY *glPixelTransferi) (GLenum pname, GLint param);
- void (APIENTRY *glPixelZoom) (GLfloat xfactor, GLfloat yfactor);
- void (APIENTRY *glPointSize) (GLfloat size);
- void (APIENTRY *glPolygonMode) (GLenum face, GLenum mode);
- void (APIENTRY *glPolygonOffset) (GLfloat factor, GLfloat units);
- void (APIENTRY *glPolygonStipple) (const GLubyte *mask);
- void (APIENTRY *glPopAttrib) (void);
- void (APIENTRY *glPopClientAttrib) (void);
- void (APIENTRY *glPopMatrix) (void);
- void (APIENTRY *glPopName) (void);
- void (APIENTRY *glPrioritizeTextures) (GLsizei n, const GLuint *textures, const GLclampf *priorities);
- void (APIENTRY *glPushAttrib) (GLbitfield mask);
- void (APIENTRY *glPushClientAttrib) (GLbitfield mask);
- void (APIENTRY *glPushMatrix) (void);
- void (APIENTRY *glPushName) (GLuint name);
- void (APIENTRY *glRasterPos2d) (GLdouble x, GLdouble y);
- void (APIENTRY *glRasterPos2dv) (const GLdouble *v);
- void (APIENTRY *glRasterPos2f) (GLfloat x, GLfloat y);
- void (APIENTRY *glRasterPos2fv) (const GLfloat *v);
- void (APIENTRY *glRasterPos2i) (GLint x, GLint y);
- void (APIENTRY *glRasterPos2iv) (const GLint *v);
- void (APIENTRY *glRasterPos2s) (GLshort x, GLshort y);
- void (APIENTRY *glRasterPos2sv) (const GLshort *v);
- void (APIENTRY *glRasterPos3d) (GLdouble x, GLdouble y, GLdouble z);
- void (APIENTRY *glRasterPos3dv) (const GLdouble *v);
- void (APIENTRY *glRasterPos3f) (GLfloat x, GLfloat y, GLfloat z);
- void (APIENTRY *glRasterPos3fv) (const GLfloat *v);
- void (APIENTRY *glRasterPos3i) (GLint x, GLint y, GLint z);
- void (APIENTRY *glRasterPos3iv) (const GLint *v);
- void (APIENTRY *glRasterPos3s) (GLshort x, GLshort y, GLshort z);
- void (APIENTRY *glRasterPos3sv) (const GLshort *v);
- void (APIENTRY *glRasterPos4d) (GLdouble x, GLdouble y, GLdouble z, GLdouble w);
- void (APIENTRY *glRasterPos4dv) (const GLdouble *v);
- void (APIENTRY *glRasterPos4f) (GLfloat x, GLfloat y, GLfloat z, GLfloat w);
- void (APIENTRY *glRasterPos4fv) (const GLfloat *v);
- void (APIENTRY *glRasterPos4i) (GLint x, GLint y, GLint z, GLint w);
- void (APIENTRY *glRasterPos4iv) (const GLint *v);
- void (APIENTRY *glRasterPos4s) (GLshort x, GLshort y, GLshort z, GLshort w);
- void (APIENTRY *glRasterPos4sv) (const GLshort *v);
- void (APIENTRY *glReadBuffer) (GLenum mode);
- void (APIENTRY *glReadPixels) (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels);
- void (APIENTRY *glRectd) (GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2);
- void (APIENTRY *glRectdv) (const GLdouble *v1, const GLdouble *v2);
- void (APIENTRY *glRectf) (GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2);
- void (APIENTRY *glRectfv) (const GLfloat *v1, const GLfloat *v2);
- void (APIENTRY *glRecti) (GLint x1, GLint y1, GLint x2, GLint y2);
- void (APIENTRY *glRectiv) (const GLint *v1, const GLint *v2);
- void (APIENTRY *glRects) (GLshort x1, GLshort y1, GLshort x2, GLshort y2);
- void (APIENTRY *glRectsv) (const GLshort *v1, const GLshort *v2);
- GLint (APIENTRY *glRenderMode) (GLenum mode);
- void (APIENTRY *glRotated) (GLdouble angle, GLdouble x, GLdouble y, GLdouble z);
- void (APIENTRY *glRotatef) (GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
- void (APIENTRY *glScaled) (GLdouble x, GLdouble y, GLdouble z);
- void (APIENTRY *glScalef) (GLfloat x, GLfloat y, GLfloat z);
- void (APIENTRY *glScissor) (GLint x, GLint y, GLsizei width, GLsizei height);
- void (APIENTRY *glSelectBuffer) (GLsizei size, GLuint *buffer);
- void (APIENTRY *glShadeModel) (GLenum mode);
- void (APIENTRY *glStencilFunc) (GLenum func, GLint ref, GLuint mask);
- void (APIENTRY *glStencilMask) (GLuint mask);
- void (APIENTRY *glStencilOp) (GLenum fail, GLenum zfail, GLenum zpass);
- void (APIENTRY *glTexCoord1d) (GLdouble s);
- void (APIENTRY *glTexCoord1dv) (const GLdouble *v);
- void (APIENTRY *glTexCoord1f) (GLfloat s);
- void (APIENTRY *glTexCoord1fv) (const GLfloat *v);
- void (APIENTRY *glTexCoord1i) (GLint s);
- void (APIENTRY *glTexCoord1iv) (const GLint *v);
- void (APIENTRY *glTexCoord1s) (GLshort s);
- void (APIENTRY *glTexCoord1sv) (const GLshort *v);
- void (APIENTRY *glTexCoord2d) (GLdouble s, GLdouble t);
- void (APIENTRY *glTexCoord2dv) (const GLdouble *v);
- void (APIENTRY *glTexCoord2f) (GLfloat s, GLfloat t);
- void (APIENTRY *glTexCoord2fv) (const GLfloat *v);
- void (APIENTRY *glTexCoord2i) (GLint s, GLint t);
- void (APIENTRY *glTexCoord2iv) (const GLint *v);
- void (APIENTRY *glTexCoord2s) (GLshort s, GLshort t);
- void (APIENTRY *glTexCoord2sv) (const GLshort *v);
- void (APIENTRY *glTexCoord3d)(GLdouble s, GLdouble t, GLdouble r);
- void (APIENTRY *glTexCoord3dv) (const GLdouble *v);
- void (APIENTRY *glTexCoord3f) (GLfloat s, GLfloat t, GLfloat r);
- void (APIENTRY *glTexCoord3fv) (const GLfloat *v);
- void (APIENTRY *glTexCoord3i) (GLint s, GLint t, GLint r);
- void (APIENTRY *glTexCoord3iv) (const GLint *v);
- void (APIENTRY *glTexCoord3s) (GLshort s, GLshort t, GLshort r);
- void (APIENTRY *glTexCoord3sv) (const GLshort *v);
- void (APIENTRY *glTexCoord4d) (GLdouble s, GLdouble t, GLdouble r, GLdouble q);
- void (APIENTRY *glTexCoord4dv) (const GLdouble *v);
- void (APIENTRY *glTexCoord4f) (GLfloat s, GLfloat t, GLfloat r, GLfloat q);
- void (APIENTRY *glTexCoord4fv) (const GLfloat *v);
- void (APIENTRY *glTexCoord4i) (GLint s, GLint t, GLint r, GLint q);
- void (APIENTRY *glTexCoord4iv) (const GLint *v);
- void (APIENTRY *glTexCoord4s) (GLshort s, GLshort t, GLshort r, GLshort q);
- void (APIENTRY *glTexCoord4sv) (const GLshort *v);
- void (APIENTRY *glTexCoordPointer) (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
-static  void (APIENTRY *glTexEnvf) (GLenum target, GLenum pname, GLfloat param);
-static  void (APIENTRY *glTexEnvfv) (GLenum target, GLenum pname, const GLfloat *params);
-static  void (APIENTRY *glTexEnvi )(GLenum target, GLenum pname, GLint param);
-static  void (APIENTRY *glTexEnviv) (GLenum target, GLenum pname, const GLint *params);
- void (APIENTRY *glTexGend )(GLenum coord, GLenum pname, GLdouble param);
- void (APIENTRY *glTexGendv) (GLenum coord, GLenum pname, const GLdouble *params);
- void (APIENTRY *glTexGenf )(GLenum coord, GLenum pname, GLfloat param);
- void (APIENTRY *glTexGenfv) (GLenum coord, GLenum pname, const GLfloat *params);
- void (APIENTRY *glTexGeni )(GLenum coord, GLenum pname, GLint param);
- void (APIENTRY *glTexGeniv) (GLenum coord, GLenum pname, const GLint *params);
- void (APIENTRY *glTexImage1D )(GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
- void (APIENTRY *glTexImage2D )(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
- void (APIENTRY *glTexParameterf) (GLenum target, GLenum pname, GLfloat param);
- void (APIENTRY *glTexParameterfv) (GLenum target, GLenum pname, const GLfloat *params);
- void (APIENTRY *glTexParameteri) (GLenum target, GLenum pname, GLint param);
- void (APIENTRY *glTexParameteriv) (GLenum target, GLenum pname, const GLint *params);
- void (APIENTRY *glTexSubImage1D) (GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels);
- void (APIENTRY *glTexSubImage2D) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
- void (APIENTRY *glTranslated )(GLdouble x, GLdouble y, GLdouble z);
- void (APIENTRY *glTranslatef) (GLfloat x, GLfloat y, GLfloat z);
- void (APIENTRY *glVertex2d) (GLdouble x, GLdouble y);
- void (APIENTRY *glVertex2dv) (const GLdouble *v);
- void (APIENTRY *glVertex2f )(GLfloat x, GLfloat y);
- void (APIENTRY *glVertex2fv) (const GLfloat *v);
- void (APIENTRY *glVertex2i )(GLint x, GLint y);
- void (APIENTRY *glVertex2iv) (const GLint *v);
- void (APIENTRY *glVertex2s )(GLshort x, GLshort y);
- void (APIENTRY *glVertex2sv) (const GLshort *v);
- void (APIENTRY *glVertex3d) (GLdouble x, GLdouble y, GLdouble z);
- void (APIENTRY *glVertex3dv) (const GLdouble *v);
- void (APIENTRY *glVertex3f) (GLfloat x, GLfloat y, GLfloat z);
- void (APIENTRY *glVertex3fv) (const GLfloat *v);
- void (APIENTRY *glVertex3i) (GLint x, GLint y, GLint z);
- void (APIENTRY *glVertex3iv) (const GLint *v);
- void (APIENTRY *glVertex3s) (GLshort x, GLshort y, GLshort z);
- void (APIENTRY *glVertex3sv) (const GLshort *v);
- void (APIENTRY *glVertex4d) (GLdouble x, GLdouble y, GLdouble z, GLdouble w);
- void (APIENTRY *glVertex4dv) (const GLdouble *v);
- void (APIENTRY *glVertex4f) (GLfloat x, GLfloat y, GLfloat z, GLfloat w);
- void (APIENTRY *glVertex4fv) (const GLfloat *v);
- void (APIENTRY *glVertex4i) (GLint x, GLint y, GLint z, GLint w);
- void (APIENTRY *glVertex4iv) (const GLint *v);
- void (APIENTRY *glVertex4s )(GLshort x, GLshort y, GLshort z, GLshort w);
- void (APIENTRY *glVertex4sv) (const GLshort *v);
- void (APIENTRY *glVertexPointer) (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
- void (APIENTRY *glViewport) (GLint x, GLint y, GLsizei width, GLsizei height);
-
+void (APIENTRY *glEnd )(void);
+void (APIENTRY *glEndList) (void);
+void (APIENTRY *glEvalCoord1d) (GLdouble u);
+void (APIENTRY *glEvalCoord1dv) (const GLdouble *u);
+void (APIENTRY *glEvalCoord1f) (GLfloat u);
+void (APIENTRY *glEvalCoord1fv) (const GLfloat *u);
+void (APIENTRY *glEvalCoord2d)(GLdouble u, GLdouble v);
+void (APIENTRY *glEvalCoord2dv) (const GLdouble *u);
+void (APIENTRY *glEvalCoord2f) (GLfloat u, GLfloat v);
+void (APIENTRY *glEvalCoord2fv) (const GLfloat *u);
+void (APIENTRY *glEvalMesh1) (GLenum mode, GLint i1, GLint i2);
+void (APIENTRY *glEvalMesh2) (GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2);
+void (APIENTRY *glEvalPoint1) (GLint i);
+void (APIENTRY *glEvalPoint2) (GLint i, GLint j);
+void (APIENTRY *glFeedbackBuffer) (GLsizei size, GLenum type, GLfloat *buffer);
+void (APIENTRY *glFinish )(void);
+void (APIENTRY *glFlush )(void);
+void (APIENTRY *glFogf )(GLenum pname, GLfloat param);
+void (APIENTRY *glFogfv) (GLenum pname, const GLfloat *params);
+void (APIENTRY *glFogi )(GLenum pname, GLint param);
+void (APIENTRY *glFogiv) (GLenum pname, const GLint *params);
+void (APIENTRY *glFrontFace) (GLenum mode);
+void (APIENTRY *glFrustum) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar);
+GLuint (APIENTRY *glGenLists) (GLsizei range);
+void (APIENTRY *glGenTextures) (GLsizei n, GLuint *textures);
+void (APIENTRY *glGetBooleanv) (GLenum pname, GLboolean *params);
+void (APIENTRY *glGetClipPlane) (GLenum plane, GLdouble *equation);
+void (APIENTRY *glGetDoublev) (GLenum pname, GLdouble *params);
+GLenum (APIENTRY *glGetError) (void);
+void (APIENTRY *glGetFloatv) (GLenum pname, GLfloat *params);
+void (APIENTRY *glGetIntegerv) (GLenum pname, GLint *params);
+void (APIENTRY *glGetLightfv) (GLenum light, GLenum pname, GLfloat *params);
+void (APIENTRY *glGetLightiv) (GLenum light, GLenum pname, GLint *params);
+void (APIENTRY *glGetMapdv) (GLenum target, GLenum query, GLdouble *v);
+void (APIENTRY *glGetMapfv) (GLenum target, GLenum query, GLfloat *v);
+void (APIENTRY *glGetMapiv) (GLenum target, GLenum query, GLint *v);
+void (APIENTRY *glGetMaterialfv) (GLenum face, GLenum pname, GLfloat *params);
+void (APIENTRY *glGetMaterialiv) (GLenum face, GLenum pname, GLint *params);
+void (APIENTRY *glGetPixelMapfv) (GLenum map, GLfloat *values);
+void (APIENTRY *glGetPixelMapuiv) (GLenum map, GLuint *values);
+void (APIENTRY *glGetPixelMapusv) (GLenum map, GLushort *values);
+void (APIENTRY *glGetPointerv) (GLenum pname, GLvoid* *params);
+void (APIENTRY *glGetPolygonStipple) (GLubyte *mask);
+const GLubyte * (APIENTRY *glGetString) (GLenum name);
+void (APIENTRY *glGetTexEnvfv )(GLenum target, GLenum pname, GLfloat *params);
+void (APIENTRY *glGetTexEnviv )(GLenum target, GLenum pname, GLint *params);
+void (APIENTRY *glGetTexGendv )(GLenum coord, GLenum pname, GLdouble *params);
+void (APIENTRY *glGetTexGenfv )(GLenum coord, GLenum pname, GLfloat *params);
+void (APIENTRY *glGetTexGeniv )(GLenum coord, GLenum pname, GLint *params);
+void (APIENTRY *glGetTexImage )(GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels);
+void (APIENTRY *glGetTexLevelParameterfv) (GLenum target, GLint level, GLenum pname, GLfloat *params);
+void (APIENTRY *glGetTexLevelParameteriv) (GLenum target, GLint level, GLenum pname, GLint *params);
+void (APIENTRY *glGetTexParameterfv) (GLenum target, GLenum pname, GLfloat *params);
+void (APIENTRY *glGetTexParameteriv) (GLenum target, GLenum pname, GLint *params);
+void (APIENTRY *glHint )(GLenum target, GLenum mode);
+void (APIENTRY *glIndexMask )(GLuint mask);
+void (APIENTRY *glIndexPointer) (GLenum type, GLsizei stride, const GLvoid *pointer);
+void (APIENTRY *glIndexd )(GLdouble c);
+void (APIENTRY *glIndexdv) (const GLdouble *c);
+void (APIENTRY *glIndexf) (GLfloat c);
+void (APIENTRY *glIndexfv) (const GLfloat *c);
+void (APIENTRY *glIndexi) (GLint c);
+void (APIENTRY *glIndexiv) (const GLint *c);
+void (APIENTRY *glIndexs) (GLshort c);
+void (APIENTRY *glIndexsv) (const GLshort *c);
+void (APIENTRY *glIndexub) (GLubyte c);
+void (APIENTRY *glIndexubv) (const GLubyte *c);
+void (APIENTRY *glInitNames) (void);
+void (APIENTRY *glInterleavedArrays) (GLenum format, GLsizei stride, const GLvoid *pointer);
+GLboolean (APIENTRY *glIsEnabled) (GLenum cap);
+GLboolean (APIENTRY *glIsList) (GLuint list);
+GLboolean (APIENTRY *glIsTexture )(GLuint texture);
+void (APIENTRY *glLightModelf) (GLenum pname, GLfloat param);
+void (APIENTRY *glLightModelfv) (GLenum pname, const GLfloat *params);
+void (APIENTRY *glLightModeli) (GLenum pname, GLint param);
+void (APIENTRY *glLightModeliv) (GLenum pname, const GLint *params);
+void (APIENTRY *glLightf) (GLenum light, GLenum pname, GLfloat param);
+void (APIENTRY	*glLightfv) (GLenum light, GLenum pname, const GLfloat *params);
+void (APIENTRY *glLighti) (GLenum light, GLenum pname, GLint param);
+void (APIENTRY *glLightiv) (GLenum light, GLenum pname, const GLint *params);
+void (APIENTRY *glLineStipple) (GLint factor, GLushort pattern);
+void (APIENTRY *glLineWidth) (GLfloat width);
+void (APIENTRY *glListBase) (GLuint base);
+void (APIENTRY *glLoadIdentity) (void);
+void (APIENTRY *glLoadMatrixd)(const GLdouble *m);
+void (APIENTRY *glLoadMatrixf) (const GLfloat *m);
+void (APIENTRY *glLoadName) (GLuint name);
+void (APIENTRY *glLogicOp) (GLenum opcode);
+void (APIENTRY *glMap1d) (GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *points);
+void (APIENTRY *glMap1f) (GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat *points);
+void (APIENTRY *glMap2d) (GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble *points);
+void (APIENTRY *glMap2f) (GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat *points);
+void (APIENTRY *glMapGrid1d) (GLint un, GLdouble u1, GLdouble u2);
+void (APIENTRY *glMapGrid1f) (GLint un, GLfloat u1, GLfloat u2);
+void (APIENTRY *glMapGrid2d) (GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2);
+void (APIENTRY *glMapGrid2f) (GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2);
+void (APIENTRY *glMaterialf) (GLenum face, GLenum pname, GLfloat param);
+void (APIENTRY *glMaterialfv) (GLenum face, GLenum pname, const GLfloat *params);
+void (APIENTRY *glMateriali) (GLenum face, GLenum pname, GLint param);
+void (APIENTRY *glMaterialiv) (GLenum face, GLenum pname, const GLint *params);
+void (APIENTRY *glMatrixMode) (GLenum mode);
+void (APIENTRY *glMultMatrixd) (const GLdouble *m);
+void (APIENTRY *glMultMatrixf) (const GLfloat *m);
+void (APIENTRY *glNewList) (GLuint list, GLenum mode);
+void (APIENTRY *glNormal3b) (GLbyte nx, GLbyte ny, GLbyte nz);
+void (APIENTRY *glNormal3bv) (const GLbyte *v);
+void (APIENTRY *glNormal3d) (GLdouble nx, GLdouble ny, GLdouble nz);
+void (APIENTRY *glNormal3dv) (const GLdouble *v);
+void (APIENTRY *glNormal3f) (GLfloat nx, GLfloat ny, GLfloat nz);
+void (APIENTRY *glNormal3fv) (const GLfloat *v);
+void (APIENTRY *glNormal3i )(GLint nx, GLint ny, GLint nz);
+void (APIENTRY *glNormal3iv) (const GLint *v);
+void (APIENTRY *glNormal3s) (GLshort nx, GLshort ny, GLshort nz);
+void (APIENTRY *glNormal3sv) (const GLshort *v);
+void (APIENTRY *glNormalPointer) (GLenum type, GLsizei stride, const GLvoid *pointer);
+void (APIENTRY *glOrtho) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar);
+void (APIENTRY *glPassThrough )(GLfloat token);
+void (APIENTRY *glPixelMapfv) (GLenum map, GLsizei mapsize, const GLfloat *values);
+void (APIENTRY *glPixelMapuiv) (GLenum map, GLsizei mapsize, const GLuint *values);
+void (APIENTRY *glPixelMapusv) (GLenum map, GLsizei mapsize, const GLushort *values);
+void (APIENTRY *glPixelStoref) (GLenum pname, GLfloat param);
+void (APIENTRY *glPixelStorei) (GLenum pname, GLint param);
+void (APIENTRY *glPixelTransferf) (GLenum pname, GLfloat param);
+void (APIENTRY *glPixelTransferi) (GLenum pname, GLint param);
+void (APIENTRY *glPixelZoom) (GLfloat xfactor, GLfloat yfactor);
+void (APIENTRY *glPointSize) (GLfloat size);
+void (APIENTRY *glPolygonMode) (GLenum face, GLenum mode);
+void (APIENTRY *glPolygonOffset) (GLfloat factor, GLfloat units);
+void (APIENTRY *glPolygonStipple) (const GLubyte *mask);
+void (APIENTRY *glPopAttrib) (void);
+void (APIENTRY *glPopClientAttrib) (void);
+void (APIENTRY *glPopMatrix) (void);
+void (APIENTRY *glPopName) (void);
+void (APIENTRY *glPrioritizeTextures) (GLsizei n, const GLuint *textures, const GLclampf *priorities);
+void (APIENTRY *glPushAttrib) (GLbitfield mask);
+void (APIENTRY *glPushClientAttrib) (GLbitfield mask);
+void (APIENTRY *glPushMatrix) (void);
+void (APIENTRY *glPushName) (GLuint name);
+void (APIENTRY *glRasterPos2d) (GLdouble x, GLdouble y);
+void (APIENTRY *glRasterPos2dv) (const GLdouble *v);
+void (APIENTRY *glRasterPos2f) (GLfloat x, GLfloat y);
+void (APIENTRY *glRasterPos2fv) (const GLfloat *v);
+void (APIENTRY *glRasterPos2i) (GLint x, GLint y);
+void (APIENTRY *glRasterPos2iv) (const GLint *v);
+void (APIENTRY *glRasterPos2s) (GLshort x, GLshort y);
+void (APIENTRY *glRasterPos2sv) (const GLshort *v);
+void (APIENTRY *glRasterPos3d) (GLdouble x, GLdouble y, GLdouble z);
+void (APIENTRY *glRasterPos3dv) (const GLdouble *v);
+void (APIENTRY *glRasterPos3f) (GLfloat x, GLfloat y, GLfloat z);
+void (APIENTRY *glRasterPos3fv) (const GLfloat *v);
+void (APIENTRY *glRasterPos3i) (GLint x, GLint y, GLint z);
+void (APIENTRY *glRasterPos3iv) (const GLint *v);
+void (APIENTRY *glRasterPos3s) (GLshort x, GLshort y, GLshort z);
+void (APIENTRY *glRasterPos3sv) (const GLshort *v);
+void (APIENTRY *glRasterPos4d) (GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+void (APIENTRY *glRasterPos4dv) (const GLdouble *v);
+void (APIENTRY *glRasterPos4f) (GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+void (APIENTRY *glRasterPos4fv) (const GLfloat *v);
+void (APIENTRY *glRasterPos4i) (GLint x, GLint y, GLint z, GLint w);
+void (APIENTRY *glRasterPos4iv) (const GLint *v);
+void (APIENTRY *glRasterPos4s) (GLshort x, GLshort y, GLshort z, GLshort w);
+void (APIENTRY *glRasterPos4sv) (const GLshort *v);
+void (APIENTRY *glReadBuffer) (GLenum mode);
+void (APIENTRY *glReadPixels) (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels);
+void (APIENTRY *glRectd) (GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2);
+void (APIENTRY *glRectdv) (const GLdouble *v1, const GLdouble *v2);
+void (APIENTRY *glRectf) (GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2);
+void (APIENTRY *glRectfv) (const GLfloat *v1, const GLfloat *v2);
+void (APIENTRY *glRecti) (GLint x1, GLint y1, GLint x2, GLint y2);
+void (APIENTRY *glRectiv) (const GLint *v1, const GLint *v2);
+void (APIENTRY *glRects) (GLshort x1, GLshort y1, GLshort x2, GLshort y2);
+void (APIENTRY *glRectsv) (const GLshort *v1, const GLshort *v2);
+GLint (APIENTRY *glRenderMode) (GLenum mode);
+void (APIENTRY *glRotated) (GLdouble angle, GLdouble x, GLdouble y, GLdouble z);
+void (APIENTRY *glRotatef) (GLfloat angle, GLfloat x, GLfloat y, GLfloat z);
+void (APIENTRY *glScaled) (GLdouble x, GLdouble y, GLdouble z);
+void (APIENTRY *glScalef) (GLfloat x, GLfloat y, GLfloat z);
+void (APIENTRY *glScissor) (GLint x, GLint y, GLsizei width, GLsizei height);
+void (APIENTRY *glSelectBuffer) (GLsizei size, GLuint *buffer);
+void (APIENTRY *glShadeModel) (GLenum mode);
+void (APIENTRY *glStencilFunc) (GLenum func, GLint ref, GLuint mask);
+void (APIENTRY *glStencilMask) (GLuint mask);
+void (APIENTRY *glStencilOp) (GLenum fail, GLenum zfail, GLenum zpass);
+void (APIENTRY *glTexCoord1d) (GLdouble s);
+void (APIENTRY *glTexCoord1dv) (const GLdouble *v);
+void (APIENTRY *glTexCoord1f) (GLfloat s);
+void (APIENTRY *glTexCoord1fv) (const GLfloat *v);
+void (APIENTRY *glTexCoord1i) (GLint s);
+void (APIENTRY *glTexCoord1iv) (const GLint *v);
+void (APIENTRY *glTexCoord1s) (GLshort s);
+void (APIENTRY *glTexCoord1sv) (const GLshort *v);
+void (APIENTRY *glTexCoord2d) (GLdouble s, GLdouble t);
+void (APIENTRY *glTexCoord2dv) (const GLdouble *v);
+void (APIENTRY *glTexCoord2f) (GLfloat s, GLfloat t);
+void (APIENTRY *glTexCoord2fv) (const GLfloat *v);
+void (APIENTRY *glTexCoord2i) (GLint s, GLint t);
+void (APIENTRY *glTexCoord2iv) (const GLint *v);
+void (APIENTRY *glTexCoord2s) (GLshort s, GLshort t);
+void (APIENTRY *glTexCoord2sv) (const GLshort *v);
+void (APIENTRY *glTexCoord3d)(GLdouble s, GLdouble t, GLdouble r);
+void (APIENTRY *glTexCoord3dv) (const GLdouble *v);
+void (APIENTRY *glTexCoord3f) (GLfloat s, GLfloat t, GLfloat r);
+void (APIENTRY *glTexCoord3fv) (const GLfloat *v);
+void (APIENTRY *glTexCoord3i) (GLint s, GLint t, GLint r);
+void (APIENTRY *glTexCoord3iv) (const GLint *v);
+void (APIENTRY *glTexCoord3s) (GLshort s, GLshort t, GLshort r);
+void (APIENTRY *glTexCoord3sv) (const GLshort *v);
+void (APIENTRY *glTexCoord4d) (GLdouble s, GLdouble t, GLdouble r, GLdouble q);
+void (APIENTRY *glTexCoord4dv) (const GLdouble *v);
+void (APIENTRY *glTexCoord4f) (GLfloat s, GLfloat t, GLfloat r, GLfloat q);
+void (APIENTRY *glTexCoord4fv) (const GLfloat *v);
+void (APIENTRY *glTexCoord4i) (GLint s, GLint t, GLint r, GLint q);
+void (APIENTRY *glTexCoord4iv) (const GLint *v);
+void (APIENTRY *glTexCoord4s) (GLshort s, GLshort t, GLshort r, GLshort q);
+void (APIENTRY *glTexCoord4sv) (const GLshort *v);
+void (APIENTRY *glTexCoordPointer) (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+static void (APIENTRY *glTexEnvf) (GLenum target, GLenum pname, GLfloat param);
+static void (APIENTRY *glTexEnvfv) (GLenum target, GLenum pname, const GLfloat *params);
+static void (APIENTRY *glTexEnvi )(GLenum target, GLenum pname, GLint param);
+static void (APIENTRY *glTexEnviv) (GLenum target, GLenum pname, const GLint *params);
+void (APIENTRY *glTexGend )(GLenum coord, GLenum pname, GLdouble param);
+void (APIENTRY *glTexGendv) (GLenum coord, GLenum pname, const GLdouble *params);
+void (APIENTRY *glTexGenf )(GLenum coord, GLenum pname, GLfloat param);
+void (APIENTRY *glTexGenfv) (GLenum coord, GLenum pname, const GLfloat *params);
+void (APIENTRY *glTexGeni )(GLenum coord, GLenum pname, GLint param);
+void (APIENTRY *glTexGeniv) (GLenum coord, GLenum pname, const GLint *params);
+void (APIENTRY *glTexImage1D )(GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+void (APIENTRY *glTexImage2D )(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+void (APIENTRY *glTexParameterf) (GLenum target, GLenum pname, GLfloat param);
+void (APIENTRY *glTexParameterfv) (GLenum target, GLenum pname, const GLfloat *params);
+void (APIENTRY *glTexParameteri) (GLenum target, GLenum pname, GLint param);
+void (APIENTRY *glTexParameteriv) (GLenum target, GLenum pname, const GLint *params);
+void (APIENTRY *glTexSubImage1D) (GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid *pixels);
+void (APIENTRY *glTexSubImage2D) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
+void (APIENTRY *glTranslated )(GLdouble x, GLdouble y, GLdouble z);
+void (APIENTRY *glTranslatef) (GLfloat x, GLfloat y, GLfloat z);
+void (APIENTRY *glVertex2d) (GLdouble x, GLdouble y);
+void (APIENTRY *glVertex2dv) (const GLdouble *v);
+void (APIENTRY *glVertex2f )(GLfloat x, GLfloat y);
+void (APIENTRY *glVertex2fv) (const GLfloat *v);
+void (APIENTRY *glVertex2i )(GLint x, GLint y);
+void (APIENTRY *glVertex2iv) (const GLint *v);
+void (APIENTRY *glVertex2s )(GLshort x, GLshort y);
+void (APIENTRY *glVertex2sv) (const GLshort *v);
+void (APIENTRY *glVertex3d) (GLdouble x, GLdouble y, GLdouble z);
+void (APIENTRY *glVertex3dv) (const GLdouble *v);
+void (APIENTRY *glVertex3f) (GLfloat x, GLfloat y, GLfloat z);
+void (APIENTRY *glVertex3fv) (const GLfloat *v);
+void (APIENTRY *glVertex3i) (GLint x, GLint y, GLint z);
+void (APIENTRY *glVertex3iv) (const GLint *v);
+void (APIENTRY *glVertex3s) (GLshort x, GLshort y, GLshort z);
+void (APIENTRY *glVertex3sv) (const GLshort *v);
+void (APIENTRY *glVertex4d) (GLdouble x, GLdouble y, GLdouble z, GLdouble w);
+void (APIENTRY *glVertex4dv) (const GLdouble *v);
+void (APIENTRY *glVertex4f) (GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+void (APIENTRY *glVertex4fv) (const GLfloat *v);
+void (APIENTRY *glVertex4i) (GLint x, GLint y, GLint z, GLint w);
+void (APIENTRY *glVertex4iv) (const GLint *v);
+void (APIENTRY *glVertex4s )(GLshort x, GLshort y, GLshort z, GLshort w);
+void (APIENTRY *glVertex4sv) (const GLshort *v);
+void (APIENTRY *glVertexPointer) (GLint size, GLenum type, GLsizei stride, const GLvoid *pointer);
+void (APIENTRY *glViewport) (GLint x, GLint y, GLsizei width, GLsizei height);
 
 // WGL_SWAP_CONTROL
-WGLSETSWAPINTERVALPROC wglSwapIntervalEXT=NULL;
-WGLGETSWAPINTERVALPROC wglGetSwapIntervalEXT=NULL;
-
+WGLSETSWAPINTERVALPROC wglSwapIntervalEXT = NULL;
+WGLGETSWAPINTERVALPROC wglGetSwapIntervalEXT = NULL;
 
 // ARB_MULTITEXTURE 
-PFNGLACTIVETEXTUREARBPROC glActiveTextureARB=NULL ;
-PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB=NULL ;
-PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB=NULL;
-PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fvARB=NULL;
+PFNGLACTIVETEXTUREARBPROC glActiveTextureARB = NULL;
+PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB = NULL;
+PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB = NULL;
+PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fvARB = NULL;
 
 // COMPILED VERTEX ARRAY
-PFNGLLOCKARRAYSEXTPROC glLockArraysEXT=NULL;
-PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT=NULL;
-
+PFNGLLOCKARRAYSEXTPROC glLockArraysEXT = NULL;
+PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT = NULL;
 
 // WGL_3DFX_GAMMA
-
-SETDEVICEGAMMARAMP3DFXPROC  wglSetDeviceGammaRamp3DFX=NULL;
-GETDEVICEGAMMARAMP3DFXPROC  wglGetDeviceGammaRamp3DFX=NULL;
-
-
+SETDEVICEGAMMARAMP3DFXPROC  wglSetDeviceGammaRamp3DFX = NULL;
+GETDEVICEGAMMARAMP3DFXPROC  wglGetDeviceGammaRamp3DFX = NULL;
 
 // WGL_ARB_extensions_string 
-
-WGLGETEXTENSIONSSTRING_ARB_PROC wglGetExtensionsStringARB =NULL;
+WGLGETEXTENSIONSSTRING_ARB_PROC wglGetExtensionsStringARB = NULL;
 
 // ARB_texture_compression 
-void (APIENTRY * glCompressedTexImage3DARB)(enum target, int level,
+void (APIENTRY *glCompressedTexImage3DARB)(enum target, int level,
                                  int internalformat, sizei width,
                                  sizei height, sizei depth,
                                  int border, sizei imageSize,
-                                 const void *data)=0;
+                                 const void *data) = 0;
 void (APIENTRY *glCompressedTexImage2DARB)(enum target, int level,
                                  int internalformat, sizei width,
                                  sizei height, int border, 
-                                 sizei imageSize, const void *data)=0;
+                                 sizei imageSize, const void *data) = 0;
+
 void (APIENTRY *glCompressedTexImage1DARB)(enum target, int level,
                                  int internalformat, sizei width,
                                  int border, sizei imageSize,
-                                 const void *data)=0;
+                                 const void *data) = 0;
+
 void (APIENTRY *glCompressedTexSubImage3DARB)(enum target, int level, 
                                     int xoffset, int yoffset,
                                     int zoffset, sizei width,
                                     sizei height, sizei depth,
                                     enum format, sizei imageSize,
-                                    const void *data)=0;
+                                    const void *data) = 0;
+
 void (APIENTRY *glCompressedTexSubImage2DARB)(enum target, int level, 
                                     int xoffset, int yoffset,
                                     sizei width, sizei height,
                                     enum format, sizei imageSize,
-                                    const void *data)=0;
+                                    const void *data) = 0;
+
 void (APIENTRY *glCompressedTexSubImage1DARB)(enum target, int level, 
                                     int xoffset, sizei width,
                                     enum format, sizei imageSize,
-                                    const void *data)=0;
-void (APIENTRY *glGetCompressedTexImageARB)(enum target, int lod,
-                                  const void *img)=0;
+                                    const void *data) = 0;
 
+void (APIENTRY *glGetCompressedTexImageARB)(enum target, int lod,
+                                  const void *img) = 0;
 
 // NV_register_combiners
-
 void (APIENTRY *glCombinerParameterfvNV)(GLenum pname,
-                          const GLfloat *params);
+                          const GLfloat *params) = 0;
 
 void (APIENTRY *glCombinerParameterivNV)(GLenum pname,
-                          const GLint *params);
+                          const GLint *params) = 0;
 
 void (APIENTRY *glCombinerParameterfNV)(GLenum pname,
-                         GLfloat param);
+                         GLfloat param) = 0;
 
 void (APIENTRY *glCombinerParameteriNV)(GLenum pname,
-                         GLint param);
+                         GLint param) = 0;
 
 void (APIENTRY *glCombinerInputNV)(GLenum stage,
                     GLenum portion,
                     GLenum variable,
                     GLenum input,
                     GLenum mapping,
-                    GLenum componentUsage);
+                    GLenum componentUsage) = 0;
 
 void (APIENTRY *glCombinerOutputNV)(GLenum stage,
-                     GLenum portion, 
-                     GLenum abOutput,
-                     GLenum cdOutput,
-                     GLenum sumOutput,
-                     GLenum scale,
-                     GLenum bias,
-                     GLboolean abDotProduct,
-                     GLboolean cdDotProduct,
-                     GLboolean muxSum);
+					GLenum portion, 
+                    GLenum abOutput,
+                    GLenum cdOutput,
+                    GLenum sumOutput,
+                    GLenum scale,
+                    GLenum bias,
+                    GLboolean abDotProduct,
+                    GLboolean cdDotProduct,
+                    GLboolean muxSum) = 0;
 
 void (APIENTRY *glFinalCombinerInputNV)(GLenum variable,
-                         GLenum input,
-                         GLenum mapping,
-                         GLenum componentUsage);
+                    GLenum input,
+                    GLenum mapping,
+                    GLenum componentUsage) = 0;
 
 void (APIENTRY *glGetCombinerInputParameterfvNV)(GLenum stage,
-                                  GLenum portion,
-                                  GLenum variable,
-                                  GLenum pname,
-                                  GLfloat *params)=0;
+                    GLenum portion,
+                    GLenum variable,
+                    GLenum pname,
+                    GLfloat *params) = 0;
 
 void (APIENTRY *glGetCombinerInputParameterivNV)(GLenum stage,
-                                  GLenum portion,
-                                  GLenum variable,
-                                  GLenum pname,
-                                  GLint *params)=0;
+                    GLenum portion,
+                    GLenum variable,
+                    GLenum pname,
+                    GLint *params) = 0;
 
 void (APIENTRY *glGetCombinerOutputParameterfvNV)(GLenum stage,
-                                   GLenum portion, 
-                                   GLenum pname,
-                                   GLfloat *params)=0;
+                    GLenum portion, 
+                    GLenum pname,
+                    GLfloat *params) = 0;
 
 void (APIENTRY *glGetCombinerOutputParameterivNV)(GLenum stage,
-                                   GLenum portion, 
-                                   GLenum pname,
-                                   GLint *params)=0;
+                    GLenum portion, 
+                    GLenum pname,
+                    GLint *params) = 0;
 
 void (APIENTRY *glGetFinalCombinerInputParameterfvNV)(GLenum variable,
-                                       GLenum pname,
-                                       GLfloat *params)=0;
+                    GLenum pname,
+                    GLfloat *params) = 0;
 
 void (APIENTRY *glGetFinalCombinerInputParameterivNV)(GLenum variable,
-                                       GLenum pname,
-                                       GLfloat *params)=0;
+                    GLenum pname,
+                    GLfloat *params) = 0;
 
-
-
-
-
-
-int GL_LoadDll ( char * name )
+aboolean GL_LoadDll (char *name)
 {
+	HINSTANCE dll;
 
+	if (GL_dll)  // Error 
+		return afalse; 
 
-	HINSTANCE dll ;
+	GL_dll = LoadLibrary(name);
 
+	if (!GL_dll)
+		return atrue;
 
-	if (GL_dll )  // Error 
-		return 0; 
+	dll = GL_dll;
 
-	GL_dll= LoadLibrary(name);
-
-
-	if (!GL_dll )
-	{
-		return 0;
-
-	}
-
-	dll=GL_dll;
-
-
-
-
-
-	glAccum =(void *) GetProcAddress(dll,"glAccum");
-	glAlphaFunc =(void *) GetProcAddress(dll,"glAlphaFunc");
-	glAreTexturesResident =(void *) GetProcAddress(dll,"glAreTexturesResident");
-	glArrayElement =(void *) GetProcAddress(dll,"glArrayElement");
-	glBegin =(void *) GetProcAddress(dll,"glBegin");
-	glBindTexture =(void *) GetProcAddress(dll,"glBindTexture");
-	glBitmap =(void *) GetProcAddress(dll,"glBitmap");
-	glBlendFunc =(void *) GetProcAddress(dll,"glBlendFunc");
-	glCallList =(void *) GetProcAddress(dll,"glCallList");
-	glCallLists =(void *) GetProcAddress(dll,"glCallLists");
-	glClear =(void *) GetProcAddress(dll,"glClear");
-	glClearAccum =(void *) GetProcAddress(dll,"glClearAccum");
-	glClearColor =(void *) GetProcAddress(dll,"glClearColor");
-	glClearDepth =(void *) GetProcAddress(dll,"glClearDepth");
-	glClearIndex =(void *) GetProcAddress(dll,"glClearIndex");
-	glClearStencil =(void *) GetProcAddress(dll,"glClearStencil");
-	glClipPlane =(void *) GetProcAddress(dll,"glClipPlane");
-	glColor3b =(void *) GetProcAddress(dll,"glColor3b");
-	glColor3bv =(void *) GetProcAddress(dll,"glColor3bv");
-	glColor3d =(void *) GetProcAddress(dll,"glColor3d");
-	glColor3dv =(void *) GetProcAddress(dll,"glColor3dv");
-	glColor3f =(void *) GetProcAddress(dll,"glColor3f");
-	glColor3fv =(void *) GetProcAddress(dll,"glColor3fv");
-	glColor3i  =(void *) GetProcAddress(dll,"glColor3i");
-	glColor3iv =(void *) GetProcAddress(dll,"glColor3iv");
-	glColor3s =(void *) GetProcAddress(dll,"glColor3s");
-	glColor3sv =(void *) GetProcAddress(dll,"glColor3sv");
-	glColor3ub =(void *) GetProcAddress(dll,"glColor3ub");
-	glColor3ubv =(void *) GetProcAddress(dll,"glColor3ubv");
-	glColor3ui =(void *) GetProcAddress(dll,"glColor3ui");
-	glColor3uiv =(void *) GetProcAddress(dll,"glColor3uiv");
-	glColor3us =(void *) GetProcAddress(dll,"glColor3us"); //
-	glColor3usv =(void *) GetProcAddress(dll,"glColor3usv");
+	glAccum = (void *)GetProcAddress(dll, "glAccum");
+	glAlphaFunc = (void *)GetProcAddress(dll, "glAlphaFunc");
+	glAreTexturesResident = (void *)GetProcAddress(dll, "glAreTexturesResident");
+	glArrayElement = (void *)GetProcAddress(dll, "glArrayElement");
+	glBegin = (void *)GetProcAddress(dll, "glBegin");
+	glBindTexture = (void *)GetProcAddress(dll, "glBindTexture");
+	glBitmap = (void *)GetProcAddress(dll, "glBitmap");
+	glBlendFunc = (void *)GetProcAddress(dll, "glBlendFunc");
+	glCallList = (void *)GetProcAddress(dll, "glCallList");
+	glCallLists = (void *)GetProcAddress(dll, "glCallLists");
+	glClear = (void *)GetProcAddress(dll, "glClear");
+	glClearAccum = (void *)GetProcAddress(dll, "glClearAccum");
+	glClearColor = (void *)GetProcAddress(dll, "glClearColor");
+	glClearDepth = (void *)GetProcAddress(dll, "glClearDepth");
+	glClearIndex = (void *)GetProcAddress(dll, "glClearIndex");
+	glClearStencil = (void *)GetProcAddress(dll, "glClearStencil");
+	glClipPlane = (void *)GetProcAddress(dll, "glClipPlane");
+	glColor3b = (void *)GetProcAddress(dll, "glColor3b");
+	glColor3bv = (void *)GetProcAddress(dll, "glColor3bv");
+	glColor3d = (void *)GetProcAddress(dll, "glColor3d");
+	glColor3dv = (void *)GetProcAddress(dll, "glColor3dv");
+	glColor3f = (void *)GetProcAddress(dll, "glColor3f");
+	glColor3fv = (void *)GetProcAddress(dll, "glColor3fv");
+	glColor3i  = (void *)GetProcAddress(dll, "glColor3i");
+	glColor3iv = (void *)GetProcAddress(dll, "glColor3iv");
+	glColor3s = (void *)GetProcAddress(dll, "glColor3s");
+	glColor3sv = (void *)GetProcAddress(dll, "glColor3sv");
+	glColor3ub = (void *)GetProcAddress(dll, "glColor3ub");
+	glColor3ubv = (void *)GetProcAddress(dll, "glColor3ubv");
+	glColor3ui = (void *)GetProcAddress(dll, "glColor3ui");
+	glColor3uiv = (void *)GetProcAddress(dll, "glColor3uiv");
+	glColor3us = (void *)GetProcAddress(dll, "glColor3us");
+	glColor3usv = (void *)GetProcAddress(dll, "glColor3usv");
 	glColor4b =(void *) GetProcAddress(dll,"glColor4b");
 	glColor4bv =(void *) GetProcAddress(dll,"glColor4bv");
 	glColor4d =(void *) GetProcAddress(dll,"glColor4d");
@@ -880,76 +857,40 @@ int GL_LoadDll ( char * name )
 	glVertexPointer =(void *) GetProcAddress(dll,"glVertexPointer");
 	glViewport =(void *) GetProcAddress(dll,"glViewport");
 
+	// OpenGL wgl prototypes
+	awglCopyContext = (void *)GetProcAddress(dll, "wglCopyContext");
+	awglCreateContext = (void *)GetProcAddress(dll, "wglCreateContext");
+	awglCreateLayerContext = (void *)GetProcAddress(dll, "wglCreateLayerContext");
+	awglDeleteContext = (void *)GetProcAddress(dll, "wglDeleteContext");
+	awglGetCurrentContext = (void *)GetProcAddress(dll, "wglGetCurrentContext");
+	awglGetCurrentDC = (void *)GetProcAddress(dll, "wglGetCurrentDC");
+	awglGetProcAddress = (void *)GetProcAddress(dll, "wglGetProcAddress");
+	awglMakeCurrent = (void *)GetProcAddress(dll, "wglMakeCurrent");
+	awglShareLists = (void *)GetProcAddress(dll, "wglShareLists");
+	awglUseFontBitmapsA = (void *)GetProcAddress(dll, "wglUseFontBitmapsA");
+	awglUseFontBitmapsW = (void *)GetProcAddress(dll, "wglUseFontBitmapsW");
+	awglSwapLayerBuffers = (void *)GetProcAddress(dll, "wglSwapLayerBuffers");
 
-
-
-
-// OpenGL wgl prototypes
-
-	awglCopyContext=(void *) GetProcAddress(dll,"wglCopyContext");
-	awglCreateContext=(void *) GetProcAddress(dll,"wglCreateContext");
-	awglCreateLayerContext=(void *) GetProcAddress(dll,"wglCreateLayerContext");
-	awglDeleteContext=(void *) GetProcAddress(dll,"wglDeleteContext");
-	awglGetCurrentContext=(void *) GetProcAddress(dll,"wglGetCurrentContext");
-	awglGetCurrentDC=(void *) GetProcAddress(dll,"wglGetCurrentDC");
-	awglGetProcAddress=(void *) GetProcAddress(dll,"wglGetProcAddress");
-	awglMakeCurrent=(void *) GetProcAddress(dll,"wglMakeCurrent");
-	awglShareLists=(void *) GetProcAddress(dll,"wglShareLists");
-	awglUseFontBitmapsA=(void *) GetProcAddress(dll,"wglUseFontBitmapsA");
-	awglUseFontBitmapsW=(void *) GetProcAddress(dll,"wglUseFontBitmapsW");
-
-
-
-
-//awglUseFontBitmaps  = (void *) GetProcAddress(dll,"wglUseFontBitmaps");
-
-	awglSwapLayerBuffers=(void *) GetProcAddress(dll,"wglSwapLayerBuffers");
-
-/*
-wglUseFontOutlines  ;
-
-
-wglDescribeLayerPlane(HDC, int, int, UINT,
-                                             LPLAYERPLANEDESCRIPTOR);
-wglSetLayerPaletteEntries(HDC, int, int, int,
-                                                 CONST COLORREF *);
-wglGetLayerPaletteEntries(HDC, int, int, int,
-                                                 COLORREF *);
-wglRealizeLayerPalette(HDC, int, BOOL);
-wglSwapLayerBuffers(HDC, UINT);
-
-
-*/
-
-return 1;
-
+	return atrue;
 }
 
-
-int GL_UnloadDll (void )
+aboolean GL_UnloadDll (void)
 {
-
-	if (GL_dll )
+	if (GL_dll)
 	{
-		if (FreeLibrary ( GL_dll ))
+		if (FreeLibrary(GL_dll))
 		{
-			GL_dll=NULL;
-			return 1;
+			GL_dll = NULL;
+			return atrue;
 		}
-		return 0;
 
-
-
+		return afalse;
 	}
 	else 
-		return 0;
-
-
+		return afalse;
 }
 
-// GLU- Replacement-functions : taken from MESA 
-
-
+// GLU - Replacement-functions:taken from MESA 
 static GLint bytes_per_pixel( GLenum format, GLenum type )
 {
    GLint n, m;
@@ -1593,14 +1534,14 @@ void APIENTRY GL_Perspective( GLdouble fovy, GLdouble aspect,
 #define MAX_TEX_UNITS 32
 
 #if TRACK_GL_STATE
-static int Cull_Face_Enabled = 1;
-static char Tex_Unit_Enabled[MAX_TEX_UNITS];
-static int Tex_IDs [MAX_TEX_UNITS];
+static GLboolean DepthMask_State = GL_TRUE;
+static aboolean Cull_Face_Enabled = atrue;
+static aboolean Blending_Enabled = afalse;
+static aboolean Alpha_Test_Enabled = afalse;
+static aboolean Polygon_Offset_Enabled = afalse;
+static aboolean Tex_Unit_Enabled[MAX_TEX_UNITS];
 static int Active_Tex_Unit = 0;
-static int Blending_Enabled = 0;
-static int Alpha_Test_Enabled = 0;
-static int Polygon_Offset_Enabled = 0;
-static int DepthMask_State = GL_TRUE;
+static int Tex_IDs[MAX_TEX_UNITS];
 
 #endif 
 
@@ -1613,15 +1554,15 @@ void GL_Enable (int param)
 			if (!Cull_Face_Enabled)
 			{
 				glEnable (param);
-				Cull_Face_Enabled = 1;
+				Cull_Face_Enabled = atrue;
 			}
 			break;
 
 		case GL_TEXTURE_2D:
-			if (!Tex_Unit_Enabled [Active_Tex_Unit])
+			if (!Tex_Unit_Enabled[Active_Tex_Unit])
 			{
 				glEnable(param);
-				Tex_Unit_Enabled[Active_Tex_Unit] = 1;
+				Tex_Unit_Enabled[Active_Tex_Unit] = atrue;
 			}
 			break;
 
@@ -1629,7 +1570,7 @@ void GL_Enable (int param)
 			if (!Blending_Enabled)
 			{
 				glEnable (param);
-				Blending_Enabled = 1;
+				Blending_Enabled = atrue;
 			}
 			break;
 
@@ -1637,7 +1578,7 @@ void GL_Enable (int param)
 			if (!Alpha_Test_Enabled)
 			{
 				glEnable (param);
-				Alpha_Test_Enabled = 1;
+				Alpha_Test_Enabled = atrue;
 			}
 			break;
 
@@ -1645,7 +1586,7 @@ void GL_Enable (int param)
 			if (!Polygon_Offset_Enabled)
 			{
 				glEnable(param);
-				Polygon_Offset_Enabled = 1;
+				Polygon_Offset_Enabled = atrue;
 			}
 			break;
 
@@ -1668,7 +1609,7 @@ void GL_Disable (int param)
 			if (Cull_Face_Enabled)
 			{
 				glDisable (param);
-				Cull_Face_Enabled = 0;
+				Cull_Face_Enabled = afalse;
 			}
 			break;
 
@@ -1676,7 +1617,7 @@ void GL_Disable (int param)
 			if (Tex_Unit_Enabled[Active_Tex_Unit])
 			{
 				glDisable(param);
-				Tex_Unit_Enabled[Active_Tex_Unit] = 0;
+				Tex_Unit_Enabled[Active_Tex_Unit] = afalse;
 			}
 			break;
 
@@ -1684,7 +1625,7 @@ void GL_Disable (int param)
 			if (Blending_Enabled)
 			{
 				glDisable (param);
-				Blending_Enabled = 0;
+				Blending_Enabled = afalse;
 			}
 			break;
 
@@ -1692,7 +1633,7 @@ void GL_Disable (int param)
 			if (Alpha_Test_Enabled)
 			{
 				glDisable (param);
-				Alpha_Test_Enabled = 0;
+				Alpha_Test_Enabled = afalse;
 			}
 			break;
 
@@ -1700,7 +1641,7 @@ void GL_Disable (int param)
 			if (Polygon_Offset_Enabled)
 			{
 				glDisable (param);
-				Polygon_Offset_Enabled = 0;
+				Polygon_Offset_Enabled = afalse;
 			}
 			break;
 
@@ -1744,7 +1685,7 @@ void GL_ActiveTextureARB (int param)
 }
 
 #if TRACK_GL_STATE
-static float  Tex_Env_Mode[MAX_TEX_UNITS];
+static float Tex_Env_Mode[MAX_TEX_UNITS];
 
 static float Combine_Rgb_Ext[MAX_TEX_UNITS];
 static float Combine_Alpha_Ext[MAX_TEX_UNITS];
@@ -1769,216 +1710,224 @@ static float Alpha_Scale[MAX_TEX_UNITS];
 
 void GL_TexEnvf (int target, int pname, float param)
 {
-	
 #if TRACK_GL_STATE
-	switch ( target )
+	switch (target)
 	{
-		
-	case GL_TEXTURE_ENV:
+		case GL_TEXTURE_ENV:
+			switch (pname)
+			{
+				case GL_TEXTURE_ENV_MODE:
+					if (param != Tex_Env_Mode[Active_Tex_Unit])
+					{
+						glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, param);
+						Tex_Env_Mode[Active_Tex_Unit] = param;
+					}
+					break;
 
-		switch (pname )
-		{
-		case GL_TEXTURE_ENV_MODE:
-			if (param!= Tex_Env_Mode[Active_Tex_Unit])
-			{
-				glTexEnvf (GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,param );	
-				Tex_Env_Mode[Active_Tex_Unit] = param ;
-			}
-			break;
-		case GL_COMBINE_RGB_EXT:
-			if (param !=Combine_Rgb_Ext[Active_Tex_Unit])
-			{
-				glTexEnvf (GL_TEXTURE_ENV,GL_COMBINE_RGB_EXT,param );
-				Combine_Rgb_Ext[Active_Tex_Unit]=param;
-			}
-			break;
-        case GL_COMBINE_ALPHA_EXT:	
-			if (param !=Combine_Alpha_Ext[Active_Tex_Unit])
-			{
-				glTexEnvf (GL_TEXTURE_ENV,GL_COMBINE_ALPHA_EXT,param );
-				Combine_Alpha_Ext[Active_Tex_Unit]=param ;
-			}
-			break;
-        case GL_SOURCE0_RGB_EXT:
-			if (param !=Source0_Rgb_Ext[Active_Tex_Unit])
-			{
-				glTexEnvf (GL_TEXTURE_ENV,GL_SOURCE0_RGB_EXT,param);
-				Source0_Rgb_Ext[Active_Tex_Unit]=param;
-			}
-			break;
-        case GL_SOURCE1_RGB_EXT:
-			if (param !=Source1_Rgb_Ext[Active_Tex_Unit])
-			{
-				glTexEnvf (GL_TEXTURE_ENV,GL_SOURCE1_RGB_EXT,param);
-				Source1_Rgb_Ext[Active_Tex_Unit]=param;
-			}
-			break;
-        case GL_SOURCE2_RGB_EXT:
-			if (param !=Source2_Rgb_Ext[Active_Tex_Unit])
-			{
-				glTexEnvf (GL_TEXTURE_ENV,GL_SOURCE2_RGB_EXT,param);
-				Source2_Rgb_Ext[Active_Tex_Unit]=param;
-			}
-			break;
-        case GL_SOURCE0_ALPHA_EXT:
-			if (param != Source0_Alpha_Ext[Active_Tex_Unit] )
-			{
-				glTexEnvf (GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_EXT,param);
-				Source0_Alpha_Ext[Active_Tex_Unit]=param;
-			}
-			break;
-        case GL_SOURCE1_ALPHA_EXT:
-			if (param != Source1_Alpha_Ext[Active_Tex_Unit] )
-			{
-				glTexEnvf (GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_EXT,param);
-				Source1_Alpha_Ext[Active_Tex_Unit]=param;
-			}
-			break;
-        case GL_SOURCE2_ALPHA_EXT:
-			if (param != Source2_Alpha_Ext[Active_Tex_Unit] )
-			{
-				glTexEnvf (GL_TEXTURE_ENV,GL_SOURCE2_ALPHA_EXT,param);
-				Source2_Alpha_Ext[Active_Tex_Unit]=param;
-			}
-			break;
-        case GL_OPERAND0_RGB_EXT:
-			if (param != Operand0_Rgb_Ext[Active_Tex_Unit] )
-			{
-				glTexEnvf (GL_TEXTURE_ENV,GL_OPERAND0_RGB_EXT,param);
-				Operand0_Rgb_Ext[Active_Tex_Unit] = param;
-			}
-			break;
-        case GL_OPERAND1_RGB_EXT:	
-			if (param != Operand1_Rgb_Ext[Active_Tex_Unit] )
-			{
-				glTexEnvf (GL_TEXTURE_ENV,GL_OPERAND1_RGB_EXT,param);
-				Operand1_Rgb_Ext[Active_Tex_Unit] = param;
-			}
-			break;
-        case GL_OPERAND2_RGB_EXT:
-			if (param != Operand2_Rgb_Ext[Active_Tex_Unit] )
-			{
-				glTexEnvf (GL_TEXTURE_ENV,GL_OPERAND2_RGB_EXT,param);
-				Operand2_Rgb_Ext[Active_Tex_Unit] = param;
-			}
-			break;
-        case GL_OPERAND0_ALPHA_EXT:
-			if (param != Operand0_Alpha_Ext[Active_Tex_Unit] )
-			{
-				glTexEnvf(GL_TEXTURE_ENV,GL_OPERAND0_ALPHA_EXT,param );
-				Operand0_Alpha_Ext[Active_Tex_Unit] = param ;
-			}
-			break;
-        case GL_OPERAND1_ALPHA_EXT:
-			if (param != Operand1_Alpha_Ext[Active_Tex_Unit] )
-			{
-				glTexEnvf(GL_TEXTURE_ENV,GL_OPERAND1_ALPHA_EXT,param );
-				Operand1_Alpha_Ext[Active_Tex_Unit] = param ;
-			}
-			break;
-        case GL_OPERAND2_ALPHA_EXT:
-			if (param != Operand2_Alpha_Ext[Active_Tex_Unit] )
-			{
-				glTexEnvf(GL_TEXTURE_ENV,GL_OPERAND2_ALPHA_EXT,param );
-				Operand2_Alpha_Ext[Active_Tex_Unit] = param ;
-			}
-			break;
-        case GL_RGB_SCALE_EXT:
-			if (param != Rgb_Scale_Ext[Active_Tex_Unit] )
-			{
-				glTexEnvf (GL_TEXTURE_ENV,GL_RGB_SCALE_EXT,param );
-				Rgb_Scale_Ext[Active_Tex_Unit]=param;
-			}
-			break;
-        case GL_ALPHA_SCALE:
-			if (param != Alpha_Scale[Active_Tex_Unit] )
-			{
-				glTexEnvf (GL_TEXTURE_ENV,GL_ALPHA_SCALE,param );
-				Alpha_Scale[Active_Tex_Unit] =param;
+				case GL_COMBINE_RGB_EXT:
+					if (param != Combine_Rgb_Ext[Active_Tex_Unit])
+					{
+						glTexEnvf (GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, param);
+						Combine_Rgb_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+
+				case GL_COMBINE_ALPHA_EXT:	
+					if (param != Combine_Alpha_Ext[Active_Tex_Unit])
+					{
+						glTexEnvf (GL_TEXTURE_ENV, GL_COMBINE_ALPHA_EXT, param);
+						Combine_Alpha_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+
+				case GL_SOURCE0_RGB_EXT:
+					if (param != Source0_Rgb_Ext[Active_Tex_Unit])
+					{
+						glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, param);
+						Source0_Rgb_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+
+				case GL_SOURCE1_RGB_EXT:
+					if (param != Source1_Rgb_Ext[Active_Tex_Unit])
+					{
+						glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, param);
+						Source1_Rgb_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+
+				case GL_SOURCE2_RGB_EXT:
+					if (param != Source2_Rgb_Ext[Active_Tex_Unit])
+					{
+						glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE2_RGB_EXT, param);
+						Source2_Rgb_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+
+				case GL_SOURCE0_ALPHA_EXT:
+					if (param != Source0_Alpha_Ext[Active_Tex_Unit])					{
+						glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, param);
+						Source0_Alpha_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+
+				case GL_SOURCE1_ALPHA_EXT:
+					if (param != Source1_Alpha_Ext[Active_Tex_Unit])
+					{
+						glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT, param);
+						Source1_Alpha_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+
+				case GL_SOURCE2_ALPHA_EXT:
+					if (param != Source2_Alpha_Ext[Active_Tex_Unit])
+					{
+						glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE2_ALPHA_EXT, param);
+						Source2_Alpha_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+
+				case GL_OPERAND0_RGB_EXT:
+					if (param != Operand0_Rgb_Ext[Active_Tex_Unit])
+					{
+						glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, param);
+						Operand0_Rgb_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+
+				case GL_OPERAND1_RGB_EXT:
+					if (param != Operand1_Rgb_Ext[Active_Tex_Unit])
+					{
+						glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, param);
+						Operand1_Rgb_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+
+				case GL_OPERAND2_RGB_EXT:
+					if (param != Operand2_Rgb_Ext[Active_Tex_Unit])
+					{
+						glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND2_RGB_EXT, param);
+						Operand2_Rgb_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+
+				case GL_OPERAND0_ALPHA_EXT:
+					if (param != Operand0_Alpha_Ext[Active_Tex_Unit] )
+					{
+						glTexEnvf(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT, param);
+						Operand0_Alpha_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+
+				case GL_OPERAND1_ALPHA_EXT:
+					if (param != Operand1_Alpha_Ext[Active_Tex_Unit])
+					{
+						glTexEnvf(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT, param);
+						Operand1_Alpha_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+
+				case GL_OPERAND2_ALPHA_EXT:
+					if (param != Operand2_Alpha_Ext[Active_Tex_Unit])
+					{
+						glTexEnvf(GL_TEXTURE_ENV, GL_OPERAND2_ALPHA_EXT, param);
+						Operand2_Alpha_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+
+				case GL_RGB_SCALE_EXT:
+					if (param != Rgb_Scale_Ext[Active_Tex_Unit])
+					{
+						glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, param);
+						Rgb_Scale_Ext[Active_Tex_Unit] = param;
+					}
+					break;
+				case GL_ALPHA_SCALE:
+					if (param != Alpha_Scale[Active_Tex_Unit])
+					{
+						glTexEnvf (GL_TEXTURE_ENV, GL_ALPHA_SCALE, param);
+						Alpha_Scale[Active_Tex_Unit] = param;
+					}
+					break;
+
+				default:
+					glTexEnvf (target, pname, param);
+					break;
 			}
 			break;
 
-		default :
-			glTexEnvf (target,pname,param);
+		default:
 			break;
-		}
-
-		break;
-
-	default :
-		break;
 	}
+
 #else 
-	glTexEnvf (target,pname ,param );
-#endif 
+	glTexEnvf (target, pname, param);
+#endif
 }
 
 #if TRACK_GL_STATE
-static char Color_Array_Enabled ;
-static char Vertex_Array_Enabled ;
-static char Tex_Coord_Array_Enabled [MAX_TEX_UNITS];
+static aboolean Color_Array_Enabled;
+static aboolean Vertex_Array_Enabled;
+static aboolean Tex_Coord_Array_Enabled[MAX_TEX_UNITS];
 
-static int Active_Client_Tex_Unit =0;
+static int Active_Client_Tex_Unit = 0;
 
-static int Blendsrc=0;
-static int Blenddst=0;
-static int DepthFunc =0;
+static int Blendsrc = 0;
+static int Blenddst = 0;
+static int DepthFunc = 0;
 
-static int AlphaFunc=0;
-static float Alpharef =0.0;
+static int AlphaFunc = 0;
+static float Alpharef = 0.0f;
 
 #endif 
-void GL_BlendFunc (int src, int dst )
+
+void GL_BlendFunc (int src, int dst)
 {
 #if TRACK_GL_STATE
-	if (Blendsrc!=src || Blenddst != dst )
+	if (Blendsrc != src || Blenddst != dst)
 	{
-		glBlendFunc (src,dst);
-		Blendsrc=src;
-		Blenddst=dst;
+		glBlendFunc (src, dst);
+		Blendsrc = src;
+		Blenddst = dst;
 	}
 #else 
-	glBlendFunc (src,dst);
+	glBlendFunc (src, dst);
 #endif 
-
 }
 
-void GL_DepthFunc (int func )
+void GL_DepthFunc (int func)
 {
 #if TRACK_GL_STATE
-	if (DepthFunc !=func)
+	if (DepthFunc != func)
 	{
 		glDepthFunc (func);
-		DepthFunc=func;
-	
+		DepthFunc = func;
 	}
 #else 
 	glDepthFunc (func );
 #endif 
 }
 
-void GL_AlphaFunc(int func, float ref )
+void GL_AlphaFunc(int func, float ref)
 {
 #if TRACK_GL_STATE
-	if (AlphaFunc!=func || Alpharef != ref )
+	if (AlphaFunc != func || Alpharef != ref)
 	{
-		glAlphaFunc ( func,ref);
-		AlphaFunc=func;
-		Alpharef=ref;
+		glAlphaFunc (func, ref);
+		AlphaFunc = func;
+		Alpharef = ref;
 	}
 #else 
-	glAlphaFunc(func,ref);
+	glAlphaFunc(func, ref);
 #endif 
 }
 
-void GL_ClientActiveTextureARB (int par )
+void GL_ClientActiveTextureARB (int par)
 {
+#if TRACK_GL_STATE
+	int num = par - GL_TEXTURE0_ARB;
 
-#if 	TRACK_GL_STATE
-	int num = par - GL_TEXTURE0_ARB ;
-
-
-	if (num!= Active_Client_Tex_Unit )
+	if (num != Active_Client_Tex_Unit)
 	{
 		glClientActiveTextureARB(par);
 		Active_Client_Tex_Unit = num;
@@ -1986,100 +1935,85 @@ void GL_ClientActiveTextureARB (int par )
 #else 
 	glClientActiveTextureARB (par);
 #endif
-
 }
 
-
-void GL_DisableClientState (int par )
+void GL_DisableClientState (int par)
 {
-
 #if TRACK_GL_STATE
-	switch (par )
+	switch (par)
 	{
+		case GL_COLOR_ARRAY:
+			if (Color_Array_Enabled)
+			{
+				glDisableClientState (GL_COLOR_ARRAY);
+				Color_Array_Enabled = afalse;
+			}
+			break;
 
-	case GL_COLOR_ARRAY:
+		case GL_VERTEX_ARRAY:
+			if (Vertex_Array_Enabled)
+			{
+				glDisableClientState (GL_VERTEX_ARRAY);
+				Vertex_Array_Enabled = afalse;
+			}
+			break;
 
-		if (Color_Array_Enabled)
-		{
-			glDisableClientState (GL_COLOR_ARRAY);
-			Color_Array_Enabled=0;
-		}
-		break;
+		case GL_TEXTURE_COORD_ARRAY:
+			if (Tex_Coord_Array_Enabled[Active_Client_Tex_Unit])
+			{
+				glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+				Tex_Coord_Array_Enabled[Active_Client_Tex_Unit] = afalse;
+			}
+			break;
 
-	case GL_VERTEX_ARRAY:
-		if (Vertex_Array_Enabled)
-		{
-			glDisableClientState (GL_VERTEX_ARRAY);
-			Vertex_Array_Enabled=0;
-		}
-		break;
-	case GL_TEXTURE_COORD_ARRAY:
-		if (Tex_Coord_Array_Enabled [Active_Client_Tex_Unit])
-		{
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-			Tex_Coord_Array_Enabled[Active_Client_Tex_Unit]=0;
-		}
-
-		break;
-
-
-	default :
-		glDisableClientState (par);
-		break;
-
+		default:
+			glDisableClientState (par);
+			break;
 	}
-
 #else 
-	glDisableClientState (par );
-
+	glDisableClientState (par);
 #endif 
 }
 
-
-void GL_EnableClientState (int par )
+void GL_EnableClientState (int par)
 {
 #if TRACK_GL_STATE
-
-	switch (par )
+	switch (par)
 	{
+		case GL_COLOR_ARRAY:
 
-	case GL_COLOR_ARRAY:
+			if (!Color_Array_Enabled)
+			{
+				glEnableClientState (GL_COLOR_ARRAY);
+				Color_Array_Enabled = atrue;
+			}
+			break;
 
-		if (!Color_Array_Enabled)
-		{
-			glEnableClientState (GL_COLOR_ARRAY);
-			Color_Array_Enabled=1;
-		}
-		break;
+		case GL_VERTEX_ARRAY:
+			if (!Vertex_Array_Enabled)
+			{
+				glEnableClientState (GL_VERTEX_ARRAY);
+				Vertex_Array_Enabled = atrue;
+			}
+			break;
 
-	case GL_VERTEX_ARRAY:
-		if (!Vertex_Array_Enabled)
-		{
-			glEnableClientState (GL_VERTEX_ARRAY);
-			Vertex_Array_Enabled = 1;
-		}
-		break;
+		case GL_TEXTURE_COORD_ARRAY:
+			if (!Tex_Coord_Array_Enabled[Active_Client_Tex_Unit])
+			{
+				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+				Tex_Coord_Array_Enabled[Active_Client_Tex_Unit] = atrue;
+			}
+			break;
 
-	case GL_TEXTURE_COORD_ARRAY:
-		if (!Tex_Coord_Array_Enabled [Active_Client_Tex_Unit])
-		{
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			Tex_Coord_Array_Enabled[Active_Client_Tex_Unit] = 1;
-		}
-
-		break;
-
-
-	default:
-		glEnableClientState (par);
-		break;
-
+		default:
+			glEnableClientState (par);
+			break;
 	}
 #else 
 	glEnableClientState (par);
 #endif 
-
 }
+
 void GL_DepthMask (GLboolean state)
 {
 #if TRACK_GL_STATE
@@ -2211,7 +2145,7 @@ int WIN_CreateWindow (HINSTANCE inst, int nCmdShow)
 		return 0;
 	}
 	else 
-		Con_Printf ("... registered window class\n");
+		Con_Printf ("...registered window class\n");
 
 	hInst = inst; 
 
@@ -2251,14 +2185,14 @@ int WIN_CreateWindow (HINSTANCE inst, int nCmdShow)
 		   NULL
 		);
 
-		glconfig.isFullscreen = 0;
+		glconfig.isFullscreen = afalse;
 		winX = mode.width;
 		winY = mode.height;
 	}
 	else 
 	{
 		WIN_Reset_DisplaySettings();
-		glconfig.isFullscreen = 1;
+		glconfig.isFullscreen = atrue;
 
 		// create the window
 		hWnd = CreateWindowEx(
@@ -2275,7 +2209,7 @@ int WIN_CreateWindow (HINSTANCE inst, int nCmdShow)
 			NULL
 		);
 
-		Con_Printf ("...calling CDS :");
+		Con_Printf ("...calling CDS:");
 
 		if (!WIN_ChangeResolution (mode.width, mode.height, r_colorbits->integer ? r_colorbits->integer : 16 ))
 		{
@@ -2339,21 +2273,21 @@ int WIN_Destroy_Window (void)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int x, y;
-	static int oldx = -1,oldy = -1;
+	static int oldx = -1, oldy = -1;
 
-	switch( message ) 
+	switch (message) 
 	{
 		case WM_PAINT:
 			break;
 
 		case WM_SYSKEYDOWN:
 		case WM_KEYDOWN:
-			Sys_Keyboard_Event (wParam,1);
+			Sys_Keyboard_Event (wParam, 1);
 			break;
 
 		case WM_SYSKEYUP:
 		case WM_KEYUP:
-			Sys_Keyboard_Event (wParam,0);
+			Sys_Keyboard_Event (wParam, 0);
 			break;
 
 		case WM_LBUTTONDOWN:
@@ -2468,7 +2402,7 @@ static int GL_ChoosePFD( int colorbits, int depthbits, int stencilbits )
 		Con_Printf("...hardware acceleration not found\n");
 	}
 
-	return( best );
+	return best;
 }
 
 static int IsExtensionSupported(char *ext)
@@ -2495,26 +2429,225 @@ static int IsExtensionSupported(char *ext)
 	return 0;
 }
 
-
 void GetGlConfig(glconfig_t *config)
 {
 	memcpy (config, &glconfig, sizeof (glconfig_t));
 }
 
-int Init_OpenGL (void)
+aboolean GL_CheckExtensions (void)
+{
+	Con_Printf("Initializing OpenGl extensions\n");
+	
+	// this is internal
+	if (IsExtensionSupported("GL_ARB_texture_compression"))
+	{
+		gl_ext_info._GL_ARB_texture_compression = atrue;
+		glCompressedTexImage3DARB = GL_GetProcAddress("glCompressedTexImage3DARB");
+		glCompressedTexImage2DARB = GL_GetProcAddress("glCompressedTexImage2DARB");
+		glCompressedTexImage1DARB = GL_GetProcAddress("glCompressedTexImage1DARB");
+		glCompressedTexSubImage3DARB = GL_GetProcAddress("glCompressedTexSubImage3DARB");
+		glCompressedTexSubImage2DARB = GL_GetProcAddress("glCompressedTexSubImage2DARB");
+		glCompressedTexSubImage1DARB = GL_GetProcAddress("glCompressedTexSubImage1DARB");
+		glGetCompressedTexImageARB = GL_GetProcAddress("glGetCompressedTexImageARB");
+	}
+	else
+	{
+		gl_ext_info._GL_ARB_texture_compression = afalse;
+		glCompressedTexImage3DARB = 0;
+		glCompressedTexImage2DARB = 0;
+		glCompressedTexImage1DARB = 0;
+		glCompressedTexSubImage3DARB = 0;
+		glCompressedTexSubImage2DARB = 0;
+		glCompressedTexSubImage1DARB = 0;
+		glGetCompressedTexImageARB = 0;
+	}
+	
+	if (IsExtensionSupported("GL_S3_s3tc"))
+	{
+		Con_Printf("...using GL_S3_s3tc\n");
+		gl_ext_info._GL_S3_s3tc = atrue;
+	}
+	else
+	{
+		Con_Printf("...GL_S3_s3tc not found\n");
+		gl_ext_info._GL_S3_s3tc = afalse;
+	}
+	
+	if (IsExtensionSupported("GL_3DFX_texture_compression_FXT1"))
+	{
+		Con_Printf("...using GL_3DFX_texture_compression_FXT1\n");
+		gl_ext_info._GL_3DFX_texture_compression_FXT1 = atrue;
+	}
+	else
+	{
+		Con_Printf("...GL_3DFX_texture_compression_FXT1 not found\n");
+		gl_ext_info._GL_3DFX_texture_compression_FXT1 = afalse;
+	}
+	
+	if (IsExtensionSupported("GL_EXT_texture_env_add"))
+	{
+		Con_Printf ("...using GL_EXT_texture_env_add\n");
+		gl_ext_info._TexEnv_Add = atrue;
+		glconfig.textureEnvAddAvailable = atrue;
+	}
+	else
+	{
+		Con_Printf ("... GL_EXT_texture_env_add not found\n");
+		gl_ext_info._TexEnv_Add = afalse;
+		glconfig.textureEnvAddAvailable = afalse;
+	}
+	
+	if (IsExtensionSupported ("GL_EXT_texture_env_combine"))
+	{
+		Con_Printf("...ignoring GL_EXT_texture_env_combine\n");
+		gl_ext_info._TexEnv_Combine = atrue;
+	}
+	else
+	{
+		Con_Printf("...GL_EXT_texture_env_combine not found\n");
+		gl_ext_info._TexEnv_Combine = afalse;
+	}
+	
+	if (IsExtensionSupported ("GL_NV_texture_env_combine4"))
+	{
+		Con_Printf("...ignoring GL_NV_texture_env_combine4\n");
+		gl_ext_info._TexEnv_Combine4 = atrue;
+	}
+	else
+	{
+		Con_Printf("...GL_NV_texture_env_combine4 not found\n");
+		gl_ext_info._TexEnv_Combine4 = afalse;
+	}
+	
+	if (IsExtensionSupported ("GL_NV_register_combiners"))
+	{
+		Con_Printf("...ignoring GL_NV_register_combiners\n");
+		gl_ext_info._GL_NV_register_combiners = atrue;
+		
+		glCombinerParameterfvNV = GL_GetProcAddress("glCombinerParameterfvNV");
+		glCombinerParameterivNV = GL_GetProcAddress("glCombinerParameterivNV");
+		glCombinerParameterfNV = GL_GetProcAddress("glCombinerParameterfNV");
+		glCombinerParameteriNV = GL_GetProcAddress("glCombinerParameteriNV");
+		glCombinerInputNV = GL_GetProcAddress("glCombinerInputNV");
+		glCombinerOutputNV = GL_GetProcAddress("glCombinerOutputNV");
+		glFinalCombinerInputNV = GL_GetProcAddress("glFinalCombinerInputNV");
+		glGetCombinerInputParameterfvNV = GL_GetProcAddress("glGetCombinerInputParameterfvNV");
+		glGetCombinerInputParameterivNV = GL_GetProcAddress("glGetCombinerInputParameterivNV");
+		glGetCombinerOutputParameterfvNV = GL_GetProcAddress("glGetCombinerOutputParameterfvNV");
+		glGetCombinerOutputParameterivNV = GL_GetProcAddress("glGetCombinerOutputParameterivNV");
+		glGetFinalCombinerInputParameterfvNV = GL_GetProcAddress("glGetFinalCombinerInputParameterfvNV");
+		glGetFinalCombinerInputParameterivNV = GL_GetProcAddress("glGetFinalCombinerInputParameterivNV");
+	}
+	else
+	{
+		Con_Printf("... GL_NV_register_combiners not found\n");
+		gl_ext_info._GL_NV_register_combiners = afalse;
+	}
+	
+	if (IsExtensionSupported ("WGL_EXT_swap_control"))
+	{
+		Con_Printf ("...using WGL_EXT_swap_control\n");
+		gl_ext_info._WGL_swap_control = atrue;
+		
+		wglSwapIntervalEXT = (WGLSETSWAPINTERVALPROC) GL_GetProcAddress ("wglSwapIntervalEXT");
+		wglGetSwapIntervalEXT = (WGLGETSWAPINTERVALPROC) GL_GetProcAddress("wglGetSwapIntervalEXT");
+		
+		if (!wglSwapIntervalEXT || !wglGetSwapIntervalEXT)
+			return afalse;
+	}
+	else 
+	{
+		Con_Printf ("...WGL_EXT_swap_control not found\n");
+		gl_ext_info._WGL_swap_control = afalse;
+		
+		wglSwapIntervalEXT = NULL;
+		wglGetSwapIntervalEXT = NULL;
+	}
+	
+	if (IsExtensionSupported("GL_ARB_multitexture"))
+	{
+		Con_Printf ("...using GL_ARB_multitexture\n");
+		gl_ext_info._ARB_Multitexture = atrue;
+		glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &glconfig.maxActiveTextures);
+		
+		// Load
+		glMultiTexCoord2fARB = (PFNGLMULTITEXCOORD2FARBPROC)GL_GetProcAddress("glMultiTexCoord2fARB");
+		glMultiTexCoord2fvARB = (PFNGLMULTITEXCOORD2FVARBPROC)GL_GetProcAddress("glMultiTexCoord2fvARB");  
+		glActiveTextureARB = (PFNGLACTIVETEXTUREARBPROC) GL_GetProcAddress("glActiveTextureARB");
+		glClientActiveTextureARB = (PFNGLCLIENTACTIVETEXTUREARBPROC) GL_GetProcAddress("glClientActiveTextureARB");
+		
+		if (!glMultiTexCoord2fARB || !glMultiTexCoord2fARB || !glMultiTexCoord2fvARB || !glActiveTextureARB || !glClientActiveTextureARB)
+			return afalse;
+	}
+	else
+	{
+		Con_Printf ("...GL_ARB_multitexture not found\n");
+		gl_ext_info._ARB_Multitexture = afalse;
+		glconfig.maxActiveTextures = 1;
+		
+		glMultiTexCoord2fARB = NULL;
+		glMultiTexCoord2fvARB = NULL;
+		glActiveTextureARB = NULL;
+		glClientActiveTextureARB = NULL;
+	}
+	
+	if (IsExtensionSupported("GL_EXT_compiled_vertex_array"))
+	{
+		Con_Printf ("...using GL_EXT_compiled_vertex_array\n");
+		gl_ext_info._CompiledVertex_Arrays = atrue;
+		
+		// Load
+		glLockArraysEXT = (PFNGLLOCKARRAYSEXTPROC) GL_GetProcAddress("glLockArraysEXT");
+		glUnlockArraysEXT = (PFNGLUNLOCKARRAYSEXTPROC) GL_GetProcAddress("glUnlockArraysEXT");
+		
+		if (!glLockArraysEXT || !glUnlockArraysEXT)
+			return afalse;
+	}
+	else
+	{
+		Con_Printf ("...GL_EXT_compiled_vertex_array not found\n");
+		gl_ext_info._CompiledVertex_Arrays = afalse;
+		
+		glLockArraysEXT = NULL;
+		glUnlockArraysEXT = NULL;
+	}	
+	
+	if (IsExtensionSupported("WGL_3DFX_gamma_control"))
+	{
+		Con_Printf ("...using WGL_3DFX_gamma_control\n");
+		gl_ext_info._WGL_3DFX_gamma = atrue;
+		
+		// TODO
+	}
+	else 
+	{
+		Con_Printf ("...WGL_3DFX_gamma_control not found\n");
+		gl_ext_info._WGL_3DFX_gamma = afalse;
+	}
+	
+	Con_Printf("\n");
+	
+	return atrue;
+}
+
+aboolean Init_OpenGL (void)
 {
 	PIXELFORMATDESCRIPTOR pfd;
-	int iFormat = -1;
-	HINSTANCE glide;
-	HINSTANCE dll;
-	char *dllname;
+	int					iFormat = -1;
+	HINSTANCE			glide;
+	HINSTANCE			dll;
+	char				*dllname;
 	unsigned long		i;
 	processor_t			*p;
 	processors_info_t	p_info;
 	int					num;
-
+	const char			*vendor;
+	const char			*ext;
+	const char			*renderer;
+	const char			*version;
+	
 	if (opengl_initialized)
-		return 1;
+		return atrue;
 
 	Con_Printf("Initializing OpenGl subsystem\n");
 
@@ -2522,10 +2655,10 @@ int Init_OpenGL (void)
 
 	glide = LoadLibrary( "glide2x.dll" );
 
-	if( !glide )
+	if (!glide)
 		glide = LoadLibrary( "glide3x.dll" );
 
-	if( glide ) {
+	if (glide) {
 		FreeLibrary( glide );
 
 		dll = LoadLibrary (_3DFX_DRIVER_NAME);
@@ -2544,22 +2677,22 @@ int Init_OpenGL (void)
 	}
 	else
 	{
-		glconfig.driverType=GLDRV_ICD;
-		dllname =OPENGL_DRIVER_NAME;
+		glconfig.driverType = GLDRV_ICD;
+		dllname = OPENGL_DRIVER_NAME;
 	}
 	
 	Con_Printf("...calling Load Library ('%s');", dllname);
 
-	if (!GL_LoadDll ( dllname))
+	if (!GL_LoadDll (dllname))
 	{
 		Con_Printf ("failed\n");
-		return 0;
+		return afalse;
 	}
 	else 
 		Con_Printf ("succeded\n");
 
-	if (! WIN_CreateWindow ( hInst ,nCmdShow))
-		return 0;
+	if (!WIN_CreateWindow (hInst, nCmdShow))
+		return afalse;
 
 	Con_Printf ("\n");
 	Con_Printf ("Initializing OpenGL driver\n");
@@ -2571,33 +2704,33 @@ int Init_OpenGL (void)
 	if (!dc)
 	{
 		Con_Printf("failed\n");
-		return 0;
+		return afalse;
 	}
 	else
 		Con_Printf("succeded\n");
 
-	iFormat = GL_ChoosePFD( 16, 16, 8 );
+	iFormat = GL_ChoosePFD(16, 16, 8);
 
 	if (iFormat < 0)
-		return 0;
+		return afalse;
 	
-	if (!SetPixelFormat( dc, iFormat, &pfd ))
+	if (!SetPixelFormat(dc, iFormat, &pfd))
 	{
-		Con_Printf ("Init_OpenGL : Could not Set PixelFormat \n");
-		return 0;
+		Con_Printf ("Init_OpenGL : Could not Set PixelFormat\n");
+		return afalse;
 	}
 	else 
 	{
-		Con_Printf("...PIXELFORMAT %i selected\n",iFormat);
+		Con_Printf("...PIXELFORMAT %i selected\n", iFormat);
 	}
 		
-	Con_Printf("...creating GL context :");
+	Con_Printf("...creating GL context:");
 	hRC = awglCreateContext( dc );
 
 	if (!hRC)
 	{
 		Con_Printf ("failed\n");
-		return 0;
+		return afalse;
 	}
 	else
 		Con_Printf("succeded\n");
@@ -2607,271 +2740,48 @@ int Init_OpenGL (void)
 	if (!awglMakeCurrent(dc, hRC))
 	{
 		Con_Printf ("failed\n");
-		return 0;
+		return afalse;
 	}
 	else
 		Con_Printf ("succeded\n");
 
-	if (1)  // TODO : Make function !!!
-	{
-		const char *vendor = glGetString(GL_VENDOR);
-		const char *ext = glGetString(GL_EXTENSIONS);
-		const char *renderer = glGetString(GL_RENDERER);
-		const char *version = glGetString(GL_VERSION);
-
-		if (vendor) 
-			A_strncpyz(glconfig.vendor_string, vendor, MAX_STRING_CHARS);
-		if (ext)	
-			A_strncpyz(glconfig.extensions_string, ext, MAX_STRING_CHARS);
-		if (renderer) 
-			A_strncpyz(glconfig.renderer_string, renderer, MAX_STRING_CHARS);
-		if (version) 
-			A_strncpyz(glconfig.version_string, version, MAX_STRING_CHARS);
-
-		if (r_allowExtensions->integer)
-		{
-			Con_Printf("Initializing OpenGl extensions\n");
-
-			// this is internal
-			if (IsExtensionSupported("GL_ARB_texture_compression"))
-			{
-				gl_ext_info._GL_ARB_texture_compression = 1;
-
-				glCompressedTexImage3DARB = GL_GetProcAddress("glCompressedTexImage3DARB");
-                glCompressedTexImage2DARB = GL_GetProcAddress("glCompressedTexImage2DARB");
-				glCompressedTexImage1DARB = GL_GetProcAddress("glCompressedTexImage1DARB");
-				glCompressedTexSubImage3DARB = GL_GetProcAddress("glCompressedTexSubImage3DARB");
-				glCompressedTexSubImage2DARB = GL_GetProcAddress("glCompressedTexSubImage2DARB");
-				glCompressedTexSubImage1DARB = GL_GetProcAddress("glCompressedTexSubImage1DARB");
-				glGetCompressedTexImageARB=  GL_GetProcAddress("glGetCompressedTexImageARB");
-			}
-			else
-			{
-				gl_ext_info._GL_ARB_texture_compression=0;
-				
-				glCompressedTexImage3DARB = 0;
-                glCompressedTexImage2DARB = 0;
-				glCompressedTexImage1DARB = 0;
-				glCompressedTexSubImage3DARB = 0;
-				glCompressedTexSubImage2DARB = 0;
-				glCompressedTexSubImage1DARB = 0;
-				glGetCompressedTexImageARB = 0;
-			}
-
-			if (IsExtensionSupported("GL_S3_s3tc"))
-			{
-				Con_Printf("...using GL_S3_s3tc\n");
-				gl_ext_info._GL_S3_s3tc=1;
-			}
-			else
-			{
-				Con_Printf("...GL_S3_s3tc not found\n");
-				gl_ext_info._GL_S3_s3tc=0;
-
-			}
-			if (IsExtensionSupported("GL_3DFX_texture_compression_FXT1"))
-			{
-
-				Con_Printf("...using GL_3DFX_texture_compression_FXT1\n");
-				gl_ext_info._GL_3DFX_texture_compression_FXT1=1;
-
-			}
-			else
-			{
-				Con_Printf("...GL_3DFX_texture_compression_FXT1 not found\n");
-				gl_ext_info._GL_3DFX_texture_compression_FXT1=0;
-			}
-
-			if (IsExtensionSupported("GL_EXT_texture_env_add"))
-			{
-				Con_Printf ("...using GL_EXT_texture_env_add\n");
-				gl_ext_info._TexEnv_Add=1;
-				glconfig.textureEnvAddAvailable=1;
-			}
-			else
-			{
-				Con_Printf ("... GL_EXT_texture_env_add not found\n");
-				gl_ext_info._TexEnv_Add=0;
-				glconfig.textureEnvAddAvailable=0;
-			}
-			if (IsExtensionSupported ("GL_EXT_texture_env_combine"))
-			{
-				Con_Printf("...ignoring GL_EXT_texture_env_combine\n");
-				gl_ext_info._TexEnv_Combine=1;
-			}
-			else
-			{
-				Con_Printf("...GL_EXT_texture_env_combine not found\n");
-				gl_ext_info._TexEnv_Combine=0;
-			}
-			if (IsExtensionSupported ("GL_NV_texture_env_combine4"))
-			{
-				Con_Printf("...ignoring GL_NV_texture_env_combine4\n");
-				gl_ext_info._TexEnv_Combine4=1;
-			}
-			else
-			{
-				Con_Printf("...GL_NV_texture_env_combine4 not found\n");
-				gl_ext_info._TexEnv_Combine4=0;
-			}
-			if (IsExtensionSupported ("GL_NV_register_combiners"))
-			{
-				Con_Printf("...ignoring GL_NV_register_combiners\n");
-				gl_ext_info._GL_NV_register_combiners=1;
-
-				
-				glCombinerParameterfvNV=GL_GetProcAddress("glCombinerParameterfvNV");
-				glCombinerParameterivNV=GL_GetProcAddress("glCombinerParameterivNV");
-
-				glCombinerParameterfNV=GL_GetProcAddress("glCombinerParameterfNV");
-
-				glCombinerParameteriNV=GL_GetProcAddress("glCombinerParameteriNV");
-
-				glCombinerInputNV=GL_GetProcAddress("glCombinerInputNV");
+	vendor = glGetString(GL_VENDOR);
+	ext = glGetString(GL_EXTENSIONS);
+	renderer = glGetString(GL_RENDERER);
+	version = glGetString(GL_VERSION);
 	
-				glCombinerOutputNV=GL_GetProcAddress("glCombinerOutputNV");
-				glFinalCombinerInputNV=GL_GetProcAddress("glFinalCombinerInputNV");
+	A_strncpyz(glconfig.vendor_string, (vendor) ? vendor : "Unknown vendor", MAX_STRING_CHARS);
+	A_strncpyz(glconfig.extensions_string, (ext) ? ext : "", MAX_STRING_CHARS);
+	A_strncpyz(glconfig.renderer_string, (renderer) ? renderer : "Unknown renderer", MAX_STRING_CHARS);
+	A_strncpyz(glconfig.version_string, (version) ? version : "Unknown version", MAX_STRING_CHARS);
 
-				glGetCombinerInputParameterfvNV=GL_GetProcAddress("glGetCombinerInputParameterfvNV");
+	if (r_allowExtensions->integer)
+		if (!GL_CheckExtensions())
+			return afalse;
 
-				glGetCombinerInputParameterivNV=GL_GetProcAddress("glGetCombinerInputParameterivNV");
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glconfig.maxTextureSize);
+	glconfig.vidHeight = winY;
+	glconfig.vidWidth = winX;
+	glconfig.displayFrequency = GetDeviceCaps (dc, VREFRESH);
 
-				glGetCombinerOutputParameterfvNV=GL_GetProcAddress("glGetCombinerOutputParameterfvNV");
-
-				glGetCombinerOutputParameterivNV=GL_GetProcAddress("glGetCombinerOutputParameterivNV");
-
-				glGetFinalCombinerInputParameterfvNV=GL_GetProcAddress("glGetFinalCombinerInputParameterfvNV");
-
-				glGetFinalCombinerInputParameterivNV=GL_GetProcAddress("glGetFinalCombinerInputParameterivNV");
-
-			}
-			else
-			{
-				Con_Printf("... GL_NV_register_combiners not found\n");
-				gl_ext_info._GL_NV_register_combiners=0;
-			}
-
-			if (IsExtensionSupported ("WGL_EXT_swap_control"))
-			{
-				Con_Printf ("...using WGL_EXT_swap_control\n");
-				gl_ext_info._WGL_swap_control=1;
-
-				wglSwapIntervalEXT= (WGLSETSWAPINTERVALPROC) GL_GetProcAddress ("wglSwapIntervalEXT");
-				wglGetSwapIntervalEXT = (WGLGETSWAPINTERVALPROC) GL_GetProcAddress("wglGetSwapIntervalEXT");
-
-
-				if (!wglSwapIntervalEXT || !wglGetSwapIntervalEXT)
-					return 0;
-			}
-			else 
-			{
-				Con_Printf ("...WGL_EXT_swap_control not found\n");
-				gl_ext_info._WGL_swap_control=0;
-
-				wglSwapIntervalEXT=NULL;
-				wglGetSwapIntervalEXT=NULL;
-			}
-
-
-			if (IsExtensionSupported("GL_ARB_multitexture"))
-			{
-				Con_Printf ("...using GL_ARB_multitexture\n");
-				gl_ext_info._ARB_Multitexture=1;
-				glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB,&glconfig.maxActiveTextures);
-
-				// Load :
-				glMultiTexCoord2fARB = (PFNGLMULTITEXCOORD2FARBPROC)GL_GetProcAddress("glMultiTexCoord2fARB");
-				glMultiTexCoord2fvARB =(PFNGLMULTITEXCOORD2FVARBPROC)GL_GetProcAddress("glMultiTexCoord2fvARB");  
-				glActiveTextureARB=(PFNGLACTIVETEXTUREARBPROC) GL_GetProcAddress("glActiveTextureARB");
-				glClientActiveTextureARB =(PFNGLCLIENTACTIVETEXTUREARBPROC) GL_GetProcAddress("glClientActiveTextureARB");
-
-				if (!glMultiTexCoord2fARB || !glMultiTexCoord2fARB || !glMultiTexCoord2fvARB || !glActiveTextureARB || !glClientActiveTextureARB)
-					return 0;
-			}
-			else
-			{
-				Con_Printf ("...GL_ARB_multitexture not found\n");
-				gl_ext_info._ARB_Multitexture=0;
-				glconfig.maxActiveTextures=1;
-
-				glMultiTexCoord2fARB=NULL;
-				glMultiTexCoord2fvARB=NULL;
-				glActiveTextureARB=NULL;
-				glClientActiveTextureARB=NULL;
-			}
-
-			if (IsExtensionSupported("GL_EXT_compiled_vertex_array"))
-			{
-				Con_Printf ("...using GL_EXT_compiled_vertex_array\n");
-				gl_ext_info._CompiledVertex_Arrays=1;
-				
-				// Load:
-
-				glLockArraysEXT=(PFNGLLOCKARRAYSEXTPROC) GL_GetProcAddress("glLockArraysEXT");
-				glUnlockArraysEXT=(PFNGLUNLOCKARRAYSEXTPROC) GL_GetProcAddress("glUnlockArraysEXT");
-		
-				if(!glLockArraysEXT || !glUnlockArraysEXT)
-					return 0;
-			}
-			else
-			{
-				Con_Printf ("...GL_EXT_compiled_vertex_array not found\n");
-				gl_ext_info._CompiledVertex_Arrays=0;
-
-				glLockArraysEXT=NULL;
-				glUnlockArraysEXT=NULL;
-			}	
-
-			if (IsExtensionSupported("WGL_3DFX_gamma_control"))
-			{
-				Con_Printf ("...using WGL_3DFX_gamma_control\n");
-				gl_ext_info._WGL_3DFX_gamma=1;
-
-				// TODO !
-			}
-			else 
-			{
-				Con_Printf ("...WGL_3DFX_gamma_control not found\n");
-				gl_ext_info._WGL_3DFX_gamma=0;
-			}
-
-			Con_Printf("\n");
-
-		}
-	}
-
-	glGetIntegerv(GL_MAX_TEXTURE_SIZE,&glconfig.maxTextureSize);
-	glconfig.vidHeight=winY;
-	glconfig.vidWidth=winX;
-	glconfig.displayFrequency=GetDeviceCaps( dc, VREFRESH );
-
-	Con_Printf ("GL_VENDOR: %s\n",glconfig.vendor_string);
-	Con_Printf ("GL_RENDERER: %s\n",glconfig.renderer_string);
-	Con_Printf ("GL_VERSION: %s\n",glconfig.version_string);
-	Con_Printf ("GL_EXTENSIONS: %s\n",glconfig.extensions_string);
-	Con_Printf ("GL_MAX_TEXTURE_SIZE: %i\n",glconfig.maxTextureSize);
-	Con_Printf ("GL_MAX_ACTIVE_TEXTURES_ARB: %i\n",glconfig.maxTextureSize);
+	Con_Printf ("GL_VENDOR: %s\n", glconfig.vendor_string);
+	Con_Printf ("GL_RENDERER: %s\n", glconfig.renderer_string);
+	Con_Printf ("GL_VERSION: %s\n", glconfig.version_string);
+	Con_Printf ("GL_EXTENSIONS: %s\n", glconfig.extensions_string);
+	Con_Printf ("GL_MAX_TEXTURE_SIZE: %i\n", glconfig.maxTextureSize);
+	Con_Printf ("GL_MAX_ACTIVE_TEXTURES_ARB: %i\n", glconfig.maxTextureSize);
 
 	Con_Printf ("\n");
-	Con_Printf ("PIXELFORMAT:color(%i -bits) Z (%i bit) stencil (%i Bits)\n",(int)pfd.cColorBits,(int)pfd.cDepthBits,(int)pfd.cStencilBits);
-	Con_Printf ("MODE: %i, %i * %i",r_mode->integer,glconfig.vidWidth,glconfig.vidHeight);
+	Con_Printf ("PIXELFORMAT:color(%i -bits) Z (%i bit) stencil (%i Bits)\n", 
+		(int)pfd.cColorBits, (int)pfd.cDepthBits, (int)pfd.cStencilBits);
+	Con_Printf ("MODE: %i, %i * %i", r_mode->integer, glconfig.vidWidth, glconfig.vidHeight);
 
-	if (r_fullscreen->integer)
-	{
-		Con_Printf(" fullscreen");
-	}
-	else
-	{
-		Con_Printf(" windowed");
-	}
+	Con_Printf(" %s", (r_fullscreen->integer) ? "fullscreen" : "windowed");
+
 	if (glconfig.displayFrequency)
-	{
-		Con_Printf(" hz:%i\n",glconfig.displayFrequency);
-	}
+		Con_Printf(" hz:%i\n", glconfig.displayFrequency);
 	else
-	{
 		Con_Printf(" hz:N/A\n");
-	}
 
 	// detect processor
 	// Vic: this is from GLOCK
@@ -2881,8 +2791,10 @@ int Init_OpenGL (void)
 	Con_Printf( "Number of system processors: %d\n", p_info.num_system_processors );
 	Con_Printf( "Number of available processors: %d\n", p_info.num_avail_processors );
 	num = p_info.num_avail_processors;
+
 	if( num > MAX_CPU )
 		num = MAX_CPU;
+
 	for( i = 0; i < num; i++ ) {
 		p = &p_info.processor[i];
 
@@ -2905,126 +2817,84 @@ int Init_OpenGL (void)
 
 	Con_Printf ( "---------------------\n" );
 
-	Con_Printf("rendering primitives: single glDrawElements\n"); // TODO !!!
-	Con_Printf("texturemode: %s\n", r_textureMode->string);
-	Con_Printf("picmip:%i\n", r_picmip->integer);
-	Con_Printf("texture bits:%i\n", r_texturebits->integer);
+	Con_Printf ("rendering primitives: single glDrawElements\n"); // TODO !!!
+	Con_Printf ("texturemode: %s\n", r_textureMode->string);
+	Con_Printf ("picmip:%i\n", r_picmip->integer);
+	Con_Printf ("texture bits:%i\n", r_texturebits->integer);
 
-	Con_Printf("multitexture: ");
-	if (!r_ext_multitexture->integer)
-	{
-		Con_Printf("disabled\n");
-	}
-	else
-	{
-		Con_Printf("enabled\n");
-	}
+	Con_Printf ("multitexture: %s\n", (r_ext_multitexture->integer) ? "enabled" : "disabled");
+	Con_Printf ("compiled vertex arrays: %s\n", (r_ext_compiled_vertex_array->integer) ? "enabled" : "disabled");
+	Con_Printf ("texenv add: %s\n", (r_ext_texture_env_add->integer) ? "enabled" : "disabled");
+	Con_Printf ("compressed textures: %s\n", (r_ext_compressed_textures->integer) ? "enabled" : "disabled");
 
-	Con_Printf ("compiled vertex arrays: ");
-	if (r_ext_compiled_vertex_array->integer)
-	{
-		Con_Printf("enabled\n");
-	}
-	else
-	{
-		Con_Printf("disabled\n");
-	}
-
-	Con_Printf("texenv add: ");
-	if (r_ext_texture_env_add->integer)
-	{
-		Con_Printf("enabled\n");
-	}
-	else
-	{
-		Con_Printf("disabled\n");
-	}
-
-	Con_Printf("compressed textures: ");
-	if (r_ext_compressed_textures->integer)
-	{
-		Con_Printf("enabled\n");
-	}
-	else
-	{
-		Con_Printf("disabled\n");
-	}
-
-	// Reset the States :
+	// Reset the States
 #if TRACK_GL_STATE
-	Cull_Face_Enabled =1;
-	Active_Tex_Unit=0;
-	Blending_Enabled =0;
-	Alpha_Test_Enabled =0;
-	memset (Tex_Unit_Enabled,0,MAX_TEX_UNITS);
-	memset (Tex_IDs,0,MAX_TEX_UNITS*sizeof (int ));
+	Cull_Face_Enabled = atrue;
+	Blending_Enabled = afalse;
+	Alpha_Test_Enabled = afalse;
+	Color_Array_Enabled = afalse;
+	Vertex_Array_Enabled = afalse;
 
-	Color_Array_Enabled=0;
-	Vertex_Array_Enabled=0;
+	memset (Tex_Unit_Enabled, afalse, sizeof(aboolean)*MAX_TEX_UNITS);
+	memset (Tex_IDs, 0, sizeof(int)*MAX_TEX_UNITS);
 
-	memset (Tex_Coord_Array_Enabled,0,MAX_TEX_UNITS);
+	memset (Tex_Coord_Array_Enabled, afalse, sizeof(aboolean)*MAX_TEX_UNITS);
 
-	Active_Client_Tex_Unit =0;
+	Active_Tex_Unit = 0;
+	Active_Client_Tex_Unit = 0;
 
-	Blendsrc=0;
-	Blenddst =0;
+	Blendsrc = 0;
+	Blenddst = 0;
 
-	DepthFunc =0;
-	AlphaFunc=0;
-	Alpharef =0;
+	DepthFunc = 0;
+	AlphaFunc = 0;
+	Alpharef = 0;
 
-	memset ( Tex_Env_Mode,0,sizeof (float ) *MAX_TEX_UNITS );
-
-	memset ( Combine_Rgb_Ext,0,sizeof (float ) * MAX_TEX_UNITS ) ;
-	memset ( Combine_Alpha_Ext,0,sizeof (float ) *MAX_TEX_UNITS ) ;
- 	memset (Source0_Rgb_Ext,0,sizeof (float ) *MAX_TEX_UNITS );
- 	memset (Source1_Rgb_Ext,0,sizeof (float ) *MAX_TEX_UNITS );
- 	memset (Source2_Rgb_Ext,0,sizeof (float ) *MAX_TEX_UNITS );
- 	memset (Source0_Alpha_Ext,0,sizeof (float ) *MAX_TEX_UNITS );
- 	memset (Source1_Alpha_Ext,0,sizeof (float ) *MAX_TEX_UNITS );
- 	memset (Source2_Alpha_Ext,0,sizeof (float ) *MAX_TEX_UNITS );
- 	memset (Operand0_Rgb_Ext,0,sizeof (float ) *MAX_TEX_UNITS );
- 	memset (Operand1_Rgb_Ext,0,sizeof (float ) *MAX_TEX_UNITS );
- 	memset (Operand2_Rgb_Ext,0,sizeof (float ) *MAX_TEX_UNITS );
- 	memset (Operand0_Alpha_Ext,0,sizeof (float ) *MAX_TEX_UNITS );
- 	memset (Operand1_Alpha_Ext,0,sizeof (float ) *MAX_TEX_UNITS );
- 	memset (Operand2_Alpha_Ext,0,sizeof (float ) *MAX_TEX_UNITS );
- 	memset (Rgb_Scale_Ext,0,sizeof (float ) *MAX_TEX_UNITS );
- 	memset (Alpha_Scale ,0,sizeof (float ) *MAX_TEX_UNITS ); 
+	memset (Tex_Env_Mode, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Combine_Rgb_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Combine_Alpha_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+ 	memset (Source0_Rgb_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+ 	memset (Source1_Rgb_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+ 	memset (Source2_Rgb_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+ 	memset (Source0_Alpha_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+ 	memset (Source1_Alpha_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+ 	memset (Source2_Alpha_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+ 	memset (Operand0_Rgb_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+ 	memset (Operand1_Rgb_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+ 	memset (Operand2_Rgb_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+ 	memset (Operand0_Alpha_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+ 	memset (Operand1_Alpha_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+ 	memset (Operand2_Alpha_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+ 	memset (Rgb_Scale_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+ 	memset (Alpha_Scale, 0, sizeof(float)*MAX_TEX_UNITS); 
 
 #endif 
 
-	opengl_initialized=1;
+	opengl_initialized = atrue;
 
-	return 1;
+	return atrue;
 }
 
-int Restart_Opengl (void )
+aboolean Restart_Opengl (void)
 {
-
-	if (Shutdown_OpenGL () && Init_OpenGL())
-		return 1;
-
-	Error ("Could not restart OpenGL ");
-
-	return 0;
+	return (Shutdown_OpenGL() && Init_OpenGL());
 }
 
-int Shutdown_OpenGL (void )
+aboolean Shutdown_OpenGL (void)
 {
 	if (!opengl_initialized) 
-		return 1;
+		return atrue;
 
-	if (!WIN_Destroy_Window ())
-		return 0;
+	if (!WIN_Destroy_Window())
+		return afalse;
 		
 	if (!GL_UnloadDll())
-		return 0;
+		return afalse;
 	
-	if (!WIN_Reset_DisplaySettings ())
-		return 0;
+	if (!WIN_Reset_DisplaySettings())
+		return afalse;
 
-	opengl_initialized=0;
+	opengl_initialized = afalse;
 
-	return 1;
+	return atrue;
 }

@@ -326,6 +326,7 @@ void R_Shutdown (void)
 	glFinish ();
 
 	Shader_Shutdown();
+
 	MD3_Shutdown ();
 
 	R_FreeWorldMap();
@@ -374,17 +375,15 @@ TODO: Optimize and sort
 void R_RenderPolys (void)
 {
 	int i, j;
-	poly_t *p;
+	poly_t *p = &Dyn_Polys[0];
 
-	for (i = 0; i < dyn_polys_count; i++)
+	for (i = 0; i < dyn_polys_count; i++, p++)
 	{
-		p = &Dyn_Polys [i];
-
 		for (j = 0; j < p->numVerts; j++)
 		{
 			VectorCopy(p->verts[j].xyz, arrays.verts[arrays.numverts]);
-			Vector2Copy (p->verts[j].st, arrays.tex_st[arrays.numverts]);
-			Vector4Copy (p->verts[j].modulate, arrays.colour[j]);
+			Vector2Copy(p->verts[j].st, arrays.tex_st[arrays.numverts]);
+			Vector4Copy(p->verts[j].modulate, arrays.colour[j]);
 			arrays.elems[arrays.numverts] = arrays.numverts+j; // FIXME ?
 			arrays.numverts++;
 		}
@@ -464,12 +463,10 @@ void R_ClearScene (void)
 void R_RenderEntities (void)
 {
 	int i;
-	refEntity_t *refEnt;
+	refEntity_t *refEnt = &refEntities[0];
 
-	for (i = 0; i < numref_entities; i++)
+	for (i = 0; i < numref_entities; i++, refEnt++)
 	{
-		refEnt = &refEntities[i];
-
 		switch (refEnt->reType)
 		{
 			case RT_MODEL:
@@ -567,7 +564,7 @@ void R_LerpTag(orientation_t *tag, int model, int startFrame, int endFrame, floa
 
 	for (i = 0; i< mod->numtags; i++)
 	{
-		if (!A_strncmp (tagName, mod->tags[startFrame][i].name, 12))
+		if (!A_strncmp (tagName, mod->tags[startFrame][i].name, MAX_APATH))
 		{
 			tagnum = i;
 			break;
@@ -596,11 +593,7 @@ void R_LerpTag(orientation_t *tag, int model, int startFrame, int endFrame, floa
 		st = &mod->tags[startFrame][tagnum];
 		et = &mod->tags[endFrame][tagnum];
 
-		if (frac > 1.0)
-			frac = 1.0;
-
-		if (frac < 0.0)
-			frac = 0.0;
+		frac = bound (0.0, frac, 1.0);
 
 		R_InterpolateNormal(st->rot[0], et->rot[0], frac, tag->axis[0]);
 		R_InterpolateNormal(st->rot[1], et->rot[1], frac, tag->axis[1]);
@@ -625,6 +618,7 @@ void R_Render_Model (const refEntity_t *re)
 	uint_t *elem;
 	int i, j, k, shaderref = -1;
 	float saved_time;
+	int frame, backframe;
 
 	if ((re->hModel <= 0) || (re->hModel >= r_md3Modelcount))
 		return;
@@ -711,8 +705,10 @@ void R_Render_Model (const refEntity_t *re)
 		if (shaderref < 0) {
 			// Revert
 			Matrix4_Identity(transform_ref.matrix);
-			transform_ref.matrix_identity = 1;
-			transform_ref.inv_matrix_calculated = 0;
+			transform_ref.matrix_identity = atrue;
+			transform_ref.inv_matrix_calculated = afalse;
+
+			arrays.numverts = arrays.numelems = 0;
 
 			glMatrixMode(GL_MODELVIEW);
 			glPopMatrix();
@@ -727,6 +723,18 @@ void R_Render_Model (const refEntity_t *re)
 			arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
 	    }
 
+		frame = re->frame;
+		backframe = re->oldframe;
+
+		if( re->renderfx & RF_WRAP_FRAMES ) {
+			frame = frame % mesh->numframes;
+			backframe = backframe % mesh->numframes;
+		}
+
+		if( frame < 0 || frame >= mesh->numframes || backframe < 0 || backframe >= mesh->numframes ) {
+			frame = backframe = 0;
+		}
+
 		if (!re->backlerp)
 		{
 			for (k = 0; k < mesh->numverts; k++)
@@ -738,8 +746,8 @@ void R_Render_Model (const refEntity_t *re)
 				Vector4Copy (re->shaderRGBA, arrays.entity_colour [arrays.numverts]);
 				ClearColor (arrays.colour[arrays.numverts]);
 
-				arrays.norms[arrays.numverts][0] = mesh->norms[re->frame][k][0];
-				arrays.norms[arrays.numverts][1] = mesh->norms[re->frame][k][1];
+				arrays.norms[arrays.numverts][0] = mesh->norms[frame][k][0];
+				arrays.norms[arrays.numverts][1] = mesh->norms[frame][k][1];
 				arrays.norms[arrays.numverts][2] = 0.0f;
 				arrays.numverts++;
 			}
@@ -747,25 +755,18 @@ void R_Render_Model (const refEntity_t *re)
 		else 
 		{
 			float frac = 1.0f - re->backlerp;
-			int backframe = re->oldframe;
 			
-			if (backframe < 0)   // wrap
-				backframe = mesh->numframes - 1;
-
-			if (backframe > mesh->numframes)
-				backframe = 0;
-
 			for (k = 0; k < mesh->numverts; k++)
 			{
-				arrays.norms[arrays.numverts][0] = mesh->norms[re->frame][k][0];
-				arrays.norms[arrays.numverts][1] = mesh->norms[re->frame][k][1];
+				arrays.norms[arrays.numverts][0] = mesh->norms[frame][k][0];
+				arrays.norms[arrays.numverts][1] = mesh->norms[frame][k][1];
 				arrays.norms[arrays.numverts][2] = 0.0f;
 				
 				ClearColor (arrays.colour[arrays.numverts]);
 
 				// Push the entity colour (TEST)
 				Vector4Copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
-				R_InterpolateNormal(mesh->points[backframe][k], mesh->points[re->frame][k], frac, arrays.verts[arrays.numverts]);
+				R_InterpolateNormal(mesh->points[backframe][k], mesh->points[frame][k], frac, arrays.verts[arrays.numverts]);
 
 				Vector2Copy(mesh->tex_st[k], arrays.tex_st[arrays.numverts]);
 				arrays.numverts++;
@@ -779,8 +780,8 @@ void R_Render_Model (const refEntity_t *re)
 
 	// Revert
 	Matrix4_Identity(transform_ref.matrix);
-	transform_ref.matrix_identity = 1;
-	transform_ref.inv_matrix_calculated = 0;
+	transform_ref.matrix_identity = atrue;
+	transform_ref.inv_matrix_calculated = afalse;
 
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
@@ -800,7 +801,6 @@ void R_Render_Sprite (const refEntity_t *re)
 	vec3_t org;
 	int elems[6];
 	vec3_t up, right;
-	float rad = re->radius;
 	vec3_t tmp;
 	int i;
 
@@ -811,7 +811,7 @@ void R_Render_Sprite (const refEntity_t *re)
 
 	VectorAdd (up, right, tmp);
 	VectorNormalize (tmp);
-	VectorScale (tmp, rad, tmp);
+	VectorScale (tmp, re->radius, tmp);
 
 	// 1 
 	VectorAdd (org, tmp, v[0]);
@@ -823,7 +823,7 @@ void R_Render_Sprite (const refEntity_t *re)
 	VectorAdd (up, right, tmp);
 	VectorNormalize (tmp);
 
-	VectorScale (tmp, rad, tmp);
+	VectorScale (tmp, re->radius, tmp);
 	
 	// 2 
 	VectorAdd (org, tmp, v[1]);
@@ -1015,13 +1015,14 @@ static void R_Free_Lightmaps (void)
 void R_LoadWorldMap (const char *mapname)
 {
 	if (r_WorldMap_loaded)
-		R_FreeWorldMap ();
+		R_FreeWorldMap();
 
-	if (!cm.name[0])
-	if (!CM_LoadMap (mapname, atrue))
-	{
-		Con_Printf (S_COLOR_YELLOW "WARNING: R_LoadWorldMap: CM_LoadMap failed!\n");
-		return;
+	if (!cm.name[0]) {
+		if (!CM_LoadMap (mapname, atrue))
+		{
+			Con_Printf (S_COLOR_YELLOW "WARNING: R_LoadWorldMap: CM_LoadMap failed!\n");
+			return;
+		}
 	}
 
 	R_Upload_Lightmaps ();
@@ -1124,7 +1125,7 @@ void R_Draw_World (void)
 }
 
 #define M_PI_2 M_PI /2.0f
-void R_Setup_Clipplanes (const refdef_t * fd )
+void R_Setup_Clipplanes (const refdef_t *fd)
 {
 	float half_pi_minus_half_fov_x = M_PI_2 - fd->fov_x * M_PI / 360.f;
 	float half_pi_minus_half_fov_y = M_PI_2 - fd->fov_y * M_PI / 360.f;

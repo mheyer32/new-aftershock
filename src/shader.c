@@ -166,7 +166,6 @@ static void shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numa
 
 	if (!A_stricmp(args[0], "wave"))
 	{
-		shader->flags |= SHADER_DEFORMVERTS;
 		shader->deform_params[shader->numdeforms][0] = atof (args[1]);
 		shader->deform_vertices[shader->numdeforms] = DEFORMV_WAVE;
 		shader_parsefunc(&args[2], &shader->deformv_wavefunc[shader->numdeforms]);		
@@ -175,7 +174,7 @@ static void shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numa
 	{
 		shader->deform_vertices[shader->numdeforms] = DEFORMV_NORMAL;
 		shader->deform_params[shader->numdeforms][0] = atof (args[1]); // Div
-		shader_parsefunc(&args[2], &shader->deformv_wavefunc[shader->numdeforms]);
+		shader->deform_params[shader->numdeforms][1] = atof (args[2]); // base
 	}
 	else if (!A_stricmp(args[0], "bulge"))
 	{
@@ -190,7 +189,7 @@ static void shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numa
 		shader->deform_params[shader->numdeforms][0] = atof (args[1]); // x 
 		shader->deform_params[shader->numdeforms][1] = atof (args[2]); // y
 		shader->deform_params[shader->numdeforms][2] = atof (args[3]); // z
-		shader_parsefunc(&args[4], &shader->deformv_wavefunc[shader->numdeforms]);
+		shader_parsefunc(&args[4], &shader->movev_wavefunc[shader->numdeforms]);
 	}
 	else if (!A_stricmp (args[0], "autosprite"))
 	{
@@ -785,16 +784,12 @@ void Shader_MakeCache (void)
 		numshaders++;
 	}
 
-	// John Clinton: fix memory overflow
-	numshaders++;	
-	
 	shadercache = (cache_t *)malloc(numshaders * sizeof (cache_t));
 
 	ptr = shaderbuf;
 	i = 0;
 
-	// John Clinton: added numshaders test
-	while (ptr && (i < numshaders))
+	while (ptr)
 	{
 		token = COM_ParseExt (&ptr, 1);
 		shadercache[i].offset = ptr - shaderbuf;
@@ -816,11 +811,12 @@ void Shader_Skip (char **ptr)
     // Opening brace
     tok = COM_ParseExt (ptr,1);
 	
-	if (!ptr) return ;
+	if (!ptr) 
+		return;
     
 	if (tok[0] != '{') 
 	{
-		tok = COM_ParseExt(ptr,1);
+		tok = COM_ParseExt(ptr, 1);
 	}
 
 	tmp = *ptr;
@@ -979,6 +975,7 @@ void Shader_Finish (shader_t *s)
 	if (! (s->flags & SHADER_DEPTHWRITE) &&
 	! (s->flags & SHADER_TRANSPARENT) &&
 	! (s->flags & SHADER_SKY) && 
+	(s->sort != SHADER_SORT_ADDITIVE) &&		// FIXME
 	(s->numpasses > 0)
 	)
 	{
@@ -1148,8 +1145,7 @@ shader_parsefunc(char **args, shaderfunc_t *func)
 	func->args[0] = atof(args[1]);
 	func->args[1] = atof(args[2]);
 	func->args[2] = atof(args[3]);
-		func->args[3] = 1;
-
+	func->args[3] = 1;
 }
 
 int R_RegisterShaderNoMip (const char *name) 

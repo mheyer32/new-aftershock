@@ -187,6 +187,7 @@ static void SV_Startup( void )
 
 	Cvar_Set( "sv_running", "1" );
 	svs.initialized = atrue;
+//	sv_frametime = 0.0;
 }
 
 static void SV_Map( const char *mapname )
@@ -214,14 +215,12 @@ static void SV_Map( const char *mapname )
 
 	Cvar_Set( "nextmap", va( "map %s", mapname ) );
 
-/*	if (!CM_LoadMap (va( "maps/%s.bsp", mapname ), atrue ))
+	if (!CM_LoadMap (va( "maps/%s.bsp", mapname ), atrue ))
 	{
 		Con_Printf ("Could not load map %s\n", mapname);
 		SV_Shutdown();
 		return;
 	}
-*/
-	R_LoadWorldMap (va( "maps/%s.bsp", mapname ));
 
 	Cvar_Set( "mapname", mapname );
 

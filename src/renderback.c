@@ -63,6 +63,34 @@ aboolean r_overlay = afalse;
 
 extern reference_t transform_ref;
 
+__inline static double render_func_eval(uint_t func, float *args)
+{
+    // Evaluate a number of time based periodic functions
+    double x  = (cl_frametime + args[2]) * args[3];
+	x -= floor(x);
+
+    switch (func)
+    {
+		case SHADER_FUNC_SIN:
+			return sin(x * TWOPI) * args[1] + args[0];
+			
+		case SHADER_FUNC_TRIANGLE:
+			return (x < 0.5) ? (2.0 * x - 1.0) * args[1] + args[0] : 
+				(-2.0 * x + 2.0) * args[1] + args[0];
+			
+		case SHADER_FUNC_SQUARE:
+			return (x < 0.5) ? args[1] + args[0] : args[0] - args[1];
+			
+		case SHADER_FUNC_SAWTOOTH:
+			return x * args[1] + args[0];
+			
+		case SHADER_FUNC_INVERSESAWTOOTH:
+			return (1.0 - x) * args[1] + args[0];
+    }
+
+    return 0.0;
+}
+
 void Render_Backend_Init(void)
 {
     arrays.verts = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
@@ -78,6 +106,8 @@ void Render_Backend_Init(void)
 	{
 		arrays.stage_tex_st = (vec2_t **)malloc (sizeof(vec2_t *));
 		arrays.stage_tex_st[0] = (vec2_t *)malloc (MAX_ARRAYS_VERTS * sizeof(vec2_t));
+
+		glconfig.maxActiveTextures = 1;
 	}
 	else 
 	{
@@ -92,6 +122,8 @@ void Render_Backend_Init(void)
 
 void Render_Backend_Shutdown(void)
 {
+	int i;
+
 	free(arrays.verts);
     free(arrays.tex_st);
     free(arrays.lm_st);
@@ -100,16 +132,8 @@ void Render_Backend_Shutdown(void)
     free(arrays.colour);
 	free(arrays.mod_colour);
 
-	if (!r_allowExtensions->integer) {
-		free (arrays.stage_tex_st[0]);
-	}
-	else 
-	{
-		int i;
-
-		for (i = 0; i < glconfig.maxActiveTextures; i++)
-			free (arrays.stage_tex_st[i]);
-	}
+	for (i = 0; i < glconfig.maxActiveTextures; i++)
+		free (arrays.stage_tex_st[i]);
 
 	free (arrays.stage_tex_st);
 }
@@ -117,31 +141,41 @@ void Render_Backend_Shutdown(void)
 
 void R_Push_Quad (quad_t *q)
 {
-	int i;
+	arrays.elems[arrays.numelems++] = arrays.numverts + q->elems[0];
+	arrays.elems[arrays.numelems++] = arrays.numverts + q->elems[1];
+	arrays.elems[arrays.numelems++] = arrays.numverts + q->elems[2];
+	arrays.elems[arrays.numelems++] = arrays.numverts + q->elems[3];
+	arrays.elems[arrays.numelems++] = arrays.numverts + q->elems[4];
+	arrays.elems[arrays.numelems++] = arrays.numverts + q->elems[5];
 
-	for (i = 0; i < 6; i++)
-	{
-		arrays.elems[arrays.numelems++] = arrays.numverts + q->elems[i];
-	}
+	VectorCopy(q->verts[0], arrays.verts[arrays.numverts]);
+	Vector2Copy(q->tc[0], arrays.tex_st[arrays.numverts]);
+	Vector4Copy(q->color[0], arrays.colour[arrays.numverts]);
+	arrays.numverts++;
 
-	for (i = 0; i < 4; i++)
-	{
-		VectorCopy(q->verts[i], arrays.verts[arrays.numverts]);
-		Vector2Copy(q->tc[i], arrays.tex_st[arrays.numverts]);
-		Vector4Copy(q->color[i], arrays.colour[arrays.numverts]);
-		arrays.numverts++;
-	}
+	VectorCopy(q->verts[1], arrays.verts[arrays.numverts]);
+	Vector2Copy(q->tc[1], arrays.tex_st[arrays.numverts]);
+	Vector4Copy(q->color[1], arrays.colour[arrays.numverts]);
+	arrays.numverts++;
+
+	VectorCopy(q->verts[2], arrays.verts[arrays.numverts]);
+	Vector2Copy(q->tc[2], arrays.tex_st[arrays.numverts]);
+	Vector4Copy(q->color[2], arrays.colour[arrays.numverts]);
+	arrays.numverts++;
+
+	VectorCopy(q->verts[3], arrays.verts[arrays.numverts]);
+	Vector2Copy(q->tc[3], arrays.tex_st[arrays.numverts]);
+	Vector4Copy(q->color[3], arrays.colour[arrays.numverts]);
+	arrays.numverts++;
 }
 
 void Render_Backend_Overlay (quad_t *q, int numquads)
 {
 	int i, shader = q->shader;
-	quad_t *quad;
+	quad_t *quad = &q[0];
 
-	for (i = 0; i < numquads; ++i)
+	for (i = 0; i < numquads; i++, q++)
     {
-		quad = &q[i];
-
 		// Look for quads that share rendering state
 		if (shader != quad->shader)
 		{
@@ -202,12 +236,10 @@ void Render_Backend(facelist_t *facelist)
 
 void Render_Backend_Sky(int numsky, int *skylist)
 {
-    int s, i, shader;
-    float skyheight;
+    int s, i, shader = cm.faces[skylist[0]].shadernum;
+    float skyheight = r_shaders[shader].skyheight;
     uint_t *elem;
 
-    shader = cm.faces[skylist[0]].shadernum;
-    skyheight = r_shaders[shader].skyheight;
     arrays.numverts = arrays.numelems = 0;
 
     // Center skybox on camera to give the illusion of a larger space
@@ -302,7 +334,7 @@ static void render_pushmesh(mesh_t *mesh)
 		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
     }
 	
-	for (i = 0; i < mesh->size[1] * mesh->size[0]; i++)
+	for (i = 0; i < mesh->msize; i++)
 	{
 	    VectorCopy(mesh->points[i], arrays.verts[arrays.numverts]);
 	    Vector2Copy(mesh->tex_st[i], arrays.tex_st[arrays.numverts]);
@@ -362,44 +394,16 @@ static void render_stripmine(int numelems, int *elems)
     }
 }
 
-__inline static double render_func_eval(uint_t func, float *args)
-{
-    // Evaluate a number of time based periodic functions
-    double x  = (cl_frametime + args[2]) * args[3];
-	x -= floor(x);
-
-    switch (func)
-    {
-		case SHADER_FUNC_SIN:
-			return sin(x * TWOPI) * args[1] + args[0];
-			
-		case SHADER_FUNC_TRIANGLE:
-			return (x < 0.5) ? (2.0 * x - 1.0) * args[1] + args[0] : 
-				(-2.0 * x + 2.0) * args[1] + args[0];
-			
-		case SHADER_FUNC_SQUARE:
-			return (x < 0.5) ? args[1] + args[0] : args[0] - args[1];
-			
-		case SHADER_FUNC_SAWTOOTH:
-			return x * args[1] + args[0];
-			
-		case SHADER_FUNC_INVERSESAWTOOTH:
-			return (1.0f - x) * args[1] + args[0];
-    }
-
-    return 0.0;
-}
-
 // TODO !!!
 void Render_Backend_Make_Vertices (shader_t *s)
 {
+	float deflect;
+	vec3_t v;
 	int i, n;
+	float args[4], startoff, off, wavesize;
 
 	if ((s->flags & SHADER_DEFORMVERTS) && s->numdeforms)
 	{
-		float deflect;
-		vec3_t v;
-
 		for (n = 0; n < s->numdeforms; n++)
 		{
 			switch (s->deform_vertices[n])
@@ -408,23 +412,50 @@ void Render_Backend_Make_Vertices (shader_t *s)
 					break;
 
 				case DEFORMV_WAVE:
+					args[0] = s->deformv_wavefunc[n].args[0];
+					args[1] = s->deformv_wavefunc[n].args[1];
+					args[2] = 0;
+					args[3] = s->deformv_wavefunc[n].args[3];
+					startoff = s->deformv_wavefunc[n].args[2];
+					wavesize = s->deform_params[n][0];
+					
 					for (i = 0; i < arrays.numverts; i++)
 					{
-						deflect = render_func_eval(s->deformv_wavefunc[n].func, s->deformv_wavefunc[n].args);
-						deflect *= s->deform_params[n][0];
-						VectorCopy(arrays.norms[i], v);
+						// FIXME: this clearly isn't the way deform waves are applied to
+						// world coordinates.  For now, it at least waves the banners :)
+						VectorCopy (arrays.verts[i], v);
+						off = VectorNormalize(v) * wavesize;
+						
+						// Evaluate wave function
+						args[2] = startoff + off;
+						deflect = render_func_eval(s->deformv_wavefunc[n].func, args);
+						
+						// Deflect vertex along its normal vector by wave amount
 						VectorScale(v, deflect, v);
 						VectorAdd(v, arrays.verts[i], arrays.verts[i]);
 					}
 					break;
 
 				case DEFORMV_NORMAL:
-					break;
+					deflect = s->deform_params[n][0];
 
-				case DEFORMV_BULGE:
+					for (i = 0; i < arrays.numverts; i++)
+					{
+						VectorCopy(arrays.norms[i], v);
+						VectorScale(v, deflect, v);
+						VectorCopy(v, arrays.norms[i]);
+						VectorAdd(v, arrays.verts[i], arrays.verts[i]);
+					}
 					break;
 
 				case DEFORMV_MOVE:
+					deflect = render_func_eval(s->movev_wavefunc[n].func, s->movev_wavefunc[n].args);
+					VectorCopy (s->deform_params[n], v); 
+					VectorScale (v, deflect, v);
+					VectorAdd(v, arrays.verts[i], arrays.verts[i]);
+					break;
+
+				case DEFORMV_BULGE:
 					break;
 
 				case DEFORMV_AUTOSPRITE:
@@ -442,7 +473,7 @@ void Render_Backend_Make_Vertices (shader_t *s)
 
 float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 {
-	int i = arrays.numverts, n = 0;
+	int i = arrays.numverts, n;
 	vec2_t *in = arrays.tex_st;
 	vec2_t *out = arrays.stage_tex_st[stage];
 	vec3_t dir, pos;
@@ -662,7 +693,7 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 			break;
 
 		case RGB_GEN_ONE_MINUS_ENTITY:
-			for (i = 0;i<arrays.numverts;i++)
+			for (i = 0; i < arrays.numverts; i++)
 			{
 				arrays.mod_colour[i][0] = 255 - arrays.entity_colour[i][0];
 				arrays.mod_colour[i][1] = 255 - arrays.entity_colour[i][1];
@@ -702,8 +733,9 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 			c = FloatToByte(255.0f * (float)render_func_eval(pass->alphagen_func.func,
 							pass->alphagen_func.args));
 
-			for (i = 0; i < arrays.numverts;i++) 
+			for (i = 0; i < arrays.numverts; i++) {
 				col[i][3] = c;
+			}
 
 			break;
 

@@ -322,6 +322,7 @@ static void Mesh_Create(cface_t *face, mesh_t *mesh)
     len = size[0] * size[1];
     mesh->size[0] = size[0];
     mesh->size[1] = size[1];
+	mesh->msize = len;
     mesh->points = (vec3_t *)malloc(len * (sizeof(vec3_t) +
 					  2 * sizeof(texcoord_t) +
 					 sizeof(colour_t)));
@@ -357,9 +358,9 @@ static void Mesh_Create(cface_t *face, mesh_t *mesh)
     mesh->elems = (uint_t*)malloc(mesh->numelems * sizeof(uint_t));
 
     i = 0;
-    for (v = 0; v < size[1]-1; ++v)
+    for (v = 0; v < size[1]-1; v++)
     {
-		for (u = 0; u < size[0]-1; ++u)
+		for (u = 0; u < size[0]-1; u++)
 		{
 			mesh->elems[i++] = v * size[0] + u;
 			mesh->elems[i++] = (v+1) * size[0] + u;

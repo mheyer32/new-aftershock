@@ -294,6 +294,8 @@ typedef struct cplane_s {
 # define max(a,b)	(((a) > (b)) ? (a) : (b))
 #endif
 
+#define bound(a,b,c) (max(a, min(b, c)))
+
 #define NUMVERTEXNORMALS	162
 extern	vec3_t	bytedirs[NUMVERTEXNORMALS];
 
