@@ -39,12 +39,11 @@
 #define FILECACHE 1
 // is there an ideal size ? 
 #define HASHSIZE 32
-#define MAXNAMELENGHT 128
 
 typedef struct {
 	long int pos_in_central_dir;
 	int filenum;
-	char name [MAXNAMELENGHT];
+	char name [MAX_APATH];
 }cacheelem_t ;
 
 
@@ -945,57 +944,7 @@ extern int ZEXPORT unzGoToNextFile (file)
 
 int Unz_GetStringForDir (unzFile * pak,const char * dir,const char *extension,char * buf ,int bufsize,int *len)
 {
-/*	int found=0;
-	char *start,*pos,*token,*bufpos;
-	unz_s *s=(unz_s*) pak;
-	char ext [16];
 
-	pos=s->pak_NameList;
-	bufpos=buf;
-	*len =0;
-	
-	COM_BeginParseSession ();
-
-	while (pos )
-	{
-		token =COM_Parse (&pos);	
-		if (!token[0])
-			continue;
-
-		if (dir[0])
-			if (strncmp (token,dir,strlen (dir)))
-				continue;
-
-		
-		/*if (extension[0])
-			if (strlen (token) > strlen (extension))
-				if (strcmpEXT(extension, token + strlen(token) - strlen(extension)))
-					continue;
-		*/			
-/*		COM_ExtractFileExtension(token,ext);		
-		if (!ext[0])
-		{
-			ext[0]=*(token +strlen (token)-1);
-			ext[1]=0;
-		}
-			
-		if (!stricmp (ext,extension))
-		{
-			found++;
-
-			token +=strlen (dir)+1;
-			A_strncpyz (bufpos,token,bufsize-*len);
-
-			bufpos+=strlen(token)+1;
-			*(bufpos-1)=0;
-			*len=bufpos-buf;
-
-		}
-
-	}
-
-	return found;
-*/
 
 	unz_s *s=(unz_s*) pak;
 	char * token,*bufpos;

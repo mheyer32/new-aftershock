@@ -19,6 +19,7 @@
 #include "a_shared.h"
 #include <windows.h>
 #include "cgame.h"
+#include "io.h"
 
 
 EntryFunc *CGAME_entry;

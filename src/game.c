@@ -18,6 +18,7 @@
 
 #include "a_shared.h"
 #include "game.h"
+#include "io.h"
 
 int GAME_Call (int arg,...);
 int (__cdecl *GAME_syscall)( int arg, ... ) = GAME_Call;

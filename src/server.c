@@ -279,7 +279,7 @@ int SV_Startup (char * mapname )
 {
 
 
-	char buf [128];
+	char buf [MAX_OSPATH];
 
 	Con_Printf( "------ Server Initialization ------\n" );
 

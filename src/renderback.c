@@ -67,6 +67,9 @@ static int error=0;
 static int meshincluded=0;
 
 
+void Render_Backend_Flush_Generic (int shadernum ,int lmtex );
+
+
 
 static void render_pushface(cface_t *face);
 static void render_pushmesh(mesh_t *mesh);
@@ -87,296 +90,6 @@ arrays_t arrays;
 
 
 extern reference_t transform_ref;
-
-
-// Added by Martin Kraus :
-// Uses ARB_MULTITEXTURE ,COMPILED_VERTEX_ARRAYS and TEX_ENV_ADD :
-// since my Voodoo 3 doesn`t support TEX_ENV_COMBINE  I have to use TEX_ENV_ADD and that causes 
-// a  problem for the 4 and 5 Pass shaders (are there any additional texture environments avaiable for my Voodoo 3 ?)
-// FIXME : There is a little problem with the error checking : some faces which are not valid are drawn ( until now I could not figure out why) 
-// 
-//
-// However, I hope this is useful 
-
-
-
-static int Settexunit1(shaderpass_t *pass,uint_t lmtex)
-{
-	if (pass->flags & SHADER_LIGHTMAP)
-    {
-	/* Select lightmap texture */
-	GL_BindTexture(GL_TEXTURE_2D, map.lightmaps[lmtex]);
-    }
-    else if (pass->flags & SHADER_ANIMMAP)
-    {
-	uint_t texobj;
-	int frame;
-
-	/* Animation: get frame for current time */
-	frame = (int)(g_frametime * pass->anim_fps) % pass->anim_numframes;
-
-	
-	texobj = pass->anim_frames[frame];
-	if (texobj < 0) return 0;
-	GL_BindTexture(GL_TEXTURE_2D, texobj);
-    }
-    else
-    {
-	uint_t texobj;
-
-	/* Set normal texture */
-	if (pass->texref<0)
-		return 0;
-	texobj = pass->texref;
- 
-	GL_BindTexture(GL_TEXTURE_2D, texobj);
-    }
-
-	glTexCoordPointer(2, GL_FLOAT, 0, R_Make_TexCoords ( pass, 0));
-
-    if (pass->flags & SHADER_BLEND)
-    {
-	GL_Enable(GL_BLEND);
-	GL_BlendFunc(pass->blendsrc, pass->blenddst);
-    }
-    else
-	GL_Disable(GL_BLEND);
-
-    if (pass->flags & SHADER_ALPHAFUNC)
-    {
-	GL_Enable(GL_ALPHA_TEST);
-	GL_AlphaFunc(pass->alphafunc, pass->alphafuncref);
-    }
-    else
-	GL_Disable(GL_ALPHA_TEST);
-    
-    GL_DepthFunc(pass->depthfunc);
-    if (pass->flags & SHADER_DEPTHWRITE)
-	GL_DepthMask(GL_TRUE);
-    else
-	GL_DepthMask(GL_FALSE);
-
-    return 1;
-
-
-
-
-}
-
-static int Settexunit2(shaderpass_t *pass,uint_t lmtex)
-{
-	if (pass->flags & SHADER_LIGHTMAP)
-    {
-	/* Select lightmap texture */
-	GL_BindTexture(GL_TEXTURE_2D, r_lightmaptex[lmtex]);
-    }
-    else if (pass->flags & SHADER_ANIMMAP)
-    {
-	uint_t texobj;
-	int frame;
-
-	/* Animation: get frame for current time */
-	frame = (int)(g_frametime * pass->anim_fps) % pass->anim_numframes;
-	texobj = r_textures[pass->anim_frames[frame]];
-	if (texobj < 0) return 0;
-	GL_BindTexture(GL_TEXTURE_2D, texobj);
-    }
-    else
-    {
-	uint_t texobj;
-
-	/* Set normal texture */
-
-	if (pass->texref < 0) return 0;
-	texobj = pass->texref;
-	GL_BindTexture(GL_TEXTURE_2D, texobj);
-    }
-
-	
-	glTexCoordPointer(2, GL_FLOAT, 0, R_Make_TexCoords ( pass, 1));
-
-    return 1;
-
-
-
-}
-
-
-// Render two passes at once
-
-static void Render2in1(shaderpass_t *pass1,shaderpass_t *pass2,uint_t lmtex)
-{
-
-		glColorPointer(4, GL_UNSIGNED_BYTE, 0, R_Make_Rgba (pass1));
-	
-		// FIRST PASS:
-		
-		GL_ActiveTextureARB(GL_TEXTURE0_ARB);
-		GL_Enable(GL_TEXTURE_2D);
-		GL_ClientActiveTextureARB(GL_TEXTURE0_ARB);
-		GL_EnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-		if (!Settexunit1(pass1,lmtex)){return;}
-	
-		//SECOND PASS :
-	
-		GL_ActiveTextureARB(GL_TEXTURE1_ARB);
-		GL_Enable(GL_TEXTURE_2D);
-		GL_ClientActiveTextureARB(GL_TEXTURE1_ARB);
-		GL_EnableClientState(GL_TEXTURE_COORD_ARRAY);
-		if (!Settexunit2(pass2,lmtex)){ return;}
-
-		if( glconfig.textureEnvAddAvailable)
-		if (pass2->blendsrc==GL_ONE && pass2->blenddst==GL_ONE )
-			GL_TexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);	
-		else
-			GL_TexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-	
-			glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
-		       arrays.elems);
-		
-	
-}
-
-// Render 1 pass at once (only texunit0 enabled)
-// used if the number of passes is not even 
-static void Render1in1(shaderpass_t *pass,uint_t lmtex)
-{
-
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, R_Make_Rgba (pass));
-
-	// Disable the 2. unit
-	GL_ActiveTextureARB(GL_TEXTURE1_ARB);
-	GL_Disable(GL_TEXTURE_2D);
-	GL_ClientActiveTextureARB(GL_TEXTURE1_ARB);
-	GL_DisableClientState(GL_TEXTURE_COORD_ARRAY);
-	
-
-	GL_ClientActiveTextureARB(GL_TEXTURE0_ARB);
-	GL_ActiveTextureARB(GL_TEXTURE0_ARB);
-	GL_Enable(GL_TEXTURE_2D);
-	if (!Settexunit1(pass,lmtex)) { return;}
-		
-
-	// Draw it :
-	glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
-		       arrays.elems);
-	
-
-
-}
-
-
-
-// Added by Martin Kraus 
-// this function flushes the rendering Pipeline using Multitexturing and Compiled Vertex Arrays 
-static void flushmultitex(int shadernum,int lmtex)
-{
-
-	shader_t *s;
-    if (!arrays.numverts || shadernum<0) return;
-
-	s = &r_shaders[shadernum];
-
-
-	if (s->flags & SHADER_NOCULL)
-		GL_Disable (GL_CULL_FACE);
-	else 
-		GL_Enable (GL_CULL_FACE);
-
-	if (s->flags & SHADER_POLYGONOFFSET)
-	{
-		GL_Enable (GL_POLYGON_OFFSET);
-	}
-	else
-	{
-		GL_Disable(GL_POLYGON_OFFSET);
-	}
-
-	R_Make_Vertices (s );
-    glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
-
-
-	if (gl_ext_info._CompiledVertex_Arrays)
-	glLockArraysEXT(0,arrays.numverts);
-
-
-	GL_EnableClientState(GL_COLOR_ARRAY);
-
-	
-	if (0)//s->flags & SHADER_MULTITEXTURE )
-	{
-
-	switch (s->numpasses)
-	{
-
-
-	//Render 2 passes at once
-	case 2:
-		Render2in1(s->pass,s->pass+1,lmtex);
-		//Render1in1(s->pass,lmtex);
-		//Render1in1(s->pass+1,lmtex);
-		break;	
-
-// ONE PASS:
-	case 1:
-		Render1in1(s->pass,lmtex);
-		break;
-
-// THREE PASSES:
-	case 3:
-		Render2in1(s->pass,s->pass+1,lmtex);
-		//Render1in1(s->pass,lmtex);
-		//Render1in1(s->pass+1,lmtex);
-		Render1in1(s->pass+2,lmtex);
-		break;
-		
-// FOUR PASSES :
-	
-	case 4:
-		Render2in1(s->pass,s->pass+1,lmtex);
-		Render2in1(s->pass+2,s->pass+3,lmtex);	
-		break;
-
-//FIVE PASSES:
-	case 5:
-		Render2in1(s->pass,s->pass+1,lmtex);
-		Render2in1(s->pass+2,s->pass+3,lmtex);	
-		Render1in1(s->pass+4,lmtex);
-		
-		break;
-
-
-	default :
-		Con_Printf ("Bad shader numpasses ! \n");
-		
-		break;
-
-	}
-
-	}
-	else 
-	{
-		int i;
-
-		for (i=0;i<s->numpasses;i++)
-		{
-			Render1in1(s->pass+i,lmtex);
-		}
-
-	}
-
-	if (gl_ext_info._CompiledVertex_Arrays)
-	glUnlockArraysEXT();
-
-
-    /* Clear arrays */
-	
-
-    arrays.numverts = arrays.numelems = 0; 
-
-}
 
 void
 R_backend_init(void)
@@ -403,40 +116,16 @@ R_backend_init(void)
 		int i;
 		arrays.stage_tex_st = (vec2_t ** ) malloc (glconfig.maxActiveTextures * sizeof(vec2_t*));
 		
-
 		for (i=0;i<glconfig.maxActiveTextures;i++)
-		{
-			
+		{	
 			arrays.stage_tex_st[i] =  (vec2_t * ) malloc (MAX_ARRAYS_VERTS * sizeof(vec2_t));
-
 		}
 
 	}
 
 
-	if (!r_allowExtensions->integer)
-	{
-		R_backend_flush = render_flush ;
-	}
-	else 
-	{
-
-		// TODO : more variations !
-		if (gl_ext_info._ARB_Multitexture &&  gl_ext_info._TexEnv_Add) 
-		{
-
-			R_backend_flush =flushmultitex;
-		}
-		else 
-		{
-			R_backend_flush = render_flush ;
-
-		}
-
-
-	}
-
-	R_backend_flush = render_flush ;
+	
+	R_backend_flush = Render_Backend_Flush_Generic;
 
 
 }
@@ -475,40 +164,6 @@ void R_backend_shutdown(void )
 }
 
 
-void R_backend_restart (void)
-{
-	
-	if (!r_allowExtensions->integer)
-	{
-		R_backend_flush = render_flush ;
-	}
-	else 
-	{
-
-		// TODO : more variations !
-
-		if (gl_ext_info._ARB_Multitexture && gl_ext_info._TexEnv_Add )
-		{
-			GL_ClientActiveTextureARB(GL_TEXTURE1_ARB);
-			GL_EnableClientState(GL_TEXTURE_COORD_ARRAY);
-			GL_ClientActiveTextureARB(GL_TEXTURE0_ARB);
-			GL_EnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-			R_backend_flush =flushmultitex;
-		}
-		else 
-		{
-			R_backend_flush = render_flush ;
-
-		}
-
-	}
-
-
-
-
-}
-
 static void R_Push_Quad ( quad_t * q )
 {
 
@@ -533,209 +188,6 @@ static void R_Push_Quad ( quad_t * q )
 	
 }
 
-// TODO : optimize 
-float * R_Make_TexCoords (shaderpass_t * pass,int stage )
-{
-	int i=arrays.numverts,n;
-	mat4_t mat,mat2; 
-	vec2_t * in = arrays.tex_st;
-	vec2_t * out ;
-
-	Matrix4_Identity(mat);
-
-
-	switch (pass->tc_gen)
-	{
-	case TC_GEN_BASE :
-		in =arrays.tex_st;
-		break;
-	case TC_GEN_LIGHTMAP:
-		in = arrays.lm_st;
-
-	case TC_GEN_ENVIRONMENT:
-		{
-
-			// TODO !!!
-		vec3_t pos ,v,n;
-		vec3_t dir;
-		int j;
-		in= arrays.stage_tex_st[stage];
-
-		
-		// FIXME !!!
-		VectorCopy (r_eyepos ,pos );
-
-		if (!transform_ref.pos_identity)
-		{
-			VectorSubtract (pos,transform_ref.pos,pos);
-		}
-		
-		if (!transform_ref.matrix_identity)
-		{
-			if (!transform_ref.inv_matrix_calculated)	
-			{
-				Matrix3_Transponse (transform_ref.matrix,transform_ref.inv_matrix);
-				transform_ref.inv_matrix_calculated=atrue;	
-			}
-			Matrix3_Multiply_Vec3(transform_ref.inv_matrix,pos,pos);
-		}
-
-		for(j=0; j<arrays.numverts; j++)
-			{
-			
-			VectorCopy (arrays.verts[j],v);
-			
-			VectorSubtract(v, pos, dir);
-			VectorNormalize(dir);
-
-			VectorCopy (arrays.norms[j],n);
-
-			dir[0]+=n[0];
-			dir[1]+=n[1];
-
-			in[j][0]=dir[0];
-			in[j][1]=dir[1];
-			}
-			
-			
-		}
-
-		break;
-
-	case TC_GEN_VECTOR :
-
-		// TODO !!!
-		in=arrays.tex_st;
-
-
-		break;
-
-
-	default :
-
-		in=arrays.tex_st;
-
-	}
-
-	if (pass->num_tc_mod >0)
-	{
-		Matrix4_Identity ( mat2);
-
-		out=arrays.stage_tex_st[stage];
-
-		mat2[12] =0.5f;
-		mat2[13] =0.5f;
-
-		Matrix4_Multiply (mat,mat2,mat);
-		
-		for (n=0;n<pass->num_tc_mod;n++)
-		{
-		if (pass->tc_mod[n].type == SHADER_TCMOD_ROTATE)
-		{
-			float rot=pass->tc_mod[n].args[0] * g_frametime * DEG2RAD ;
-			float cost=cos(rot);
-			float sint=sin(rot);
-
-			Matrix4_Identity (mat2);
-			mat2[0] = cost;
-			mat2[1] = sint;
-			mat2[4] = -sint;
-			mat2[5] = cost;
-			
-
-			Matrix4_Multiply  (mat,mat2,mat);
-			//memcpy ( mat, mat2,16 * sizeof (float ));
-
-
-		}
-		else
-		if (pass->tc_mod[n].type == SHADER_TCMOD_SCALE)
-		{
-			Matrix4_Identity (mat2);
-			mat2[0] =pass->tc_mod[n].args[0];
-			mat2[5] = pass->tc_mod[n].args[1];
-			
-			Matrix4_Multiply  (mat,mat2,mat);
-		}
-		else
-		if (pass->tc_mod[n].type == SHADER_TCMOD_TURB)
-		{
-			// TODO 
-			float scale[2];
-			double x, y1, y2;
-			x = (g_frametime + pass->tc_mod[n].args[2]) * pass->tc_mod[n].args[3];
-			x -= floor(x);
-			y1 = sin(x * TWOPI) * pass->tc_mod[n].args[1] + pass->tc_mod[n].args[0];
-			y2 = sin((x+0.25) * TWOPI) * pass->tc_mod[n].args[1] +
-			pass->tc_mod[n].args[0];
-	    
-
-			scale[0]= 1.0+y1*TURB_SCALE ;
-			scale[1]= 1.0+y2*TURB_SCALE;
-
-			
-			Matrix4_Identity (mat2);
-			mat2[0] =scale[0];
-			mat2[5] = scale[1];
-			
-			Matrix4_Multiply  (mat,mat2,mat);
-
-		}
-		else
-		if (pass->tc_mod[n].type == SHADER_TCMOD_STRETCH)
-		{
-	     
-			float factor=1.0f/(float)render_func_eval(pass->tc_mod_stretch.func,
-					pass->tc_mod_stretch.args);
-
-			Matrix4_Identity (mat2);
-			mat2[0] =factor;
-			mat2[5] = factor;
-			
-			Matrix4_Multiply  (mat,mat2,mat);
-		
-		}
-		if (pass->tc_mod[n].type ==  SHADER_TCMOD_SCROLL)
-		{
-			vec2_t scroll;
-			scroll[0] = pass->tc_mod[n].args[0] * g_frametime;
-			scroll[1] = pass->tc_mod[n].args[1] * g_frametime;
-			
-
-			Matrix4_Identity (mat2);
-
-			mat2[12] = scroll[0];
-			mat2[13] = scroll[1];
-
-			Matrix4_Multiply  (mat,mat2,mat);
-
-		}
-		
-		}
-
-		Matrix4_Identity ( mat2);
-		mat2[12] =-0.5f;
-		mat2[13] =-0.5f;
-
-		Matrix4_Multiply  (mat,mat2,mat);
-
-		do {
-			Matrix_Multiply_Vec2(mat,*in++,*out++);
-		}while ( --i );
-
-		out=arrays.stage_tex_st[stage];
-	}
-	
-	else 
-	{
-		//out=in;
-		out=arrays.stage_tex_st[stage];
-		memcpy (out,in,arrays.numverts * sizeof ( vec2_t ));
-	}
-
-	return *(float**)&out;
-
-}
 
 colour_t * R_Make_Rgba (shaderpass_t * pass )
 {
@@ -851,8 +303,6 @@ void R_Make_Vertices (shader_t *s )
 		{
 
 		case DEFORMV_NONE:
-			
-
 			break;
 		case DEFORMV_WAVE:
 
@@ -1018,11 +468,8 @@ render_backend_sky(int numsky, int *skylist)
 	    arrays.numverts++;
 	}
     }
-
-	if (gl_ext_info._ARB_Multitexture)
-    flushmultitex(shader, 0);
-	else
-	render_flush(shader, 0);
+	R_backend_flush(shader,0);
+	
     /* Restore world space */
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -1084,67 +531,6 @@ void R_Push_raw (vec3_t * v,vec2_t *tc ,colour_t *c,int * elems ,int numverts ,i
 
 }
 
-/*
-static void
-render_pushface_deformed(int shadernum, cface_t *face)
-{
-    /* Push the face, deforming each vertex as we go. */
-    /* FIXME: Better to deform vertexes after pushing, but where
-       does the normal info come from ? */
-    /* Only wave deformation supported here */
-/*    shader_t *shader = &r_shaders[shadernum];
-    float args[4], startoff, off, wavesize, deflect;
-    int  *elem;
-	int *finaladdress;
-    vertex_t *vert;
-    vec3_t v;
-
-    /* Setup wave function */
-/*    args[0] = shader->deformv_wavefunc.args[0];
-    args[1] = shader->deformv_wavefunc.args[1];
-    args[3] = shader->deformv_wavefunc.args[3];
-    startoff = shader->deformv_wavefunc.args[2];
-    wavesize = shader->deformv_wavesize;
-
-    elem = face->elems;
-	finaladdress=elem+face->numelems;
-    while (elem<finaladdress)
-	{
-	arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
-	arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
-	arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
-    }
-        
-    vert = face->verts;
-	finaladdress=vert+face->numverts;
-    while(vert<finaladdress)
-	{
-	/* FIXME: this clearly isn't the way deform waves are applied to
-	   world coordinates.  For now, it at least waves the banners :) */
-/*	off = (vert->v_point[0] + vert->v_point[1] + vert->v_point[2]) /
-	    wavesize;
-
-	/* Evaluate wave function */
-/*	args[2] = startoff + off;
-	deflect = render_func_eval(shader->deformv_wavefunc.func, args);
-	/* Deflect vertex along its normal vector by wave amount */
-/*	vec_copy(vert->v_norm, v);
-	vec_scale(v, deflect, v);
-	vec_add(v, vert->v_point, v);
-
-	/* Push it */
-/*	vec_copy(v, arrays.verts[arrays.numverts]);
-
-	VectorCopy (vert->v_norm ,arrays.norms[arrays.numverts]);
-	vec2_copy(vert->tex_st, arrays.tex_st[arrays.numverts]);
-	vec2_copy(vert->lm_st, arrays.lm_st[arrays.numverts]);	
-	if (r_shaders[face->shadernum].flags & SHADER_NEEDCOLOURS)
-	    colour_copy(vert->colour, arrays.colour[arrays.numverts]);
-	vert++;
-	arrays.numverts++;	
-    }	    
-}
-*/
 
 static void
 render_pushmesh(mesh_t *mesh)
@@ -1352,6 +738,7 @@ render_setstate(shaderpass_t *pass, uint_t lmtex)
 	int frame;
 
 	/* Animation: get frame for current time */
+	if (!pass->anim_numframes || pass->anim_numframes > 8) return 0;
 	frame = (int)(g_frametime * pass->anim_fps) % pass->anim_numframes;
 	texobj = pass->anim_frames[frame];
 	if (texobj < 0) return 0;
@@ -1400,6 +787,555 @@ render_setstate(shaderpass_t *pass, uint_t lmtex)
 static void
 render_clearstate(shaderpass_t *pass)
 {
-   
+  
+}
+
+void Render_Backend_Make_Vertices (shader_t *s )
+{
+
+
+
+
+
+
+
+
+
+}
+
+float * Render_Backend_Make_TexCoords (shaderpass_t * pass ,int stage )
+{
+
+	int i=arrays.numverts,n;
+	mat4_t mat,mat2; 
+	vec2_t * in = arrays.tex_st;
+	vec2_t * out ;
+
+	Matrix4_Identity(mat);
+
+
+	switch (pass->tc_gen)
+	{
+	case TC_GEN_BASE :
+		in =arrays.tex_st;
+		break;
+	case TC_GEN_LIGHTMAP:
+		in = arrays.lm_st;
+
+	case TC_GEN_ENVIRONMENT:
+		{
+
+			// TODO !!!
+		vec3_t pos ,v,n;
+		vec3_t dir;
+		int j;
+		in= arrays.stage_tex_st[stage];
+
+		
+		// FIXME !!!
+		VectorCopy (r_eyepos ,pos );
+
+		if (!transform_ref.pos_identity)
+		{
+			VectorSubtract (pos,transform_ref.pos,pos);
+		}
+		
+		if (!transform_ref.matrix_identity)
+		{
+			if (!transform_ref.inv_matrix_calculated)	
+			{
+				Matrix3_Transponse (transform_ref.matrix,transform_ref.inv_matrix);
+				transform_ref.inv_matrix_calculated=atrue;	
+			}
+			Matrix3_Multiply_Vec3(transform_ref.inv_matrix,pos,pos);
+		}
+
+		for(j=0; j<arrays.numverts; j++)
+			{
+			
+			VectorCopy (arrays.verts[j],v);
+			
+			VectorSubtract(v, pos, dir);
+			VectorNormalize(dir);
+
+			VectorCopy (arrays.norms[j],n);
+
+			dir[0]+=n[0];
+			dir[1]+=n[1];
+
+			in[j][0]=dir[0];
+			in[j][1]=dir[1];
+			}
+			
+			
+		}
+
+		break;
+
+	case TC_GEN_VECTOR :
+
+		// TODO !!!
+		in=arrays.tex_st;
+
+
+		break;
+
+
+	default :
+
+		in=arrays.tex_st;
+
+	}
+
+	if (pass->num_tc_mod >0)
+	{
+		Matrix4_Identity ( mat2);
+
+		out=arrays.stage_tex_st[stage];
+
+		mat2[12] =0.5f;
+		mat2[13] =0.5f;
+
+		Matrix4_Multiply (mat,mat2,mat);
+		
+		for (n=0;n<pass->num_tc_mod;n++)
+		{
+			switch (pass->tc_mod[n].type)
+			{
+				case SHADER_TCMOD_ROTATE:
+				{
+					float rot=pass->tc_mod[n].args[0] * g_frametime * DEG2RAD ;
+					float cost=cos(rot);
+					float sint=sin(rot);
+
+					Matrix4_Identity (mat2);
+					mat2[0] = cost;
+					mat2[1] = sint;
+					mat2[4] = -sint;
+					mat2[5] = cost;
+			
+
+					Matrix4_Multiply  (mat,mat2,mat);
+				
+				}
+				break;
+	
+				case SHADER_TCMOD_SCALE:
+				{
+					Matrix4_Identity (mat2);
+					mat2[0] =pass->tc_mod[n].args[0];
+					mat2[5] = pass->tc_mod[n].args[1];
+			
+					Matrix4_Multiply  (mat,mat2,mat);
+				}
+				break;
+				case SHADER_TCMOD_TURB:
+				{
+					// TODO 
+					float scale[2];
+					double x, y1, y2;
+					x = (g_frametime + pass->tc_mod[n].args[2]) * pass->tc_mod[n].args[3];
+					x -= floor(x);
+					y1 = sin(x * TWOPI) * pass->tc_mod[n].args[1] + pass->tc_mod[n].args[0];
+					y2 = sin((x+0.25) * TWOPI) * pass->tc_mod[n].args[1] +
+					pass->tc_mod[n].args[0];
+	    
+
+					scale[0]= 1.0+y1*TURB_SCALE ;
+					scale[1]= 1.0+y2*TURB_SCALE;
+
+			
+					Matrix4_Identity (mat2);
+					mat2[0] =scale[0];
+					mat2[5] = scale[1];
+			
+					Matrix4_Multiply  (mat,mat2,mat);
+				}
+				break;
+
+				case SHADER_TCMOD_STRETCH:
+				{
+	     
+					float factor=1.0f/(float)render_func_eval(pass->tc_mod_stretch.func,
+					pass->tc_mod_stretch.args);
+
+					Matrix4_Identity (mat2);
+					mat2[0] =factor;
+					mat2[5] = factor;
+			
+					Matrix4_Multiply  (mat,mat2,mat);
+		
+				}
+				break;
+				case SHADER_TCMOD_SCROLL:
+				{
+					vec2_t scroll;
+					scroll[0] = pass->tc_mod[n].args[0] * g_frametime;
+					scroll[1] = pass->tc_mod[n].args[1] * g_frametime;
+			
+
+					Matrix4_Identity (mat2);
+
+					mat2[12] = scroll[0];
+					mat2[13] = scroll[1];
+
+					Matrix4_Multiply  (mat,mat2,mat);
+				}
+				break;
+				case SHADER_TCMOD_NONE:
+				default:
+					break;
+			}
+		}
+
+		Matrix4_Identity ( mat2);
+		mat2[12] =-0.5f;
+		mat2[13] =-0.5f;
+
+		Matrix4_Multiply  (mat,mat2,mat);
+
+		do {
+			Matrix_Multiply_Vec2(mat,*in++,*out++);
+		}while ( --i );
+
+		out=arrays.stage_tex_st[stage];
+	}
+	
+	else 
+	{
+		out=arrays.stage_tex_st[stage];
+		memcpy (out,in,arrays.numverts * sizeof ( vec2_t ));
+	}
+
+	return *(float**)&out;
+
+
+}
+
+byte * Render_Backend_Make_Colors ( shaderpass_t * pass )
+{
+	int i;
+	byte rgb;
+	colour_t * col;
+
+
+	switch (pass->rgbgen)
+	{
+
+	case RGB_GEN_IDENTITY_LIGHTING :
+		memset (arrays.mod_colour,r_overBrightBits->integer ? 128 : 255 ,arrays.numverts *4 );
+		col= arrays.mod_colour;
+		break;
+	case RGB_GEN_IDENTITY:
+		memset (arrays.mod_colour,255 ,arrays.numverts *4 );
+		col= arrays.mod_colour;
+		break;
+	case RGB_GEN_WAVE :
+		rgb = (byte)255 * (float)render_func_eval(pass->rgbgen_func.func,
+					    pass->rgbgen_func.args);
+		memset (arrays.mod_colour,rgb,arrays.numverts * 4 );
+		for (i=0;i< arrays.numverts;i++)
+			arrays.mod_colour[i][3] =255;
+
+		col= arrays.mod_colour;
+		break;
+	case RGB_GEN_ENTITY :
+		col= arrays.entity_colour;
+		break;
+	case RGB_GEN_ONE_MINUS_ENTITY:
+		for (i=0;i<arrays.numverts;i++)
+		{
+			arrays.mod_colour[i][0] = 255 - arrays.entity_colour[i][0];
+			arrays.mod_colour[i][1] = 255 - arrays.entity_colour[i][1];
+			arrays.mod_colour[i][2] = 255 - arrays.entity_colour[i][2];
+			arrays.mod_colour[i][2] = 255 ;
+		}
+		break;
+	case RGB_GEN_VERTEX:
+		col= arrays.colour;
+		break;
+	case RGB_GEN_ONE_MINUS_VERTEX:
+		for (i=0;i<arrays.numverts;i++)
+		{
+			arrays.mod_colour[i][0] = 255 - arrays.colour[i][0];
+			arrays.mod_colour[i][1] = 255 - arrays.colour[i][1];
+			arrays.mod_colour[i][2] = 255 - arrays.colour[i][2];
+		}
+		col= arrays.mod_colour;
+		break;
+	case RGB_GEN_LIGHTING_DIFFUSE :
+		// TODO 
+		memset (arrays.mod_colour,255 ,arrays.numverts *4 );
+		col= arrays.mod_colour;
+		break;
+
+
+
+
+	default :
+		col= arrays.colour;
+
+		break;
+
+	}
+
+
+		// TODO !!!!
+	switch (pass->alpha_gen)
+	{
+
+	case  ALPHA_GEN_PORTAL :
+		
+		for (i=0;i<arrays.numverts;i++)
+		{
+			// TODO 
+			int alpha;
+			alpha = 255.0 * 1.0 /Distance (r_eyepos,arrays.verts[i]);	
+			
+			if (alpha>255 )
+				alpha = 255;
+
+			col[i][3] = alpha;
+		}
+		// TODO
+	case ALPHA_GEN_DEFAULT :
+	case ALPHA_GEN_VERTEX :
+	case ALPHA_GEN_ENTITY:
+	case ALPHA_GEN_LIGHTINGSPECULAR:
+	default :
+		for (i=0;i<arrays.numverts;i++)
+			col[i][3]=arrays.colour[i][3];
+		
+	break;
+
+	}
+
+
+	return *(byte**)&col;
+
+}
+
+
+void Render_Backend_Flush_Generic (int shadernum ,int lmtex )
+{
+
+	shader_t *s ;
+	shaderpass_t *pass;
+	int i,texture;
+
+	if (shadernum<0 || !arrays.numverts)
+		return ;
+
+	s=&r_shaders[shadernum];
+
+	// Set the main states :
+	if (s->flags & SHADER_NOCULL )
+		GL_Disable (GL_CULL_FACE );
+	else 
+		GL_Enable (GL_CULL_FACE );
+
+	if (s->flags & SHADER_POLYGONOFFSET)
+		GL_Enable (GL_POLYGON_OFFSET);
+	else
+		GL_Disable (GL_POLYGON_OFFSET);
+
+
+	Render_Backend_Make_Vertices(s);
+	glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
+
+	if (glLockArraysEXT)
+		glLockArraysEXT(0,arrays.numverts);
+
+	
+	
+	for (i=0;i<s->numpasses;i++)
+	{
+		pass=&s->pass[i];
+		
+		// Set the Texture Coord Array :
+		glTexCoordPointer(2, GL_FLOAT, 0,Render_Backend_Make_TexCoords (pass,0 ));
+		
+		// Set the Colors :
+		glColorPointer(4, GL_UNSIGNED_BYTE, 0, Render_Backend_Make_Colors(pass));
+		
+
+		// Set the Texture  :
+		if (pass->flags & SHADER_LIGHTMAP )
+		{
+			texture=lmtex;
+		}
+		else if (pass->flags & SHADER_ANIMMAP )
+		{
+			int frame ;
+
+			if (!pass->anim_numframes || pass->anim_numframes > 8) return ;
+			frame = (int)(g_frametime * pass->anim_fps) % pass->anim_numframes;
+			
+			texture =pass->anim_frames[frame];
+		}
+		else
+		{
+			texture =pass->texref;
+		}
+
+		if ( !texture || texture< 0 )
+			return ;
+
+		GL_BindTexture(GL_TEXTURE_2D, texture);	
+
+		// Blending :
+		if (pass->flags & SHADER_BLEND )
+		{
+			GL_Enable (GL_BLEND );
+			GL_BlendFunc(pass->blendsrc, pass->blenddst);	
+		}
+		else 
+			GL_Disable(GL_BLEND);
+
+		// Alphafunc :
+		if (pass->flags & SHADER_ALPHAFUNC)
+		{
+			GL_Enable(GL_ALPHA_TEST);
+			GL_AlphaFunc(pass->alphafunc, pass->alphafuncref);
+		}
+		else
+			GL_Disable(GL_ALPHA_TEST);
+
+		// Depth :
+		GL_DepthFunc(pass->depthfunc);
+		if (pass->flags & SHADER_DEPTHWRITE)
+			GL_DepthMask(GL_TRUE);
+		else
+			GL_DepthMask(GL_FALSE);
+
+
+		// Draw it :
+		glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
+		       arrays.elems);
+
+	}
+
+	
+	if (glUnlockArraysEXT)
+		glUnlockArraysEXT();
+
+
+	arrays.numverts=arrays.numelems=0;
+
+}
+
+// assumes a 2 pass shader 
+// no blending in first pass 
+// Modulate int 2. pass
+
+void Render_Backend_Flush_Multitexture_Lightmapped (int shadernum ,int lmtex )
+{
+	shader_t *s ;
+	shaderpass_t * pass;
+	int texture ;
+
+
+	if (shadernum < 0 )
+		return ;
+
+	s=&r_shaders[shadernum];
+
+	if (s->numpasses != 2 )
+		return ;
+
+	// Set the main states :
+	if (s->flags & SHADER_NOCULL )
+		GL_Disable (GL_CULL_FACE );
+	else 
+		GL_Enable (GL_CULL_FACE );
+
+	if (s->flags & SHADER_POLYGONOFFSET)
+		GL_Enable (GL_POLYGON_OFFSET);
+	else
+		GL_Disable (GL_POLYGON_OFFSET);
+
+
+	Render_Backend_Make_Vertices(s);
+	glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
+
+	if (glLockArraysEXT)
+		glLockArraysEXT(0,arrays.numverts);
+
+
+	// Preparations :
+
+	GL_DisableClientState (GL_COLOR_ARRAY);
+	
+
+	// FIRST PASS : 
+
+	pass = &s->pass[0];
+	
+	GL_ActiveTextureARB (GL_TEXTURE0_ARB );
+	GL_Enable(GL_TEXTURE_2D);
+
+	GL_ClientActiveTextureARB (GL_TEXTURE0_ARB);
+	GL_EnableClientState (GL_TEXTURE_COORD_ARRAY );
+	
+	GL_TexEnvf (GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
+	
+	if (!lmtex || lmtex < 0)
+		return ;
+
+	glTexCoordPointer(2, GL_FLOAT, 0,Render_Backend_Make_TexCoords(pass,0));
+
+	GL_BindTexture(GL_TEXTURE_2D,lmtex);
+
+	// SECOND PASS :
+	pass = &s->pass[1];
+
+	GL_ActiveTextureARB (GL_TEXTURE1_ARB );
+	GL_Enable(GL_TEXTURE_2D );
+
+	GL_ClientActiveTextureARB (GL_TEXTURE1_ARB);
+	GL_EnableClientState (GL_TEXTURE_COORD_ARRAY );
+
+	GL_TexEnvf (GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+	
+	glTexCoordPointer(2, GL_FLOAT, 0,Render_Backend_Make_TexCoords(pass,1));
+
+	if (pass->flags & SHADER_ANIMMAP )
+	{
+		int frame ;
+
+		if (!pass->anim_numframes || pass->anim_numframes > 8) return ;
+		frame = (int)(g_frametime * pass->anim_fps) % pass->anim_numframes;
+			
+		texture =pass->anim_frames[frame];
+	}
+	else
+	{
+		texture =pass->texref;
+	}
+
+	if (!texture || texture<0 )
+		return ;
+
+	GL_BindTexture(GL_TEXTURE_2D,texture);
+
+
+	// Draw it :
+		glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
+		       arrays.elems);
+
+
+	// Cleanup :
+	GL_Disable(GL_TEXTURE_2D );
+	GL_DisableClientState (GL_TEXTURE_COORD_ARRAY );
+
+	GL_ActiveTextureARB (GL_TEXTURE0_ARB );
+	GL_TexEnvf (GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+
+	GL_ClientActiveTextureARB (GL_TEXTURE0_ARB);
+
+	if (glUnlockArraysEXT)
+		glUnlockArraysEXT();
+
+	arrays.numverts=arrays.numelems=0;
 
 }

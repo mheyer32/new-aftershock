@@ -209,6 +209,8 @@ shader_deformvertexes(shader_t *shader, shaderpass_t *pass, int numargs,
 	}
 	else 
 	{
+		shader->flags |= SHADER_DEFORMVERTS;
+		shader->deform_vertices= DEFORMV_NONE;
 		Con_Printf ("WARNING: Unknown deformv param : %s \n",args[0]);
 	}
 
@@ -225,7 +227,6 @@ static void shader_fogparams (shader_t *shader, shaderpass_t *pass, int numargs,
 	shader->fog_params[1]=atof (args[1]); // G
 	shader->fog_params[2]=atof (args[2]); // B
 	shader->fog_params[3]=atof (args[3]); // Dist
-
 
 }
 
@@ -269,7 +270,7 @@ static void shader_portal(shader_t *shader, shaderpass_t *pass, int numargs,
 static void shader_entitymergable (shader_t *shader, shaderpass_t *pass, int numargs,
 		      char **args)
 {
-	// TODO !
+	// TODO ! (? )
 
 }
 static void shader_polygonoffset (shader_t *shader, shaderpass_t *pass, int numargs,
@@ -898,11 +899,14 @@ Shader_Readpass(shader_t *shader, shaderpass_t *pass, char ** ptr)
     /* Set defaults */
     pass->flags = 0;
     pass->texref = -1;
+	pass->anim_numframes=0;
     pass->depthfunc = GL_LEQUAL;
     pass->rgbgen = RGB_GEN_IDENTITY;
     pass->num_tc_mod = 0;
-	pass->alpha_gen =	ALPHA_GEN_DEFAULT ;
-    
+	pass->alpha_gen =ALPHA_GEN_DEFAULT ;
+	pass->tc_gen=TC_GEN_BASE;
+	pass->tc_mod[0].type=SHADER_TCMOD_NONE;
+	pass->num_tc_mod=0;
 
 	while (ptr)
 	{
@@ -961,7 +965,7 @@ Shader_Parsetok(shader_t *shader, shaderpass_t *pass, shaderkey_t *keys,
 	}
 
 	// we could not find the keyword :
-	Con_Printf ("Shader_Parsetok : unknown param : % s \n",token);
+	Con_Printf ("Shader_Parsetok : Unknown keyword: %s \n",token);
    
 	// Next Line :
 	while (ptr)
@@ -1050,16 +1054,21 @@ int R_LoadShader ( const char * name ,int type )
 
 	offset =Shader_GetOffset (name);
 
-
-	s->contents=0;
-	s->flags=0;
-	s->sort=0;
-	s->numpasses=0;
-
+	// the shader is in the shader scripts :
 	if (offset > -1 )
 	{
 		char * token ;
 		ptr = shaderbuf + offset;
+
+
+		// set defaults ;
+		s->contents=0;
+		s->flags=0;
+		s->sort=0;
+		s->numpasses=0;
+		s->deform_vertices=DEFORMV_NONE;
+		s->skyheight=512.0f;
+
 
 
 		token = COM_ParseExt(&ptr,1);
@@ -1097,10 +1106,9 @@ int R_LoadShader ( const char * name ,int type )
 
 
 	}
+	// make a default shader :
 	else
 	{
-
-
 		switch (type )
 		{
 		case SHADER_2D :
@@ -1113,7 +1121,7 @@ int R_LoadShader ( const char * name ,int type )
 			s->pass[0].depthfunc = GL_ALWAYS;
 			s->pass[0].rgbgen = RGB_GEN_VERTEX;
 			s->sort = SHADER_SORT_ADDITIVE;
-
+			s->deform_vertices=DEFORMV_NONE;
 			break;
 
 		case SHADER_BSP :
@@ -1124,7 +1132,7 @@ int R_LoadShader ( const char * name ,int type )
 	         s->pass[0].depthfunc = GL_LEQUAL;
 			 s->pass[0].rgbgen = RGB_GEN_VERTEX;	 
 		     s->sort = SHADER_SORT_OPAQUE;
-
+			 s->deform_vertices=DEFORMV_NONE;
 			break;
 
 		case SHADER_MD3 :
@@ -1135,12 +1143,9 @@ int R_LoadShader ( const char * name ,int type )
 			s->pass[0].depthfunc = GL_LESS;
 			s->pass[0].rgbgen = RGB_GEN_IDENTITY;
 			s->sort = SHADER_SORT_OPAQUE;
-
-
+			s->deform_vertices=DEFORMV_NONE;
+	
 			break;
-
-
-
 
 		default :
 			return -1;
@@ -1157,9 +1162,6 @@ int R_LoadShader ( const char * name ,int type )
 	shadercount++;
 
 	return shadercount-1;
-
-
-
 }
 
 
@@ -1196,16 +1198,10 @@ shader_parsefunc(char **args, shaderfunc_t *func)
 
 int  R_RegisterShaderNoMip( const char *name ) 
 {
-
 	return R_LoadShader(name,SHADER_2D);
-	
-
 }
 
 int R_RegisterShader ( const char * name )
 {
-
-
 	return R_LoadShader (name,SHADER_BSP );
-
 }

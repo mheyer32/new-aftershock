@@ -310,7 +310,6 @@ void Check_Brush ( cbrush_t *brush)
 	}
 
 	if (i == brush->numsides) {
-		cplane_t hitplane ;
 		collided = 1;
 
 		if (start_solid) {

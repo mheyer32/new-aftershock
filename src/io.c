@@ -46,7 +46,7 @@ typedef enum {
 }filetype_t;
 
 typedef struct {
-	char name [MAX_APATH];
+	char name [MAX_OSPATH];
 	filetype_t type;
 	void * fhandle ;
 }file_t;
@@ -57,7 +57,7 @@ static int files_used [MAX_FILES ];
 static int num_files=0;
 
 
-static char basedir [MAX_APATH];
+static char basedir [MAX_OSPATH];
 
 
 char *FS_Add_Basedir (const char * s)
@@ -131,7 +131,7 @@ int FS_OpenFile (const char *path, int  *handle,fsMode_t mode)
 		return File_GetLen (h);
 	}
 	else	
-	if (pak_open(path))
+	if (Pak_FileExists(path))
 	{
 		files_used[fnum]=1;
 		f->fhandle=NULL;
@@ -139,7 +139,7 @@ int FS_OpenFile (const char *path, int  *handle,fsMode_t mode)
 
 		*handle = fnum +1;
 		A_strncpyz (f->name,path,MAX_APATH);
-		return pak_getlen();
+		return Pak_GetFileLen(path);
 	}
 
 	*handle = 0;
@@ -172,8 +172,7 @@ void FS_Read(void *buffer,int len ,int  handle)
 
 
 	case FILE_IN_PAK:
-		pak_open ( f->name);
-		if (!pak_read (buffer,len,1))
+		if (!Pak_ReadFile (f->name,len,buffer))
 			Con_Printf ("WARNING: Could not read file %s\n",f->name);
 
 		break;
@@ -183,14 +182,6 @@ void FS_Read(void *buffer,int len ,int  handle)
 	}
 
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -235,8 +226,7 @@ void FS_FCloseFile( int  handle )
 void FS_Shutdown(void)
 {
 
-	pak_closeall();
-
+	Pak_Shutdown ();
 
 
 }
@@ -244,11 +234,14 @@ void FS_Shutdown(void)
 void FS_Init (const char *dir )
 {
 	void * handle;
-	char buf [128];
-	char fname [128];
-	char buf2[128];
+	char buf [MAX_OSPATH];
+	char fname [MAX_OSPATH];
+	char buf2[MAX_OSPATH];
 
 	Con_Printf("   ------- FS_INIT: -------    \n");
+
+	if (!Pak_Init ())
+		return 0;
 
 	strcpy (basedir,dir );
 
@@ -262,7 +255,7 @@ void FS_Init (const char *dir )
 	if (handle)
 	{
 		sprintf (buf2,"%s/%s",dir,fname);
-		if (!pak_openpak(buf2))
+		if (!Pak_OpenPak(buf2))
 			Error ("Could not open pk3 : %s ",fname);
 	}
 	else 
@@ -273,7 +266,7 @@ void FS_Init (const char *dir )
 	while(File_FindNext(handle,fname,0,0))
 	{
 		printf (buf2,"%s/%s",dir,fname);
-			pak_openpak(buf2);
+			Pak_OpenPak(buf2);
 		
 	}
 
@@ -284,19 +277,15 @@ void FS_Init (const char *dir )
 
 }
 
-
+// TODO !
 int FS_FileExists (char * file )
 {
 	
 
-	return pak_FileExists(file);
+	return Pak_FileExists(file);
 
 }
 
-
-
-
-int pak_GetStringforDir (const char * dir,const char * extension,char *str,int bufsize );
 
 
 
@@ -306,11 +295,11 @@ int  FS_GetFileList (const char *path,const char *extension,char *listbuf,int bu
 
 	char *bufpos;
 	int found=0,buflen=0;
-	char tmp [128];
+	char tmp [MAX_OSPATH];
 	int len=0;
 	void * handle ;
 	char *syspath;
-	char fname [128];
+	char fname [MAX_OSPATH];
 
 	listbuf[0]=0;
 	bufpos=listbuf;
@@ -335,7 +324,7 @@ int  FS_GetFileList (const char *path,const char *extension,char *listbuf,int bu
 
 
 
-	found=pak_GetStringforDir(path,extension,listbuf,bufsize);
+	found=Pak_GetFileList(path,extension,listbuf,bufsize);
 	
 
 	return found;

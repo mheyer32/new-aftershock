@@ -20,6 +20,7 @@
 #include "command.h"	/* Cbuf_InsertText */
 #include "c_var.h"
 #include "io.h"			/* FS_Write */
+#include "util.h"
 
 
 #define MAX_CVARS	1024	

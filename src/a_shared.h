@@ -450,6 +450,13 @@ void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs );
 void SetPlaneSignbits( struct cplane_s *out );
 int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, struct cplane_s *plane);
 
+
+
+void Merge_BoundingBoxes ( const vec3_t mins1 , const vec3_t maxs1 ,
+						  const vec3_t mins2 , const vec3_t maxs2 ,
+						  vec3_t rmins ,vec3_t rmaxs ) ;
+
+
 //=============================================
 
 float Com_Clamp( float min, float max, float value );

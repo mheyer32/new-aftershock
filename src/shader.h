@@ -64,15 +64,17 @@ enum
 };
 
 /* tcmod functions */
-enum
+enum 
 {
-    SHADER_TCMOD_SCALE               = 1 << 1,
-    SHADER_TCMOD_ROTATE              = 1 << 2,
-    SHADER_TCMOD_SCROLL              = 1 << 3,
-    SHADER_TCMOD_TRANSFORM           = 1 << 4,
-    SHADER_TCMOD_TURB                = 1 << 5,
-    SHADER_TCMOD_STRETCH             = 1 << 6
+	SHADER_TCMOD_NONE ,
+	SHADER_TCMOD_SCALE,
+	SHADER_TCMOD_SCROLL,
+	SHADER_TCMOD_ROTATE,
+	SHADER_TCMOD_TRANSFORM,
+	SHADER_TCMOD_TURB,
+	SHADER_TCMOD_STRETCH
 };
+
 
 // SORTING 
 enum {

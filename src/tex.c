@@ -106,7 +106,7 @@ jpeg_mem_src(j_decompress_ptr cinfo, byte *mem, int len)
     cinfo->src->next_input_byte = mem;
 }
 	
-
+/*
 int tga_read_extern (const char *fname, byte **rgb, int *w, int *h,
 		       int *format,void * filebuf)
 {
@@ -154,7 +154,7 @@ int tga_read_extern (const char *fname, byte **rgb, int *w, int *h,
 	    if (packethead & 0x80)
 	    {
 		/* Run-length packet */
-		packetlen = (packethead & 0x7f) + 1;
+/*		packetlen = (packethead & 0x7f) + 1;
 		memcpy(rlc, tgacur, depth);
 		if ((tgacur += depth) > tgaend)
 		    Error("Unexpected end of tga file");
@@ -165,7 +165,7 @@ int tga_read_extern (const char *fname, byte **rgb, int *w, int *h,
 	    else
 	    {
 		/* Raw data packet */
-		packetlen = packethead + 1;
+/*		packetlen = packethead + 1;
 		memcpy(c, tgacur, depth * packetlen);
 		if ((tgacur += depth * packetlen) > tgaend)
 		    Error("Unexpected end of tga file");
@@ -174,7 +174,7 @@ int tga_read_extern (const char *fname, byte **rgb, int *w, int *h,
 	}
 
 	/* Flip image in y */
-	{
+/*	{
 	    int i, linelen;
 	    byte *temp;
 	    
@@ -199,14 +199,14 @@ int tga_read_extern (const char *fname, byte **rgb, int *w, int *h,
 	    Error("Bad tga image data length");
 
 	/* Flip image in y */
-	linelen = tgahead->width * depth;
+/*	linelen = tgahead->width * depth;
 	for (i=0; i < tgahead->height; ++i)
 	    memcpy(&img[i * linelen],
 		   &tgacur[(tgahead->height - i - 1) * linelen], linelen);
     }    
 
     /* Exchange B and R to get RGBA ordering */
-    {
+/*    {
 	int i;
 	byte temp;
 
@@ -224,7 +224,8 @@ int tga_read_extern (const char *fname, byte **rgb, int *w, int *h,
     *format = (depth == 3) ? GL_RGB : GL_RGBA;
     return 1;
 }
-
+*/
+/*
 int jpg_read_extern(const char *fname, byte **rgb, int *w, int *h, int *format,void * filbuf)
 {
     struct jpeg_decompress_struct cinfo;
@@ -262,7 +263,7 @@ int jpg_read_extern(const char *fname, byte **rgb, int *w, int *h, int *format,v
     return 1;
 }
 
-
+*/
 
  
 
@@ -343,7 +344,7 @@ static char * Find_Texture ( const char * filename )
 
 #define MAX_TEXTURES 512 
 
-static char img_buf [IMG_BUFSIZE];
+static byte img_buf [IMG_BUFSIZE];
 static int r_num_textures =0;
 static texture_t * textures = NULL;
 
@@ -387,8 +388,10 @@ byte * Tex_Load_TGA (const char *fname ,int *width, int * height , int * format)
 
 	int file;
 	tgaheader_t *tgahead;
-    byte *img, *tga, *tgacur, *tgaend;
+    byte *img,*tga,*tgaend,*tgacur;
     int tgalen, len, depth = 0;
+	int		i,j;
+
 
     tgalen = FS_OpenFile (fname,&file,FS_READ);
 
@@ -396,9 +399,9 @@ byte * Tex_Load_TGA (const char *fname ,int *width, int * height , int * format)
 		return NULL;
 
 	FS_Read (img_buf,tgalen,file );
-    
-    if (!tgalen) return NULL;
 
+    
+	
     tga = (byte*)img_buf;
     tgaend = tga + tgalen;
     
@@ -503,6 +506,9 @@ byte * Tex_Load_TGA (const char *fname ,int *width, int * height , int * format)
     *width = tgahead->width;
     *height = tgahead->height;
     *format = (depth == 3) ? GL_RGB : GL_RGBA;
+
+
+	
 
 	FS_FCloseFile (file );
 
