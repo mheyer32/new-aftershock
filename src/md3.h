@@ -18,18 +18,21 @@
 #ifndef __MD3_H__
 #define __MD3_H__
 
-
-#include "cmap.h"
+#include "a_shared.h"
 
 #define MD3_ID_HEADER	 (*(int*)"IDP3")
 #define MD3_ALIAS_VERSION	15
 #define MAX_MD3_MODELS		256+1
 #define MAX_MD3_MESHES      16
-#define MAX_MD3_SKINS       128+1
+#define MAX_MD3_SKINS       MAX_MD3_MODELS << 2
+
+// vertex scales
+#define	MD3_XYZ_SCALE		(1.0/64)
 
 typedef struct
 {
-	char name[68];
+	char name[MAX_APATH];
+	int flags;
     int shader;          /* Shader reference */
     int numverts;
 	int numskins;
@@ -41,7 +44,7 @@ typedef struct
     texcoord_t **norms;  /* Used for environment mapping ? */
     int numelems;
     uint_t *elems;
-	int * skins;
+	int *skins;
 } md3mesh_t;
 
 typedef struct
@@ -67,7 +70,8 @@ typedef struct
 {
     int id;
     int version;
-    char filename[68];
+    char filename[MAX_APATH];
+	int	flags;
     int numboneframes;
     int numtags;
     int nummeshes;
@@ -80,8 +84,7 @@ typedef struct
 
 typedef struct
 {
-    char name[12];
-	char unknown[52];
+	char name[MAX_APATH];	// tag name
     vec3_t pos;
     mat3x3_t rot;
 } md3tag_t;
@@ -89,7 +92,8 @@ typedef struct
 typedef struct
 {
     int id;
-    char name[68];
+    char name[MAX_APATH];
+	int	flags;
     int numframes;
     int numskins;
     int numverts;
@@ -104,8 +108,8 @@ typedef struct
 
 typedef struct 
 {
-	char name [128];
-	vec3_t mins,maxs;
+	char name[MAX_OSPATH];
+	vec3_t mins, maxs;
 	int nummeshes;
 	int numframes;
 	int numtags;
@@ -124,12 +128,12 @@ typedef struct
 
 typedef struct {
 
-	char mesh_name[68];
+	char mesh_name[MAX_APATH];
 	int shaderref;
 } mesh_skin_t;
 
 typedef struct {
-	char name [68];
+	char name[MAX_APATH];
 	mesh_skin_t skins[MAX_MD3_MESHES];
 	int num_mesh_skins;
 } skin_t;

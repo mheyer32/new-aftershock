@@ -55,12 +55,9 @@ static void Render_Backend_Flush_Vertex_Lit (shader_t *s, int lmtex );
 
 static void render_pushface(cface_t *face);
 static void render_pushmesh(mesh_t *mesh);
-static double render_func_eval(uint_t func, float *args);
 static void render_pushface_deformed(int shadernum, cface_t *face);
 static void render_stripmine(int numelems, int *elems);
 static int render_setstate(shaderpass_t *pass, uint_t lmtex);
-static void render_pushmesh_deformed(mesh_t *mesh,cface_t *face);
-
 
 arrays_t arrays;
 
@@ -70,8 +67,7 @@ static aboolean r_reflection_ = afalse;
 
 extern reference_t transform_ref;
 
-void
-R_backend_init(void)
+void R_backend_init(void)
 {
     arrays.verts = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
 	arrays.norms = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
@@ -122,7 +118,7 @@ void R_backend_shutdown(void )
 }
 
 
-void R_Push_Quad ( quad_t * q )
+void R_Push_Quad (quad_t *q)
 {
 	int i;
 
@@ -162,7 +158,6 @@ void Render_backend_Overlay (quad_t *q, int numquads)
 
     // Final flush to clear queue
 	Render_Backend_Flush(shader, 0);
-
 }
 
 void render_backend(facelist_t *facelist)
@@ -196,8 +191,7 @@ void render_backend(facelist_t *facelist)
 				break;
 
 			case FACETYPE_MESH:
-				if (facelist->faces[f].face < r_nummeshes)// bugfix : need to find the source !!!
-					render_pushmesh(&r_meshes[facelist->faces[f].face]);
+				render_pushmesh(&r_meshes[r_facemeshes[facelist->faces[f].face]]);
 				break;
 
 			default:
@@ -219,30 +213,33 @@ void render_backend_sky(int numsky, int *skylist)
     skyheight = r_shaders[shader].skyheight;
     arrays.numverts = arrays.numelems = 0;
 
-    /* Center skybox on camera to give the illusion of a larger space */
+    // Center skybox on camera to give the illusion of a larger space
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(r_eyepos[0], r_eyepos[1], r_eyepos[2]);
     glScalef(skyheight, skyheight, skyheight);
 
-    /* FIXME: Need to cull skybox based on face list */
+    // FIXME: Need to cull skybox based on face list
     for (s=0; s < 5; s++)
     {
-	elem = r_skybox->elems;
-	for (i=0; i < r_skybox->numelems; i++)
-	{
-	    arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
-	}
-	for (i=0; i < r_skybox->numpoints; i++)
-	{
-	    vec_copy(r_skybox->points[s][i], arrays.verts[arrays.numverts]);
-	    vec2_copy(r_skybox->tex_st[s][i], arrays.tex_st[arrays.numverts]);
-	    arrays.numverts++;
-	}
+		elem = r_skybox->elems;
+
+		for (i=0; i < r_skybox->numelems; i++)
+		{
+			arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
+		}
+
+		for (i=0; i < r_skybox->numpoints; i++)
+		{
+			vec_copy(r_skybox->points[s][i], arrays.verts[arrays.numverts]);
+			vec2_copy(r_skybox->tex_st[s][i], arrays.tex_st[arrays.numverts]);
+			arrays.numverts++;
+		}
     }
+
 	Render_Backend_Flush(shader,0);
 	
-    /* Restore world space */
+    // Restore world space
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 }
@@ -291,13 +288,10 @@ void R_Push_raw (vec3_t *v,vec2_t *tc, colour_t *c, int *elems, int numverts, in
 
 static void render_pushmesh(mesh_t *mesh)
 {
-    int  i,*elem;
+    int  i, *elem = mesh->elems;
 
 	// any way to implement faceculling here in the engine ?
 
-	// shit happens 
-	if (mesh->size[0]>10000 || mesh->size[0]>10000 || mesh->size[0]<0 || mesh->size[1]<0 ) return;
-    elem = mesh->elems;
     for (i = 0; i < mesh->numelems/3; ++i)
     {
 		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
@@ -305,18 +299,16 @@ static void render_pushmesh(mesh_t *mesh)
 		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
     }
 	
-	for (i=0;i<mesh->size[1]*mesh->size[0];i++)
+	for (i = 0;i < mesh->size[1] * mesh->size[0]; i++)
 	{
 	    vec_copy(mesh->points[i], arrays.verts[arrays.numverts]);
-	    //arrays.verts[arrays.numverts][3] = 1.0f;
-	    vec2_copy(mesh->tex_st[i],  arrays.tex_st[arrays.numverts]);
+	    vec2_copy(mesh->tex_st[i], arrays.tex_st[arrays.numverts]);
 	    vec2_copy(mesh->lm_st[i], arrays.lm_st[arrays.numverts]);
 	    arrays.numverts++;
 	}
 }
 
-static void
-render_stripmine(int numelems, int *elems)
+static void render_stripmine(int numelems, int *elems)
 {
     int toggle;
     uint_t a, b, elem;
@@ -336,41 +328,41 @@ render_stripmine(int numelems, int *elems)
     elem = 0;
     while (elem < numelems)
     {
-	toggle = 1;
-	glBegin(GL_TRIANGLE_STRIP);
-	
-	glArrayElement(elems[elem++]);
-	b = elems[elem++];
-	glArrayElement(b);
-	a = elems[elem++];
-	glArrayElement(a);
-	
-	while (elem < numelems)
-	{
-	    if (a != elems[elem] || b != elems[elem+1])
-		break;
-	    
-	    if (toggle)
-	    {
-		b = elems[elem+2];
+		toggle = 1;
+		glBegin(GL_TRIANGLE_STRIP);
+		
+		glArrayElement(elems[elem++]);
+		b = elems[elem++];
 		glArrayElement(b);
-	    }
-	    else
-	    {
-		a = elems[elem+2];
+		a = elems[elem++];
 		glArrayElement(a);
-	    }
-	    elem += 3;
-	    toggle = !toggle;
-	}
-	glEnd();
+		
+		while (elem < numelems)
+		{
+			if (a != elems[elem] || b != elems[elem+1])
+			break;
+			
+			if (toggle)
+			{
+				b = elems[elem+2];
+				glArrayElement(b);
+			}
+			else
+			{
+				a = elems[elem+2];
+				glArrayElement(a);
+			}
+			elem += 3;
+			toggle = !toggle;
+		}
+		glEnd();
     }
 }
 
-static double render_func_eval(uint_t func, float *args)
+__inline static double render_func_eval(uint_t func, float *args)
 {
     // Evaluate a number of time based periodic functions
-    double x = (cl_frametime + args[2]) * args[3];
+    double x  = (cl_frametime + args[2]) * args[3];
 	x -= floor(x);
 
     switch (func)
@@ -396,11 +388,11 @@ static double render_func_eval(uint_t func, float *args)
 }
 
 // TODO !!!
-void Render_Backend_Make_Vertices (shader_t *s )
+void Render_Backend_Make_Vertices (shader_t *s)
 {
 	int i;
 
-	if (s->flags & SHADER_DEFORMVERTS )
+	if (s->flags & SHADER_DEFORMVERTS)
 	{
 		float deflect;
 		vec3_t v;
@@ -521,7 +513,7 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 			// Is this right ?
 			in = arrays.stage_tex_st[stage];
 				
-			for (j=0;j<arrays.numverts;j++)
+			for (j = 0; j < arrays.numverts; j++)
 			{
 				in[j][0] = DotProduct(pass->tc_gen_s, arrays.verts[j]);
 				in[j][1] = DotProduct(pass->tc_gen_t, arrays.verts[j]);
@@ -538,6 +530,8 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 		float t1, t2, p1, p2;
 		double pos;
 
+		out = arrays.stage_tex_st[stage];
+
 		for (n = 0; n < pass->num_tc_mod; n++)
 		{
 			switch (pass->tc_mod[n].type)
@@ -553,24 +547,18 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 					
 					for (j = 0; j < arrays.numverts; j++)
 					{
-						t1 = in[j][0];
-						t2 = in[j][1];
-						
-						in[j][0] = t1 * cost - t2 * sint + p1;
-						in[j][1] = t2 * cost + t1 * sint + p2;
+						out[j][0] = in[j][0] * cost - in[j][1] * sint + p1;
+						out[j][1] = in[j][1] * cost + in[j][0] * sint + p2;
 					}
 				}
 				break;
 				
 				case SHADER_TCMOD_SCALE:
 				{
-					t1 = pass->tc_mod[n].args[0];
-					t2 = pass->tc_mod[n].args[1];
-
 					for (j = 0; j < arrays.numverts; j++)
 					{
-						in[j][0] *=	t1;
-						in[j][1] *=	t2;
+						out[j][0] = in[j][0] * pass->tc_mod[n].args[0];
+						out[j][1] =	in[j][1] * pass->tc_mod[n].args[1];
 					}
 				}
 				break;
@@ -584,10 +572,10 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 					for (j = 0; j < arrays.numverts; j++)
 					{
 						k = ( ( ( arrays.verts[j][0] + arrays.verts[j][2] ) / 1024.f + pos ) * 1024.f ) * DEG2RAD;
-						in[j][0] += pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
+						out[j][0] = in[j][0] + pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
 
 						k = ( ( ( arrays.verts[j][1] ) / 1024.f + pos ) * 1024.f ) * DEG2RAD;
-						in[j][1] += pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
+						out[j][1] = in[j][1] + pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
 					}
 				}
 				
@@ -597,11 +585,10 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 				{
 					t1 = 1.0f / (float)render_func_eval(pass->tc_mod_stretch.func,
 						pass->tc_mod_stretch.args);
-					t2 = 0.5f - t1 * 0.5f;
 
 					for (j = 0; j < arrays.numverts; j++) {
-						in[j][0] = in[j][0] * t1 + t2;
-						in[j][1] = in[j][1] * t1 + t2;
+						out[j][0] = t1 * (in[j][0] - 0.5f) + 0.5f;
+						out[j][1] = t1 * (in[j][1] - 0.5f) + 0.5f;
 					}
 				}
 
@@ -618,8 +605,8 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 					t2 = (float)pos;
 
 					for (j = 0; j < arrays.numverts; j++) {
-						in[j][0] += t1;
-						in[j][1] += t2;
+						out[j][0] = in[j][0] + t1;
+						out[j][1] = in[j][1] + t2;
 					}
 				}
 				
@@ -629,21 +616,18 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 				{
 					for (j = 0; j < arrays.numverts; j++) 
 					{
-						t1 = in[j][0];
-						t2 = in[j][1];
-						in[j][0] = t1 * pass->tc_mod[n].args[0] + t2 * pass->tc_mod[n].args[2] + pass->tc_mod[n].args[4];
-						in[j][1] = t2 * pass->tc_mod[n].args[1] + t1 * pass->tc_mod[n].args[3] + pass->tc_mod[n].args[5];
+						out[j][0] = in[j][0] * pass->tc_mod[n].args[0] + in[j][1] * pass->tc_mod[n].args[2] + pass->tc_mod[n].args[4];
+						out[j][1] = in[j][1] * pass->tc_mod[n].args[1] + in[j][0] * pass->tc_mod[n].args[3] + pass->tc_mod[n].args[5];
 					}
 				}
 				break;
 	
 				default:
+					out = arrays.stage_tex_st[stage];
+					memcpy (out, in, arrays.numverts * sizeof(vec2_t));
 					break;
 			}
 		}
-
-		out = arrays.stage_tex_st[stage];
-		memcpy (out, in, arrays.numverts * sizeof(vec2_t));
 	}
 	else
 	{
@@ -902,7 +886,7 @@ void Render_Backend_Flush (int shadernum, int lmtex)
 			Render_Backend_Flush_Multitexture_Lightmapped(s, lmtex);
 			break;
 
-		case SHADER_FLUSH_MULTITEXTURE_COMBINE :
+		case SHADER_FLUSH_MULTITEXTURE_COMBINE:
 			Render_Backend_Flush_Multitexture_Combine(s, lmtex);
 			break;
 
@@ -920,28 +904,25 @@ void Render_Backend_Flush (int shadernum, int lmtex)
 
 static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 {
-
 	shaderpass_t *pass;
-	int i,texture;
-
+	int i, texture;
 
 	switch (s->cull )
 	{
-	case SHADER_CULL_DISABLE:
-		GL_Disable (GL_CULL_FACE);
-		break;
-
-	case SHADER_CULL_FRONT:
-		GL_Enable (GL_CULL_FACE);
-		GL_CullFace (GL_FRONT);
-		break;
-
-
-	case SHADER_CULL_BACK:
-		GL_Enable (GL_CULL_FACE);
-		GL_CullFace (GL_BACK);
-		break;
-
+		case SHADER_CULL_DISABLE:
+			GL_Disable (GL_CULL_FACE);
+			break;
+			
+		case SHADER_CULL_FRONT:
+			GL_Enable (GL_CULL_FACE);
+			GL_CullFace (GL_FRONT);
+			break;
+			
+			
+		case SHADER_CULL_BACK:
+			GL_Enable (GL_CULL_FACE);
+			GL_CullFace (GL_BACK);
+			break;
 	}
 
 	if (s->flags & SHADER_POLYGONOFFSET)
@@ -949,78 +930,78 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 	else
 		GL_Disable (GL_POLYGON_OFFSET);
 
-
 	Render_Backend_Make_Vertices(s);
 	glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
 
 	if (glLockArraysEXT)
-		glLockArraysEXT(0,arrays.numverts);
+		glLockArraysEXT(0, arrays.numverts);
 
 	if (gl_ext_info._ARB_Multitexture)
 	{
-		GL_ActiveTextureARB (GL_TEXTURE0_ARB );
+		GL_ActiveTextureARB (GL_TEXTURE0_ARB);
 		GL_ClientActiveTextureARB (GL_TEXTURE0_ARB);
 	}
 	
-	for (i=0;i<s->numpasses;i++)
+	for (i = 0; i < s->numpasses; i++)
 	{
-		pass=&s->pass[i];
+		pass = &s->pass[i];
 		
-		// Set the Texture Coord Array :
-		glTexCoordPointer(2, GL_FLOAT, 0,Render_Backend_Make_TexCoords (pass,0 ));
+		// Set the Texture Coord Array
+		glTexCoordPointer(2, GL_FLOAT, 0, Render_Backend_Make_TexCoords (pass, 0));
 		
-		// Set the Colors :
+		// Set the Colors
 		glColorPointer(4, GL_UNSIGNED_BYTE, 0, Render_Backend_Make_Colors(pass));
 		
-
-		// Set the Texture  :
-		if (pass->flags & SHADER_LIGHTMAP )
+		// Set the Texture
+		if (pass->flags & SHADER_LIGHTMAP)
 		{
-			texture=r_lightmaps [lmtex];
+			texture = r_lightmaps[lmtex];
 		}
-		else if (pass->flags & SHADER_ANIMMAP )
+		else if (pass->flags & SHADER_ANIMMAP)
 		{
-			int frame ;
+			int frame;
 
-			if (!pass->anim_numframes || pass->anim_numframes > 8) return ;
+			if (!pass->anim_numframes || pass->anim_numframes > SHADER_ANIM_FRAMES_MAX)
+				return;
+
 			frame = (int)(cl_frametime * pass->anim_fps) % pass->anim_numframes;
 			
-			texture =pass->anim_frames[frame];
+			texture = pass->anim_frames[frame];
 		}
-		else
-		{
-			texture =pass->texref;
+		else {
+			texture = pass->texref;
 		}
 
-		if ( !texture || texture< 0 )
-		{
-			return ;
-		}
+		if (texture < 1)
+			return;
 
 		GL_BindTexture(GL_TEXTURE_2D, texture);	
 
-		// Blending :
-		if (pass->flags & SHADER_BLEND )
+		// Blending
+		if (pass->flags & SHADER_BLEND)
 		{
-			GL_Enable (GL_BLEND );
+			GL_Enable (GL_BLEND);
 			GL_BlendFunc(pass->blendsrc, pass->blenddst);	
 		}
-		else 
+		else {
 			GL_Disable(GL_BLEND);
+		}
 
-		// Alphafunc :
+		// Alphafunc
 		if (pass->flags & SHADER_ALPHAFUNC)
 		{
 			GL_Enable(GL_ALPHA_TEST);
 			GL_AlphaFunc(pass->alphafunc, pass->alphafuncref);
 		}
-		else
+		else {
 			GL_Disable(GL_ALPHA_TEST);
+		}
 
 		if (!r_overlay)
 		{
-			// Depth :
+			// Depth
 			GL_DepthFunc(pass->depthfunc);
+
 			if (pass->flags & SHADER_DEPTHWRITE)
 				GL_DepthMask(GL_TRUE);
 			else
@@ -1052,124 +1033,113 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 			glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
 		}
 
-		// Draw it :
+		// Draw it
 		glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
 		       arrays.elems);
 	}
 
-	
 	if (glUnlockArraysEXT)
 		glUnlockArraysEXT();
 }
 
-// assumes a 2 pass shader 
-// no blending in first pass 
-// Modulate int 2. pass
+/*
+================
+Render_Backend_Flush_Multitexture_Lightmapped
 
+Assumes a 2 pass shader. No blending
+in first pass. Modulate int 2. pass.
+================
+*/
 static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmtex )
 {
-	shaderpass_t * pass;
-	int texture ;
+	shaderpass_t *pass;
+	int texture;
 
-
-	if (s->numpasses != 2 )
-		return ;
+	if (s->numpasses != 2)
+		return;
 
 	Render_Backend_Make_Vertices (s);
 
-	
-	switch (s->cull )
+	switch (s->cull)
 	{
-	case SHADER_CULL_DISABLE:
-		GL_Disable (GL_CULL_FACE);
-		break;
+		case SHADER_CULL_DISABLE:
+			GL_Disable (GL_CULL_FACE);
+			break;
 
-	case SHADER_CULL_FRONT:
-		GL_Enable (GL_CULL_FACE);
-		GL_CullFace (GL_FRONT);
-		break;
+		case SHADER_CULL_FRONT:
+			GL_Enable (GL_CULL_FACE);
+			GL_CullFace (GL_FRONT);
+			break;
 
-
-	case SHADER_CULL_BACK:
-		GL_Enable (GL_CULL_FACE);
-		GL_CullFace (GL_BACK);
-		break;
-
+		case SHADER_CULL_BACK:
+			GL_Enable (GL_CULL_FACE);
+			GL_CullFace (GL_BACK);
+			break;
 	}
-
 
 	if (s->flags & SHADER_POLYGONOFFSET)
 		GL_Enable (GL_POLYGON_OFFSET);
 	else
 		GL_Disable (GL_POLYGON_OFFSET);
 
-
 	Render_Backend_Make_Vertices(s);
+
 	glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
 
 	if (glLockArraysEXT)
 		glLockArraysEXT(0,arrays.numverts);
 
-
-	// Preparations :
-
+	// Preparations
 	GL_DisableClientState (GL_COLOR_ARRAY);
-	
 
-	// FIRST PASS : 
-
+	// first pass
 	pass = &s->pass[0];
 	
-	GL_ActiveTextureARB (GL_TEXTURE0_ARB );
+	GL_ActiveTextureARB (GL_TEXTURE0_ARB);
 	GL_Enable(GL_TEXTURE_2D);
 
 	GL_ClientActiveTextureARB (GL_TEXTURE0_ARB);
-	GL_EnableClientState (GL_TEXTURE_COORD_ARRAY );
+	GL_EnableClientState (GL_TEXTURE_COORD_ARRAY);
 	
-	GL_TexEnvf (GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_REPLACE);
+	GL_TexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	
-	if (!lmtex || lmtex < 0)
-	{
-		return ;
-	}
+	if (lmtex < 1)
+		return;
 
-	glTexCoordPointer(2, GL_FLOAT, 0,Render_Backend_Make_TexCoords(pass,0));
+	glTexCoordPointer(2, GL_FLOAT, 0, Render_Backend_Make_TexCoords(pass, 0));
 
-	GL_BindTexture(GL_TEXTURE_2D,r_lightmaps[lmtex]);
+	GL_BindTexture(GL_TEXTURE_2D, r_lightmaps[lmtex]);
 
-	// SECOND PASS :
+	// second pass
 	pass = &s->pass[1];
 
-	GL_ActiveTextureARB (GL_TEXTURE1_ARB );
-	GL_Enable(GL_TEXTURE_2D );
+	GL_ActiveTextureARB (GL_TEXTURE1_ARB);
+	GL_Enable(GL_TEXTURE_2D);
 
 	GL_ClientActiveTextureARB (GL_TEXTURE1_ARB);
-	GL_EnableClientState (GL_TEXTURE_COORD_ARRAY );
+	GL_EnableClientState (GL_TEXTURE_COORD_ARRAY);
 
-	GL_TexEnvf (GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+	GL_TexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	
-	glTexCoordPointer(2, GL_FLOAT, 0,Render_Backend_Make_TexCoords(pass,1));
+	glTexCoordPointer(2, GL_FLOAT, 0, Render_Backend_Make_TexCoords(pass, 1));
 
-	if (pass->flags & SHADER_ANIMMAP )
+	if (pass->flags & SHADER_ANIMMAP)
 	{
-		int frame ;
+		int frame;
 
-		if (!pass->anim_numframes || pass->anim_numframes > 8) return ;
+		if (!pass->anim_numframes || pass->anim_numframes > SHADER_ANIM_FRAMES_MAX) 
+			return;
+
 		frame = (int)(cl_frametime * pass->anim_fps) % pass->anim_numframes;
-			
-		texture =pass->anim_frames[frame];
+		texture = pass->anim_frames[frame];
 	}
 	else
-	{
-		texture =pass->texref;
-	}
+		texture = pass->texref;
 
-	if (!texture || texture<0 )
-	{
-		return ;
-	}
+	if (texture < 1)
+		return;
 
-	GL_BindTexture(GL_TEXTURE_2D,texture);
+	GL_BindTexture(GL_TEXTURE_2D, texture);
 
 	if (r_reflection != r_reflection_)
 	{
@@ -1196,17 +1166,16 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 		glTexGenf(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
 	}
 
-	// Draw it :
-		glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
-		       arrays.elems);
+	// draw it
+	glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
+		arrays.elems);
 
+	// cleanup
+	GL_Disable(GL_TEXTURE_2D);
+	GL_DisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	// Cleanup :
-	GL_Disable(GL_TEXTURE_2D );
-	GL_DisableClientState (GL_TEXTURE_COORD_ARRAY );
-
-	GL_ActiveTextureARB (GL_TEXTURE0_ARB );
-	GL_TexEnvf (GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+	GL_ActiveTextureARB(GL_TEXTURE0_ARB);
+	GL_TexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	GL_ClientActiveTextureARB (GL_TEXTURE0_ARB);
 
@@ -1214,54 +1183,49 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 		glUnlockArraysEXT();
 }
 
-// assumes  2 Passes 
-// we could extend this 
-// TODO !!!
+/*
+================
+Render_Backend_Flush_Multitexture_Lightmapped
+
+Assumes 2 passes. We could extend this. TODO!
+================
+*/
 static void Render_Backend_Flush_Multitexture_Combine (shader_t *s,int lmtex )
 {
-//	shaderpass_t * pass;
-//	int texture  ;
-
-	if (s->numpasses != 2 )
-		return ;
+	if (s->numpasses != 2)
+		return;
 
 	Render_Backend_Make_Vertices (s);
 
-
-	
-	switch (s->cull )
+	switch (s->cull)
 	{
-	case SHADER_CULL_DISABLE:
-		GL_Disable (GL_CULL_FACE);
-		break;
+		case SHADER_CULL_DISABLE:
+			GL_Disable (GL_CULL_FACE);
+			break;
 
-	case SHADER_CULL_FRONT:
-		GL_Enable (GL_CULL_FACE);
-		GL_CullFace (GL_FRONT);
-		break;
+		case SHADER_CULL_FRONT:
+			GL_Enable (GL_CULL_FACE);
+			GL_CullFace (GL_FRONT);
+			break;
 
-
-	case SHADER_CULL_BACK:
-		GL_Enable (GL_CULL_FACE);
-		GL_CullFace (GL_BACK);
-		break;
-
+		case SHADER_CULL_BACK:
+			GL_Enable (GL_CULL_FACE);
+			GL_CullFace (GL_BACK);
+			break;
 	}
-
 
 	if (s->flags & SHADER_POLYGONOFFSET)
 		GL_Enable (GL_POLYGON_OFFSET);
 	else
 		GL_Disable (GL_POLYGON_OFFSET);
 
-
 	Render_Backend_Make_Vertices(s);
+
 	glVertexPointer(3, GL_FLOAT, 0, arrays.verts);
 
 	if (glLockArraysEXT)
-		glLockArraysEXT(0,arrays.numverts);
+		glLockArraysEXT(0, arrays.numverts);
 }
-
 
 // TODO !!!
 static void Render_Backend_Flush_Vertex_Lit (shader_t *s, int lmtex )

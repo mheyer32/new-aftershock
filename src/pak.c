@@ -117,7 +117,6 @@ int Pak_ReadFile (const char *path, int len, void *buf)
 	return (len == read);
 }
 
-
 int Pak_GetFileList (const char *dir, const char *extension, char *str, int bufsize)
 {
 	int len = 0, alllen = 0;
@@ -132,7 +131,7 @@ int Pak_GetFileList (const char *dir, const char *extension, char *str, int bufs
 		{
 			allfound += found;
 			state = 1;
-			alllen += len + 1;	
+			alllen += len + 1;
 		}
 	}
 

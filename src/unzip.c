@@ -898,51 +898,43 @@ extern int ZEXPORT unzGoToNextFile (unzFile file)
 	return err;
 }
 
-
-
-int Unz_GetStringForDir (unzFile * pak,const char * dir,const char *extension,char * buf ,int bufsize,int *len)
+int Unz_GetStringForDir (unzFile *pak,const char * dir,const char *extension,char * buf ,int bufsize,int *len)
 {
+	unz_s *s = (unz_s *)pak;
+	char *token, *bufpos = buf;
+	int i, j, found = 0;
 
-
-	unz_s *s=(unz_s*) pak;
-	char * token,*bufpos;
-	int i,j,found=0;
-
-
-//	s->cache
-//	s->counts
-
-	*len=0;
-	bufpos=buf;
-
-	for (i=0;i<HASHSIZE;i++)
+	*len = 0;
+	
+	for (i = 0; i < HASHSIZE; i++)
 	{
-		for (j=0;j<s->counts[i];j++)
+		for (j = 0; j < s->counts[i]; j++)
 		{
-			token=s->cache[i][j].name;
+			token = s->cache[i][j].name;
 			
 			if (dir[0])
-			if (strncmp (token,dir,strlen (dir)))
-				continue;
-
-			if (dir[0])
-				if (strlen (token) <=strlen (dir)+ strlen (extension))
+				if (strncmp (token, dir, strlen(dir)))
 					continue;
 
-			if (strlen (token) > strlen (extension))
-				if (!strncmp(extension, token + strlen(token) - strlen(extension),strlen(extension)))
+			if (dir[0])
+				if (strlen (token) <= strlen (dir) + strlen (extension))
+					continue;
+
+			if (strlen (token) > strlen (extension)) {
+				if (!strncmp(extension, token + strlen(token) - strlen(extension), strlen(extension)))
 				{
 					found++;
 
 					if (dir[0])
-					token +=strlen (dir)+1;
+						token += strlen (dir) + 1;
 
-					A_strncpyz (bufpos,token, strlen(token)+1);
+					A_strncpyz (bufpos, token, strlen(token) + 1);
 
-					bufpos+=strlen(token)+1;
-					*(bufpos-1)=0;
-					*len=bufpos-buf;
+					bufpos += strlen(token);
+					*bufpos++ = 0;
+					*len = bufpos - buf - 1;		// bugfix
 				}
+			}
 		}
 	}
 

@@ -50,6 +50,7 @@ float r_subdivisiontol = 20;
 int r_maxmeshlevel = 4;
 int r_nummeshes;
 mesh_t *r_meshes;
+int *r_facemeshes;
 
 int r_numtextures;
 shader_t *r_shaders;

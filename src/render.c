@@ -185,8 +185,6 @@ static cvarTable_t cvarTable[] = {
 
 const static int	cvarTableSize = sizeof(cvarTable) / sizeof(cvarTable[0]);
 
-
-
 void R_GetCvars( void )
 {
 	int		i;
@@ -196,7 +194,6 @@ void R_GetCvars( void )
 		*cv->cvar = Cvar_Get( cv->name, cv->resetString, cv->flags );
 	}
 }
-
 
 void R_Draw_World (void );
 void R_Setup_Clipplanes (const refdef_t * fd );
@@ -259,7 +256,7 @@ static cplane_t clipplanes[4];
 
 static mat4_t model_view_mat;
 
-int r_WorldMap_loaded = 0;
+aboolean r_WorldMap_loaded = afalse;
 
 // This will be used by the backend when doing sfx like environment-mapping
 reference_t transform_ref;
@@ -317,7 +314,7 @@ void R_Init(void)
 
 	R_ClearScene();
 
-	Con_Printf ("... finished R_INIT ...\n");
+	Con_Printf ("... finished R_Init ...\n");
 }
 
 void R_Shutdown (void)
@@ -327,10 +324,8 @@ void R_Shutdown (void)
 	Shader_Shutdown();
 	MD3_Shutdown ();
 
-	free(facelist.faces);
-    free(translist.faces);
-    free(r_faceinc);
-    free(skylist);
+	R_FreeWorldMap();
+
 	free(render_list);
 
 	R_backend_shutdown();
@@ -686,6 +681,17 @@ void R_render_model (refEntity_t *re)
 			shaderref = mesh->skins[re->skinNum];
 		}
 
+		if (shaderref < 0) {
+			// Revert
+			Matrix4_Identity(transform_ref.matrix);
+			transform_ref.matrix_identity = 1;
+			transform_ref.inv_matrix_calculated = 0;
+
+			glMatrixMode(GL_MODELVIEW);
+			glPopMatrix();
+			return;
+		}
+
 		arrays.numverts = 0;
 
 	    elem = mesh->elems;
@@ -943,7 +949,7 @@ void R_Update_Screen (void )
 
 static void R_Upload_Lightmaps (void )
 {
-	int i, texsize = 128 * 128 * 3;
+	int i, texsize = LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 3;
 	
 	r_numLightmaps = cm.lightmapdata_size / texsize;
 
@@ -960,7 +966,7 @@ static void R_Upload_Lightmaps (void )
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 128, 128, 0, GL_RGB,
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 0, GL_RGB,
 		     GL_UNSIGNED_BYTE, &cm.lightmapdata[i * texsize]);
 	}
 }
@@ -974,49 +980,56 @@ static void R_Free_Lightmaps (void)
 	r_numLightmaps = 0;
 }
 
-// Loads and setups the map for Rendering :
-void R_LoadWorldMap( const char *mapname )
+// Loads and setups the map for Rendering
+void R_LoadWorldMap (const char *mapname)
 {
-	if (r_WorldMap_loaded )
+	if (r_WorldMap_loaded)
 		R_FreeWorldMap ();
 
 	if (!cm.name[0])
 	if (!CM_LoadMap (mapname , 1 ))
 	{
 // Vic: Typo
-//		Con_Printf ("WARNING : R_LoadWorldMap : CM_LoadMap falied !\n");
-		Con_Printf ("WARNING : R_LoadWorldMap : CM_LoadMap failed !\n");
+//		Con_Printf ("WARNING: R_LoadWorldMap: CM_LoadMap falied!\n");
+		Con_Printf ("WARNING: R_LoadWorldMap: CM_LoadMap failed!\n");
 	
-		return ;
-		
+		return;
 	}
 
 	R_Upload_Lightmaps ();
 
-	// sizeup the face-arrays :
-	facelist.faces = malloc (cm.num_faces * sizeof (rendface_t ));
+	// sizeup the face-arrays
+	facelist.faces = malloc (cm.num_faces * sizeof (rendface_t));
 	facelist.numfaces = 0;
-	memset (facelist.faces ,0, cm.num_faces * sizeof ( rendface_t ));
+	memset (facelist.faces, 0, cm.num_faces * sizeof (rendface_t));
 
 	r_faceinc = malloc (cm.num_faces * sizeof (byte ));
 	memset (r_faceinc ,0, cm.num_faces * sizeof ( byte ));
 
     skylist = (int *)malloc(100 * sizeof(int));
-	memset (skylist ,0, 100 * sizeof ( int ));
+	memset (skylist, 0, 100 * sizeof (int));
 
-	r_WorldMap_loaded = 1;
+	r_WorldMap_loaded = atrue;
 
     skybox_create();
 }
 
 
-void R_FreeWorldMap (void )
+void R_FreeWorldMap (void)
 {
+	if (!r_WorldMap_loaded)
+		return;
+
 	R_Free_Lightmaps ();
 	
-	free (facelist.faces);
+	skybox_free();
 
-	r_WorldMap_loaded =0;
+	free(facelist.faces);
+    free(translist.faces);
+    free(r_faceinc);
+	free(skylist);
+
+	r_WorldMap_loaded = afalse;
 }
 
 void R_StartFrame (void )

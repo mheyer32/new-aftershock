@@ -82,7 +82,7 @@ typedef struct
 typedef struct 
 {
 	int shadernum;
-	int unknown;
+	int fognum;
 	int facetype;
 	cvertex_t *verts;
 	int numverts;
@@ -111,8 +111,8 @@ typedef struct
 typedef struct 
 {
 	shader_t *shader;
-	cbrush_t *brushes;
-	int numbrushes;
+	cbrush_t *brush;
+	int visibleside;
 } cfogzone_t;
 
 

@@ -133,7 +133,22 @@ typedef int		clipHandle_t;
 # define NULL ((void *)0)
 #endif
 
-/* angle indexes */
+// key / value pair sizes in the entities lump
+#define	MAX_KEY				32
+#define	MAX_VALUE			1024
+
+// the editor uses these predefined yaw angles to orient entities up or down
+#define	ANGLE_UP			-1
+#define	ANGLE_DOWN			-2
+
+#define	LIGHTMAP_WIDTH		128
+#define	LIGHTMAP_HEIGHT		128
+
+#define MIN_WORLD_COORD ( -65536 )
+#define	MAX_WORLD_COORD	( 65536 )
+#define WORLD_SIZE		( MAX_WORLD_COORD - MIN_WORLD_COORD )
+
+// angle indexes
 #define	PITCH				0	/* up / down */
 #define	YAW					1	/* left / right */
 #define	ROLL				2	/* fall over */

@@ -30,35 +30,40 @@ mesh_create_all(void)
 {
     int i;    
     
-    /* Count meshes */
-    for (r_nummeshes=0; r_nummeshes < cm.num_faces; r_nummeshes++)
-	if (cm.faces[r_nummeshes].facetype != FACETYPE_MESH)
-	    break;
+	// Count meshes
+    for (i = 0, r_nummeshes = 0; i < cm.num_faces; i++)
+		if (cm.faces[i].facetype != FACETYPE_MESH)
+			r_nummeshes++;
 
-    r_meshes = (mesh_t*)malloc(r_nummeshes * sizeof(mesh_t));
+    r_meshes = (mesh_t *)malloc(r_nummeshes * sizeof(mesh_t));
+	r_facemeshes = (int *)malloc(cm.num_faces * sizeof(int));
 
-    for (i=0; i < r_nummeshes; i++)
+    for (i = 0, r_nummeshes = 0; i < cm.num_faces; i++)
     {
-	mesh_create(&cm.faces[i], &r_meshes[i]);
+		if (cm.faces[i].facetype == FACETYPE_MESH) {
+			mesh_create(&cm.faces[i], &r_meshes[r_nummeshes]);
+			r_facemeshes[i] = r_nummeshes++;
+		}
     }
 }
 
-void
-mesh_free_all(void)
+void mesh_free_all(void)
 {
     int i;
 
-    for (i=0; i < r_nummeshes; i++)
+    for (i = 0; i < r_nummeshes; i++)
     {
-	free(r_meshes[i].points);
-	/* tex_st and lm_st are part of points: don't free */
-	free(r_meshes[i].elems);
+		free(r_meshes[i].points);
+
+		// tex_st and lm_st are part of points: don't free
+		free(r_meshes[i].elems);
     }
+
+	free(r_facemeshes);
     free(r_meshes);
 }
 
-static int
-mesh_find_level(vec3_t *v)
+static int mesh_find_level(vec3_t *v)
 {
     int level;
     vec3_t a, b, dist;

@@ -17,14 +17,11 @@
  */
 
 
-
 #ifndef BSP_FILE_H__
 #define BSP_FILE_H__
 
-
 #define BSPHEADER_ID  (*(int*)"IBSP")
 #define BSPHEADER_VERSION 46
-
 
 typedef enum 
 {
@@ -48,56 +45,52 @@ typedef enum
     NUM_LUMPS
 } lumps_t;
 
-
-
 typedef struct 
 {
 	int fileofs;
 	int filelen;
-}lump_t ;
-
+} lump_t;
 
 typedef struct {
-	int id ,ver;
-	lump_t lumps [NUM_LUMPS];
-}bsp_header_t;
+	int id, ver;
+	lump_t lumps[NUM_LUMPS];
+} bsp_header_t;
 
 
 typedef struct
 {
-    char name[64];
+    char name[MAX_APATH];
     int flags;
 	int contents;
 } dshaderref_t;
 
-/* Face planes */
+// Face planes
 typedef struct
 {
-    vec3_t vec;    /* Normal to plane */
-    float offset;  /* Distance to plane along normal */
+    vec3_t vec;    // Normal to plane
+    float offset;  // Distance to plane along normal
 } dplane_t;
 
 typedef struct
 {
-    int plane;        /* Dividing plane */
-    int children[2];  /* Left and right node.  Negatives are leafs */
+    int plane;        // Dividing plane
+    int children[2];  // Left and right node.  Negatives are leafs
     int mins[3];
 	int maxs[3];
 } dnode_t;
 
-
-/* Leafs in BSP tree */
+// Leafs in BSP tree
 typedef struct
 {
-    int cluster;    /* Visibility cluster number */
-    int area;       /* ? */
+    int cluster;    // Visibility cluster number
+    int area;
     int mins[3];
 	int maxs[3];
     int firstface, numfaces;
     int firstbrush, numbrushes;
 } dleaf_t;
 
-/* Model 0 is the main map, others are doors, gates, buttons, etc. */
+// Model 0 is the main map, others are doors, gates, buttons, etc.
 typedef struct
 {
     vec3_t mins;
@@ -109,83 +102,57 @@ typedef struct
 
 typedef struct
 {
-	int firstside; /* Points to lump 10 */
+	int firstside; // Points to lump 10
 	int numsides;
 	int shader;
 } dbrush_t; 
 
-/* Lump 10: brush sides */
 typedef struct
 {
-	int plane; /* Points to plane_t */
+	int plane; // Points to plane_t
 	int shader;
 } dbrushside_t; 
 
 typedef struct
 {
-    vec3_t v_point;     /* World coords */
-    vec2_t tex_st;  /* Texture coords */
-	vec2_t lm_st;   /* Lightmap texture coords */
-    vec3_t v_norm;      /* Normal */
-    colour_t colour;    /* Colour used for vertex lighting ? */
+    vec3_t v_point;     // World coords
+    vec2_t tex_st;		// Texture coords
+	vec2_t lm_st;		// Lightmap texture coords
+    vec3_t v_norm;      // Normal
+    colour_t colour;    // Colour used for vertex lighting?
 } dvertex_t;
 
-/* Lump 13: fogzones */
 typedef struct
 { 
-	char shadername[64];
-	int firstbrush; 
-	int numbrushes; 
+	char shadername[MAX_APATH];
+	int brushnum; 
+	int visibleside; 
 } dfogzone_t; 
 
-
-/* Faces (or surfaces) */
+// Faces (or surfaces)
 typedef struct
 {
-    int shader;      /* Shader reference */
-    int unknown;
-    int facetype;   /* FACETYPE enum */
+    int shader;     // Shader reference
+    int fognum;
+    int facetype;   // FACETYPE enum
     int firstvert, numverts;
     int firstelem, numelems;
-    int lm_texnum;    /* lightmap info */
+    int lm_texnum;   // lightmap info
     int lm_offset[2];
     int lm_size[2];
-    vec3_t v_orig;   /* FACETYPE_NORMAL only */
+    vec3_t v_orig;   // FACETYPE_NORMAL only
     vec3_t mins;
-    vec3_t maxs;     /* FACETYPE_MESH only */
-    vec3_t v_norm;   /* FACETYPE_NORMAL only */
-    int mesh_cp[2];  /* mesh control point dimensions */
+    vec3_t maxs;     // FACETYPE_MESH only
+    vec3_t v_norm;   // FACETYPE_NORMAL only
+    int mesh_cp[2];  // mesh control point dimensions
 } dface_t;
 
-
-// TODO !!!
-// lightgrid !!!
-
-
-
-/* Potentially visible set (PVS) data */
+// Potentially visible set (PVS) data
 typedef struct
 {
-    int numclusters;   /* Number of PVS clusters */
+    int numclusters;   // Number of PVS clusters
     int rowsize;
     byte data[1];
 } dvisibility_t;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #endif 

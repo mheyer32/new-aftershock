@@ -17,12 +17,7 @@
  */
 
 
-
-
 /////////// TODO /////////////// TODO 
-
-
-
 
 #include "util.h"
 #include "cmap.h"

@@ -125,7 +125,7 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 	int					i;
 	int					j;
 	int					k;
-	char				texName[68];
+	char				texName[MAX_APATH];
 	int					num;
 	int					num2;
 	int					num3;
@@ -250,12 +250,8 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 			num2 = md3->numtags;
 			for (j = 0; j < num2; j++) {
 				// name
-				memcpy(md3->tags[i][j].name, data, 12);
-				data += 12;
-
-				// unknown
-				memcpy(md3->tags[i][j].unknown, data, 52);
-				data += 52;
+				memcpy(md3->tags[i][j].name, data, MAX_APATH);
+				data += MAX_APATH;
 
 				// position
 				md3->tags[i][j].pos[0] = LittleFloat(*(float *) data);
@@ -303,6 +299,7 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 
 			// mesh header
 			mesh_header = (md3mesh_file_t *) data;
+			mesh_header->flags = LittleLong(mesh_header->flags);
 			mesh_header->numframes = LittleLong(mesh_header->numframes);
 			mesh_header->numskins = LittleLong(mesh_header->numskins);
 			mesh_header->numverts = LittleLong(mesh_header->numverts);
@@ -312,12 +309,13 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 			mesh_header->meshsize = LittleLong(mesh_header->meshsize);
 
 			if (mesh_header->id == MD3_ID_HEADER) {
-				A_strncpyz(mesh->name, mesh_header->name, 68);
+				A_strncpyz(mesh->name, mesh_header->name, MAX_APATH);
 
 				mesh->numframes = mesh_header->numframes;
 				mesh->numskins = mesh_header->numskins;
 				mesh->numverts = mesh_header->numverts;
 				mesh->numtris = mesh_header->numtris;
+				mesh->flags = mesh_header->flags;
 
 				// skins
 				if (mesh->numskins && (mesh_header->meshsize > mesh_header->skin_offs)) {
@@ -329,7 +327,7 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 
 					for (j = 0; j < num2; j++) {
 						COM_StripExtension(data, texName);
-						data += 68;
+						data += MAX_APATH;
 						mesh->skins[j] = R_LoadShader(texName, SHADER_MD3);
 					}
 				} else {
@@ -388,13 +386,13 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 						pnorms = *ppnorms = (vec2_t *)malloc(num2 * sizeof(vec2_t));
 				
 						for (k = 0; k < num2; k++, pf++, pnorms++) {
-							/* TODO: big hack, change later! */
-							(*pf)[0] = (float)(*((short *)data)) / 64.f;
+							(*pf)[0] = (float)(*((short *)data)) * MD3_XYZ_SCALE;
 							data += sizeof(short);
-							(*pf)[1] = (float)(*((short *)data)) / 64.f;
+							(*pf)[1] = (float)(*((short *)data)) * MD3_XYZ_SCALE;
 							data += sizeof(short);
-							(*pf)[2] = (float)(*((short *)data)) / 64.f;
+							(*pf)[2] = (float)(*((short *)data)) * MD3_XYZ_SCALE;
 							data += sizeof(short);
+
 							(*pnorms)[0] = (LittleFloat((float)(*data++))) / 256.f;
 							(*pnorms)[1] = (LittleFloat((float)(*data++))) / 256.f;
 						}
@@ -414,7 +412,7 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 		md3->meshes = NULL;
 	}
 
-	strcpy(md3->name, filename);
+	A_strncpyz(md3->name, filename, MAX_OSPATH);
 
 	free(fdata);
 
@@ -458,7 +456,7 @@ int R_RegisterSkin (const char *name)
 static aboolean R_LoadSkin(skin_t *skin, const char *name) 
 {
 	int file, len, meshcount = 0;
-	char *token, *buf, *tmp, *comma;
+	char *token, *buf, *tmp, *comma, shadername[MAX_APATH];
 
 	if (r_md3Skincount >= MAX_MD3_SKINS)
 	{
@@ -494,6 +492,7 @@ static aboolean R_LoadSkin(skin_t *skin, const char *name)
 		if (A_strncmp(token, "tag_", 4))
 		{
 			*comma++ = 0;
+			COM_StripExtension (comma, shadername);
 
 			if (meshcount >= MAX_MD3_MESHES) 
 			{
@@ -502,7 +501,7 @@ static aboolean R_LoadSkin(skin_t *skin, const char *name)
 			}
 
 			strcpy (skin->skins[meshcount].mesh_name, token);
-			skin->skins[meshcount].shaderref = R_LoadShader (comma, SHADER_MD3); 
+			skin->skins[meshcount].shaderref = R_LoadShader (shadername, SHADER_MD3);
 			meshcount++;
 		}
 		else 

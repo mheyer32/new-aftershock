@@ -237,15 +237,15 @@ int FS_FileExists (char *file)
 }
 
 // Works, but could be faster 
-int FS_GetFileList (const char *path, const char *extension, char *listbuf,int bufsize)
+int FS_GetFileList (const char *path, const char *extension, char *listbuf, int bufsize)
 {
 	char *bufpos;
-	int found=0,buflen=0;
-	char tmp [MAX_OSPATH];
-	int len=0;
-	void * handle ;
+	int found = 0, buflen = 0;
+	char tmp[MAX_OSPATH];
+	int len = 0;
+	void *handle;
 	char *syspath;
-	char fname [MAX_OSPATH];
+	char fname[MAX_OSPATH];
 
 	listbuf[0] = 0;
 	bufpos = listbuf;
@@ -267,7 +267,7 @@ int FS_GetFileList (const char *path, const char *extension, char *listbuf,int b
 	}
 
 	found = Pak_GetFileList(path, extension, listbuf, bufsize);
-	
+
 	return found;
 }
 

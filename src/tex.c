@@ -177,6 +177,7 @@ byte *Tex_Load_TGA (const char *fname, int *width, int *height, int *format)
 		return NULL;
 
 	FS_Read (img_buf, tgalen, file);
+	FS_FCloseFile (file);
 
     tga = (byte *)img_buf;
     tgaend = tga + tgalen;
@@ -187,16 +188,20 @@ byte *Tex_Load_TGA (const char *fname, int *width, int *height, int *format)
     tgahead->width = LittleShort(tgahead->width);
     tgahead->height = LittleShort(tgahead->height);
 
-    if (tgahead->imgtype != 2 && tgahead->imgtype != 10)
-		Error("Bad tga image type");
+    if (tgahead->imgtype != 2 && tgahead->imgtype != 10) {
+//		Con_Printf("Bad tga image type\n");
+		return NULL;
+	}
 
     if (tgahead->pixsize == 24)
 		depth = 3;
     else if (tgahead->pixsize == 32)
 		depth = 4;
-    else
-		Error("Non 24 or 32 bit tga image");
-    
+    else {
+		Con_Printf("Non 24 or 32 bit tga image\n");
+  		return NULL;
+	}
+  
     len = tgahead->width * tgahead->height * depth;
     img = malloc(len);
 
@@ -213,8 +218,11 @@ byte *Tex_Load_TGA (const char *fname, int *width, int *height, int *format)
 		{
 			packethead = *tgacur;
 
-			if (++tgacur > tgaend)
-				Error("Unexpected end of tga file");
+			if (++tgacur > tgaend) {
+				Con_Printf("Unexpected end of tga file\n");
+				free (img);
+				return NULL;
+			}
 
 			if (packethead & 0x80)
 			{
@@ -222,8 +230,11 @@ byte *Tex_Load_TGA (const char *fname, int *width, int *height, int *format)
 				packetlen = (packethead & 0x7f) + 1;
 				memcpy(rlc, tgacur, depth);
 
-				if ((tgacur += depth) > tgaend)
-					Error("Unexpected end of tga file");
+				if ((tgacur += depth) > tgaend) {
+					Con_Printf("Unexpected end of tga file\n");
+					free (img);
+					return NULL;
+				}
 
 				for (j=0; j < packetlen; ++j)
 					for(i=0; i < depth; ++i)
@@ -235,9 +246,11 @@ byte *Tex_Load_TGA (const char *fname, int *width, int *height, int *format)
 				packetlen = packethead + 1;
 				memcpy(c, tgacur, depth * packetlen);
 
-				if ((tgacur += depth * packetlen) > tgaend)
-					Error("Unexpected end of tga file");
-
+				if ((tgacur += depth * packetlen) > tgaend) {
+					Con_Printf("Unexpected end of tga file\n");
+					free (img);
+					return NULL;
+				}
 				c += packetlen * depth;
 			}
 		}
@@ -264,8 +277,11 @@ byte *Tex_Load_TGA (const char *fname, int *width, int *height, int *format)
     {
 		int i, linelen;
 		
-		if (tgaend - tgacur + 1 < len)
-			Error("Bad tga image data length");
+		if (tgaend - tgacur + 1 < len) {
+			Con_Printf("Bad tga image data length\n");
+			free (img);
+			return NULL;
+		}
 
 		// Flip image in y
 		linelen = tgahead->width * depth;
@@ -290,8 +306,6 @@ byte *Tex_Load_TGA (const char *fname, int *width, int *height, int *format)
     *width = tgahead->width;
     *height = tgahead->height;
     *format = (depth == 3) ? GL_RGB : GL_RGBA;
-
-	FS_FCloseFile (file);
 
     return img;
 }
@@ -391,6 +405,7 @@ byte *Tex_Load_JPG (const char *fname, int *width, int *height, int *format)
 		return NULL;
 
 	FS_Read (img_buf, len, file);
+	FS_FCloseFile (file);
 
     cinfo.err = jpeg_std_error(&jerr);
     jpeg_create_decompress(&cinfo);
@@ -398,8 +413,12 @@ byte *Tex_Load_JPG (const char *fname, int *width, int *height, int *format)
     jpeg_read_header(&cinfo, TRUE);
     jpeg_start_decompress(&cinfo);
 
-    if (cinfo.output_components != 3)
-		Error("Bad number of jpg components");
+    if (cinfo.output_components != 3) {
+		Con_Printf("Bad number of jpg components\n");
+		jpeg_finish_decompress(&cinfo);
+	    jpeg_destroy_decompress(&cinfo);
+		return NULL;
+	}
 
     img = c = malloc(cinfo.output_width * cinfo.output_height * 3);
     while (cinfo.output_scanline < cinfo.output_height)
@@ -414,8 +433,6 @@ byte *Tex_Load_JPG (const char *fname, int *width, int *height, int *format)
 
     jpeg_finish_decompress(&cinfo);
     jpeg_destroy_decompress(&cinfo);
-
-	FS_FCloseFile (file);
 
     return img;
 }
@@ -556,10 +573,13 @@ int R_Load_Texture (const char *name, int flags)
 
 	A_strncpyz (fname, name, MAX_APATH);
 
+	for (i = 0; i < strlen(fname); i++)
+		fname[i] = tolower (fname[i]);
+
 	// Check if already loaded 
 	for (i = 0; i < r_num_textures; i++)
 	{
-		if (!strcmp(textures[i].name, fname))
+		if (!stricmp(textures[i].name, fname))
 			return r_textures_id[i];
 	}
 
@@ -637,7 +657,7 @@ int R_Load_Texture (const char *name, int flags)
 	{
 		char ext[3];
 		char *tex_name = Find_Texture (fname);
-
+		
 		if (!tex_name)
 		{
 			Con_Printf ("WARNING: Could not load texture %s\n", name);
@@ -648,8 +668,11 @@ int R_Load_Texture (const char *name, int flags)
 		
 		if (!ext[0])
 		{
-			Con_Printf ("WARNING: Could not load texture %s\n", name);
-			return -1;
+			Con_Printf ("%s\n", fname);
+
+			// .tga by default
+			strcpy (ext, "tga");
+			strcat (fname, ".tga");
 		}
 		
 		if (!stricmp (ext, "tga"))

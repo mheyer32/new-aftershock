@@ -38,6 +38,7 @@ extern float r_subdivisiontol;  /* A lower values produces more vertexes
 extern int r_maxmeshlevel;      /* Constraint on maximum num vertexes */
 extern int r_nummeshes;
 extern mesh_t *r_meshes;
+extern int *r_facemeshes;
 
 void mesh_create_all(void);
 void mesh_free_all(void);

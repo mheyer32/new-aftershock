@@ -190,7 +190,7 @@ typedef struct
 /* Shader info */
 typedef struct
 {	
-	char name[65];
+	char name[MAX_APATH];
 	byte sortkey;  // a precalculated sortkey which is added to the shaderkey ; (TODO )
 	byte flush;      // FLUSH_ENUM
 	byte cull;
@@ -235,12 +235,9 @@ typedef struct
 
 
 extern texture_t *r_dynamic_tex;
-
 extern int r_numtextures;
 extern shader_t *r_shaders;
 extern texfile_t *r_texfiles;
-
-
 extern int shader_white;
 extern int shader_text;
 extern int shader_console;
@@ -248,8 +245,7 @@ extern int shader_console;
 int Shader_Init (void);
 int Shader_Shutdown (void);
 
-
-int  R_RegisterShaderNoMip(const char *name);
+int R_RegisterShaderNoMip(const char *name);
 int R_RegisterShader (const char *name);
 
 int R_LoadShader (const char *name, int type);

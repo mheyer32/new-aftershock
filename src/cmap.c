@@ -191,7 +191,6 @@ static void CM_Load_Models (aboolean load_rdata)
 	free (models);
 }
 
-
 static void CM_Load_Brushes (void)
 {
 	int i;
@@ -204,7 +203,6 @@ static void CM_Load_Brushes (void)
 	{
 		cm.brushes[i].shaderref = &cm.shaderrefs[LittleLong (brushes[i].shader)];
 		cm.brushes[i].numsides = LittleLong (brushes[i].numsides);
-
 		cm.brushes[i].sides = &cm.brushsides[LittleLong (brushes[i].firstside)];
 
 	}
@@ -212,13 +210,13 @@ static void CM_Load_Brushes (void)
 	free (brushes);
 }
 
-static void CM_Load_BrushSides (void )
+static void CM_Load_BrushSides (void)
 {
 	int i;
 	dbrushside_t *sides;
 
 	cm.num_brushsides = CM_ReadLump (BRUSH_SIDES, &sides, sizeof (dbrushside_t));
-	cm.brushsides = malloc ( cm.num_brushsides * sizeof (cbrushside_t));
+	cm.brushsides = malloc (cm.num_brushsides * sizeof (cbrushside_t));
 
 	for (i = 0; i < cm.num_brushsides; i++)
 	{
@@ -283,9 +281,9 @@ static void CM_Load_Fog (aboolean load_rdata)
 
 		for (i = 0; i < cm.num_fog; i++)
 		{
-			cm.fog[i].brushes = &cm.brushes[LittleLong (fogs[i].firstbrush)];
-			cm.fog[i].numbrushes = LittleLong (fogs[i].numbrushes);
-			cm.fog[i].shader = &r_shaders [R_LoadShader (fogs[i].shadername, SHADER_BSP)];
+			cm.fog[i].shader = &r_shaders[R_LoadShader (fogs[i].shadername, SHADER_BSP)];
+			cm.fog[i].visibleside = LittleLong (fogs[i].visibleside);
+			cm.fog[i].brush = &cm.brushes[LittleLong (fogs[i].brushnum)];
 		}
 
 		free (fogs);
@@ -322,7 +320,7 @@ static void CM_Load_Faces (aboolean load_rdata)
 			cm.faces[i].maxs[1] = LittleFloat (faces[i].maxs[1]);
 			cm.faces[i].maxs[2] = LittleFloat (faces[i].maxs[2]);
 
-			cm.faces[i].unknown = LittleLong (faces[i].unknown);
+			cm.faces[i].fognum = LittleLong (faces[i].fognum);
 
 			cm.faces[i].lm_offset[0] = LittleLong (faces[i].lm_offset[0]);
 			cm.faces[i].lm_offset[1] = LittleLong (faces[i].lm_offset[1]);
@@ -353,7 +351,6 @@ static void CM_Load_Lightmaps (aboolean load_rdata)
 	if (load_rdata)
 		cm.lightmapdata_size = CM_ReadLump (LIGHTMAPS, &cm.lightmapdata, 1); 
 }
-
 
 aboolean CM_LoadMap (const char *mapname, aboolean load_rdata)
 {
@@ -414,7 +411,7 @@ aboolean CM_LoadMap (const char *mapname, aboolean load_rdata)
 	}
 
 	// now load the lumps
-	CM_ReadLump(ENTITIES, &cm.entityspawn, 1);
+	CM_ReadLump (ENTITIES, &cm.entityspawn, 1);
 	CM_Load_Shaderrefs (load_rdata);
 	CM_Load_Planes ();
 	CM_Load_Nodes ();
@@ -432,7 +429,7 @@ aboolean CM_LoadMap (const char *mapname, aboolean load_rdata)
 
 	cm.r_data_loaded = load_rdata;
 
-	A_strncpyz (cm.name,mapname, MAX_APATH);
+	A_strncpyz (cm.name, mapname, MAX_APATH);
 
 	return atrue;
 }

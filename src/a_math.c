@@ -228,6 +228,7 @@ float NormalizeColor( const vec3_t in, vec3_t out ) {
 	float	max;
 	
 	max = in[0];
+
 	if ( in[1] > max ) {
 		max = in[1];
 	}
@@ -238,9 +239,11 @@ float NormalizeColor( const vec3_t in, vec3_t out ) {
 	if ( !max ) {
 		VectorClear( out );
 	} else {
-		out[0] = in[0] / max;
-		out[1] = in[1] / max;
-		out[2] = in[2] / max;
+		max = 1.0f / max;
+
+		out[0] = in[0] * max;
+		out[1] = in[1] * max;
+		out[2] = in[2] * max;
 	}
 	return max;
 }
@@ -286,7 +289,6 @@ void RotatePointAroundVector( vec3_t dst, const  vec3_t dir, const  vec3_t point
 	float	tmpmat[3][3];
 	float	rot[3][3];
 	vec3_t vr, vup;
-	float	rad,Cos,Sin;
 
 	PerpendicularVector( vr, dir );
 	CrossProduct( vr, dir, vup );
@@ -315,23 +317,17 @@ void RotatePointAroundVector( vec3_t dst, const  vec3_t dir, const  vec3_t point
 	memset( zrot, 0, sizeof( zrot ) );
 	zrot[0][0] = zrot[1][1] = zrot[2][2] = 1.0F;
 
-	rad = DEG2RAD*degrees ;
-	Cos=cos( rad );
-	Sin=sin( rad );
-
-	zrot[0][0] = Cos;
-	zrot[0][1] = Sin;
-	zrot[1][0] = -Sin;
-	zrot[1][1] = Cos;
+	zrot[0][0] = cos(DEG2RAD * degrees);
+	zrot[0][1] = sin(DEG2RAD * degrees);
+	zrot[1][0] = -zrot[0][1];		// -sin
+	zrot[1][1] = zrot[0][0];		// cos
 
 	MatrixMultiply( m, zrot, tmpmat );
 	MatrixMultiply( tmpmat, im, rot );
 
-	
-		dst[0] = rot[0][0] * point[0] + rot[0][1] * point[1] + rot[0][2] * point[2];
-		dst[1] = rot[1][0] * point[0] + rot[1][1] * point[1] + rot[1][2] * point[2];
-		dst[2] = rot[2][0] * point[0] + rot[2][1] * point[1] + rot[2][2] * point[2];
-	
+	dst[0] = rot[0][0] * point[0] + rot[0][1] * point[1] + rot[0][2] * point[2];
+	dst[1] = rot[1][0] * point[0] + rot[1][1] * point[1] + rot[1][2] * point[2];
+	dst[2] = rot[2][0] * point[0] + rot[2][1] * point[1] + rot[2][2] * point[2];
 }
 
 
@@ -558,7 +554,6 @@ void AnglesSubtract( vec3_t v1, vec3_t v2, vec3_t v3 ) {
 	v3[1] = AngleSubtract( v1[1], v2[1] );
 	v3[2] = AngleSubtract( v1[2], v2[2] );
 }
-
 
 float	AngleMod(float a) {
 	a = (360.0/65536) * ((int)(a*(65536/360.0)) & 65535);
