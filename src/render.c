@@ -232,7 +232,7 @@ int  r_numLightmaps = 0;
 #define  MAX_REF_ENTITIES 256 
 #define  MIN_RENDER_LIST_SIZE 512
  
-#define  MAX_DYN_POLYS 256
+#define  MAX_DYN_POLYS 512
 #define	 MAX_VERTS_ON_POLY	10
 #define  MAX_POLY_VERTS MAX_DYN_POLYS * MAX_VERTS_ON_POLY 
 
@@ -350,8 +350,10 @@ void R_Shutdown (void )
 void R_AddPolyToScene(  const polyVert_t *verts , int numVerts, int Shader ) 
 {
 	poly_t * p=&Dyn_Polys[dyn_polys_count];
-	if (dyn_polys_count == MAX_DYN_POLYS || !verts || !numVerts)
-		return;
+	if (dyn_polys_count == MAX_DYN_POLYS )
+	{
+		Error ("R_AddPolyToScene : MAX_DYN_POLYS");
+	}
 
 	p->hShader = Shader;
 	p->numVerts=numVerts;
@@ -450,6 +452,11 @@ void	R_DrawStretchPic( float x,float y,float w,float h,float s1,float t1,float s
 
 		if (hShader<0) 
 			return;
+
+	if (overlay_numquads>=MAX_OVERLAY)
+	{
+		Error ("R_DrawStretchPic: MAX_OVERLAY");
+	}
 
 	q= &overlay[overlay_numquads++];
 
@@ -1272,7 +1279,7 @@ void R_EndFrame (void )
 
 	if (r_ext_swap_control->modified)
 	{
-		wglSwapIntervalEXT(r_ext_swap_control->integer);
+	//	wglSwapIntervalEXT(r_ext_swap_control->integer);
 		r_ext_swap_control->modified=0;
 	}
 
@@ -1499,6 +1506,7 @@ unsigned int SortKey (cface_t * face )
 		(face->shadernum << 7 ) + // 9 Bits 
 		(face->lm_texnum ) ;  // 6 Bits
 		*/
+	return 0;
 }
 
 static int

@@ -20,7 +20,7 @@
 #include "shader.h"
 #include "tex.h"
 #include "opengl.h"
-#include <jpeglib.h>
+#include "jpeglib.h"
 #include "render.h"
 #include "io.h"
 #include "console.h"

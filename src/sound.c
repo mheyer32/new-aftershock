@@ -16,11 +16,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+// Martin Kraus 2000-4-14 : disabled sound support 
+
+
 #include "a_shared.h"
 #include "c_var.h"
 #include "io.h"
 #include "console.h"
-#include "Fmod/fmod.h"
+//#include "Fmod/fmod.h"
 //#include "Fmod/fmod_errors.h"
 #include "sound.h"
 
@@ -28,7 +31,7 @@
 #define MAX_SAMPLES 256 
 #define NUM_CHANNELS 32 
 
-
+/*
 typedef struct 
 {
 	char name [MAX_OSPATH];
@@ -38,10 +41,10 @@ typedef struct
 	vec3_t origin; 
 
 }sample_t ; 
-
+*/
 
  
-static sample_t samples [MAX_SAMPLES ];
+//static sample_t samples [MAX_SAMPLES ];
 static int s_num_samples =0;
 static int s_intialized =0;
 
@@ -124,7 +127,7 @@ int S_Init ( void )
 
 	S_GetCvars ();
 
-	memset (samples ,0, MAX_SAMPLES * sizeof (sample_t ));
+	/*memset (samples ,0, MAX_SAMPLES * sizeof (sample_t ));
 	s_num_samples =0;
 	
 	// FSOUND_INIT !!!
@@ -144,7 +147,7 @@ int S_Init ( void )
 
 	FSOUND_3D_Listener_SetDopplerFactor(s_doppler->value);
 
-
+*/
 
 
 
@@ -160,7 +163,7 @@ void S_Shutdown (void )
 	if (!s_intialized)
 		return ;
 
-	for (i=0;i<s_num_samples;i++ )
+/*	for (i=0;i<s_num_samples;i++ )
 	{
 		FSOUND_Sample_Free(samples[i].handle);
 	}
@@ -168,7 +171,7 @@ void S_Shutdown (void )
 	FSOUND_Close ();
 
 	s_num_samples=0;
-	s_intialized=0;
+*/	s_intialized=0;
 }
 
 
@@ -179,7 +182,7 @@ void S_Shutdown (void )
 // moves and the listener moves
 void		S_StartSound( vec3_t origin, int entityNum, int entchannel, sfxHandle_t sfx )
 {
-	sample_t * s=NULL;
+/*	sample_t * s=NULL;
 	vec3_t vel ={0.0,0.0,0.0};
 	int act_channel;
 
@@ -198,14 +201,14 @@ void		S_StartSound( vec3_t origin, int entityNum, int entchannel, sfxHandle_t sf
 	VectorCopy (origin,s->origin);
 	s->channel = act_channel;
 
-
+*/
 
 }
 
 // a local sound is always played full volume
 void		S_StartLocalSound( sfxHandle_t sfx, int channelNum )
 {
-	sample_t * s; 
+/*	sample_t * s; 
 	int act_channel ;
 
 	if (sfx< 0 ||sfx >= s_num_samples || !s_intialized)
@@ -219,7 +222,7 @@ void		S_StartLocalSound( sfxHandle_t sfx, int channelNum )
 		return ;
 
 	s->channel = act_channel ;
-
+*/
 
 }
 void		S_ClearLoopingSounds( void )
@@ -259,7 +262,7 @@ void		S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int in
 
 sfxHandle_t	S_RegisterSound( const char *sample )		// returns buzz if not found
 {
-	int file ,i ;
+/*	int file ,i ;
 	void * f_data ;
 	unsigned int f_len ;
 	FSOUND_SAMPLE * handle ;
@@ -335,7 +338,8 @@ sfxHandle_t	S_RegisterSound( const char *sample )		// returns buzz if not found
 	s_num_samples++ ;
 
 	return s_num_samples -1 ;
-
+*/
+	return -1;
 }
 void		S_StartBackgroundTrack( const char *intro, const char *loop )	// empty name stops music
 {

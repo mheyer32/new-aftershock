@@ -17,8 +17,6 @@
  */
 
 
-
-#include <time.h>		/* asctime, localtime, time */
 #include "util.h"
 #include "a_shared.h"	
 #include "sys_main.h"

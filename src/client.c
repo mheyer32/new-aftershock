@@ -140,7 +140,7 @@ int CL_Init (void )
 	
 		client_prepared=0;
 		Error ("FAILED to load UI ! ");
-
+		return 0;
 	}
 
 

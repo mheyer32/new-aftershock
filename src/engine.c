@@ -143,13 +143,22 @@ int Engine_Init (void )
 
 
 
-	SV_Init();
-	CL_Init ();
+	if (!SV_Init())
+	{
+		Error ("Could not initialize server subsystem");
+	}
+	if (!CL_Init ())
+	{
+		Error ("Could not initialize client subsystem");
+	}
 	
 
 
 
-	Net_Init();
+	if (!Net_Init())
+	{
+		Error ("Could not initialize networking");
+	}
 
 
 
