@@ -318,17 +318,16 @@ shaderpass_map(shader_t *shader, shaderpass_t *pass, int numargs, char **args)
 	{
 		pass->tc_gen = TC_GEN_LIGHTMAP;
 		pass->flags |= SHADER_LIGHTMAP;
-
 	}
 	else if (!stricmp (args[0], "$whiteimage"))
 	{
 		pass->tc_gen = TC_GEN_BASE;
-		pass->texref = R_Load_Texture("white", shader->flags );
+		pass->texref = R_Load_Texture("white", shader->flags);
 	}
 	else
     {
 		pass->tc_gen = TC_GEN_BASE;
-		pass->texref = R_Load_Texture(args[0], shader->flags );
+		pass->texref = R_Load_Texture(args[0], shader->flags);
     }
 }
 
