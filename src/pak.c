@@ -41,7 +41,7 @@ void Pak_Shutdown (void)
 {
 	int i;
 
-	for (i = 0;i < pak_numfiles; i++)
+	for (i = 0; i < pak_numfiles; i++)
 		unzClose (pakfiles[i]);
 
 	pak_numfiles = 0;

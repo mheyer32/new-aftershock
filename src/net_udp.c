@@ -19,8 +19,8 @@
 #include "a_shared.h"
 #include "sys_network.h"
 #include "network.h"	/* NET_SOCKET */
-#include "console.h"		/* Con_Printf */
-#include "c_var.h"			/* cvar_t */
+#include "console.h"	/* Con_Printf */
+#include "c_var.h"		/* cvar_t */
 
 
 // From GOLK :www.digital-phenomenon.de
@@ -38,19 +38,19 @@ NET_SOCKET UDP_OpenSocket(unsigned short port)
 	new_socket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (new_socket == NET_INVALID_SOCKET) {
 		Con_Printf(S_COLOR_YELLOW "WARNING: UDP_OpenSocket: socket: %s\n", Net_GetErrorString());
-		return(NET_INVALID_SOCKET);
+		return NET_INVALID_SOCKET;
 	}
 
 	if(ioctlsocket(new_socket, FIONBIO, &opt) == NET_SOCKET_ERROR) {
 		Con_Printf(S_COLOR_YELLOW "WARNING: UDP_OpenSocket: ioctl FIONBIO:%s\n", Net_GetErrorString());
 		closesocket(new_socket);
-		return(NET_INVALID_SOCKET);
+		return NET_INVALID_SOCKET;
 	}
 
 	if(setsockopt(new_socket, SOL_SOCKET, SO_BROADCAST, (char *)&opt, sizeof(opt))) {
 		Con_Printf(S_COLOR_YELLOW "WARNING: UDP_OpenSocket: setsockopt SO_BROADCAST: %s\n", Net_GetErrorString());
 		closesocket(new_socket);
-		return(NET_INVALID_SOCKET);
+		return NET_INVALID_SOCKET;
 	}
 
 	addr.sin_family = AF_INET;
@@ -60,7 +60,7 @@ NET_SOCKET UDP_OpenSocket(unsigned short port)
 	if (bind(new_socket, (struct sockaddr *) &addr,  sizeof(addr))==NET_INVALID_SOCKET) {
 		Con_Printf("WARNING: UDP_OpenSocket: bind: %s\n", Net_GetErrorString());
 		closesocket(new_socket);
-		return(NET_INVALID_SOCKET);
+		return NET_INVALID_SOCKET;
 	}
 
 	return new_socket;
@@ -88,10 +88,11 @@ aboolean UDP_GetLocalhost(void)
 					(unsigned char)hp->h_addr_list[0][2],
 					(unsigned char)hp->h_addr_list[0][3]);
 
-			return (atrue);
+			return atrue;
 		}
 	}
-	return (afalse);
+
+	return afalse;
 }
 
 void UDP_AddrToString (net_address_t *addr, char *buf, int buflen)
@@ -111,7 +112,7 @@ aboolean UDP_Broadcast(char *buf, int size, unsigned short port)
 	udp_addr.sin_addr.s_addr = INADDR_BROADCAST;
 	udp_addr.sin_port = htons(port);
 
-	return(Net_SendPacket(buf, size, (net_address_t *)&udp_addr));
+	return Net_SendPacket(buf, size, (net_address_t *)&udp_addr);
 }
 
 int UDP_CompareAddr( const net_address_t *addr1, const net_address_t *addr2 )

@@ -67,7 +67,7 @@ static int Mesh_FindLevel(vec3_t *v)
     vec3_t a, b, dist;
 
     // Subdivide on the left until tolerance is reached
-    for (level=0; level < r_maxmeshlevel-1; level++)
+    for (level = 0; level < r_maxmeshlevel-1; level++)
     {
 		// Subdivide on the left
 		VectorAvg(v[0], v[1], a);
@@ -324,10 +324,10 @@ static void Mesh_Create(cface_t *face, mesh_t *mesh)
     mesh->size[1] = size[1];
 	mesh->msize = len;
     mesh->points = (vec3_t *)malloc(len * (sizeof(vec3_t) +
-					  2 * sizeof(texcoord_t) +
+					  2 * sizeof(vec2_t) +
 					 sizeof(colour_t)));
     mesh->colour = (colour_t *)(mesh->points + len);
-    mesh->tex_st = (texcoord_t *)(mesh->colour + len);
+    mesh->tex_st = (vec2_t *)(mesh->colour + len);
     mesh->lm_st = mesh->tex_st + len;
 
     // Fill in sparse mesh control points

@@ -1076,6 +1076,8 @@ int R_LoadShader (const char *name, int type)
 			s->pass[0].texref = R_Load_Texture (name, SHADER_NOMIPMAPS | SHADER_NOPICMIP);
 			s->pass[0].depthfunc = GL_ALWAYS;
 			s->pass[0].rgbgen = RGB_GEN_VERTEX;
+			s->pass[0].num_tc_mod = 0;
+			s->pass[0].tc_gen = TC_GEN_BASE;
 			s->sort = SHADER_SORT_ADDITIVE;
 			s->deform_vertices[0] = DEFORMV_NONE;
 			s->numdeforms = 0;
@@ -1089,7 +1091,9 @@ int R_LoadShader (const char *name, int type)
 			s->pass[0].flags = SHADER_DEPTHWRITE;
 			s->pass[0].texref = R_Load_Texture (name, 0); 
 	        s->pass[0].depthfunc = GL_LEQUAL;
-			s->pass[0].rgbgen = RGB_GEN_VERTEX;	 
+			s->pass[0].rgbgen = RGB_GEN_VERTEX;
+			s->pass[0].num_tc_mod = 0;
+			s->pass[0].tc_gen = TC_GEN_BASE;
 		    s->sort = SHADER_SORT_OPAQUE;
 			s->deform_vertices[0] = DEFORMV_NONE;
 			s->numdeforms = 0;
@@ -1104,6 +1108,8 @@ int R_LoadShader (const char *name, int type)
 			s->pass[0].texref = R_Load_Texture (name, 0);
 			s->pass[0].depthfunc = GL_LESS;
 			s->pass[0].rgbgen = RGB_GEN_LIGHTING_DIFFUSE;
+			s->pass[0].num_tc_mod = 0;
+			s->pass[0].tc_gen = TC_GEN_BASE;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->deform_vertices[0] = DEFORMV_NONE;
 			s->numdeforms = 0;

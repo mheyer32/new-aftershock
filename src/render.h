@@ -28,6 +28,7 @@ extern float r_aspect;
 extern int r_eyecluster;     /* Current PVS cluster */
 extern double cl_frametime;   /* Current time */
 extern double sv_frametime;   /* Current time */
+extern double shadertime;
 
 #include "c_var.h"
 #include "lightmap.h"
@@ -177,7 +178,7 @@ typedef struct {
 	refEntityType_t	reType;
 	int			renderfx;
 
-	int     	hModel;				// opaque type outside refresh
+	ahandle_t  	hModel;				// opaque type outside refresh
 
 	// most recent data
 	vec3_t		lightingOrigin;		// so multi-part models can be lit identically (RF_LIGHTING_ORIGIN)
@@ -195,8 +196,8 @@ typedef struct {
 
 	// texturing
 	int			skinNum;			// inline skin index
-	int     	customSkin;			// NULL for default skin
-	int     	customShader;		// use one image for the entire thing
+	ahandle_t   customSkin;			// NULL for default skin
+	ahandle_t   customShader;		// use one image for the entire thing
 
 	// misc
 	byte		shaderRGBA[4];		// colors used by rgbgen entity shaders

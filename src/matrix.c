@@ -15,18 +15,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
+
 #include "a_shared.h"
 #include "matrix.h"
-
-// Stolen from Mesa:matrix.c
-#define A(row,col)  a[(col<<2)+row]
-#define B(row,col)  b[(col<<2)+row]
-#define P(row,col)  product[(col<<2)+row]
 
 void Matrix4_Identity(mat4_t mat)
 {
 	memset(mat, 0, 16 * sizeof(float));
-
 	mat[0] = mat[5] = mat[10] = mat[15] = 1.0f;
 }
 
@@ -38,21 +33,42 @@ void Matrix3_Identity (vec3_t mat[3])
 
 void Matrix4_Multiply(mat4_t a, mat4_t b, mat4_t product)
 {
-   int i;
-   float ai0, ai1, ai2, ai3;
+	product[0]  = a[0] * b[0] + a[4] * b[1] + a[8] * b[2] + a[12] * b[3];
+	product[1]  = a[1] * b[0] + a[5] * b[1] + a[9] * b[2] + a[13] * b[3];
+	product[2]  = a[2] * b[0] + a[6] * b[1] + a[10] * b[2] + a[14] * b[3];
+	product[3]  = a[3] * b[0] + a[7] * b[1] + a[11] * b[2] + a[15] * b[3];
+	product[4]  = a[0] * b[4] + a[4] * b[5] + a[8] * b[6] + a[12] * b[7];
+	product[5]  = a[1] * b[4] + a[5] * b[5] + a[9] * b[6] + a[13] * b[7];
+	product[6]  = a[2] * b[4] + a[6] * b[5] + a[10] * b[6] + a[14] * b[7];
+	product[7]  = a[3] * b[4] + a[7] * b[5] + a[11] * b[6] + a[15] * b[7];
+	product[8]  = a[0] * b[8] + a[4] * b[9] + a[8] * b[10] + a[12] * b[11];
+	product[9]  = a[1] * b[8] + a[5] * b[9] + a[9] * b[10] + a[13] * b[11];
+	product[10] = a[2] * b[8] + a[6] * b[9] + a[10] * b[10] + a[14] * b[11];
+	product[11] = a[3] * b[8] + a[7] * b[9] + a[11] * b[10] + a[15] * b[11];
+	product[12] = a[0] * b[12] + a[4] * b[13] + a[8] * b[14] + a[12] * b[15];
+	product[13] = a[1] * b[12] + a[5] * b[13] + a[9] * b[14] + a[13] * b[15];
+	product[14] = a[2] * b[12] + a[6] * b[13] + a[10] * b[14] + a[14] * b[15];
+	product[15] = a[3] * b[12] + a[7] * b[13] + a[11] * b[14] + a[15] * b[15];
+}
 
-   for (i = 0; i < 4; i++)
-   {
-      ai0 = A(i, 0);
-	  ai1 = A(i, 1);
-	  ai2 = A(i, 2);
-	  ai3 = A(i, 3);
-
-      P(i, 0) = ai0 * B(0, 0) + ai1 * B(1, 0) + ai2 * B(2, 0) + ai3 * B(3, 0);
-      P(i, 1) = ai0 * B(0, 1) + ai1 * B(1, 1) + ai2 * B(2, 1) + ai3 * B(3, 1);
-      P(i, 2) = ai0 * B(0, 2) + ai1 * B(1, 2) + ai2 * B(2, 2) + ai3 * B(3, 2);
-      P(i, 3) = ai0 * B(0, 3) + ai1 * B(1, 3) + ai2 * B(2, 3) + ai3 * B(3, 3);
-   }
+void Matrix4_MultiplyFast(mat4_t a, mat4_t b, mat4_t product)
+{
+	product[0]  = a[0] * b[0] + a[4] * b[1] + a[8] * b[2];
+	product[1]  = a[1] * b[0] + a[5] * b[1] + a[9] * b[2];
+	product[2]  = a[2] * b[0] + a[6] * b[1] + a[10] * b[2];
+	product[3]  = 0.0f;
+	product[4]  = a[0] * b[4] + a[4] * b[5] + a[8] * b[6];
+	product[5]  = a[1] * b[4] + a[5] * b[5] + a[9] * b[6];
+	product[6]  = a[2] * b[4] + a[6] * b[5] + a[10] * b[6];
+	product[7]  = 0.0f;
+	product[8]  = a[0] * b[8] + a[4] * b[9] + a[8] * b[10];
+	product[9]  = a[1] * b[8] + a[5] * b[9] + a[9] * b[10];
+	product[10] = a[2] * b[8] + a[6] * b[9] + a[10] * b[10];
+	product[11] = 0.0f;
+	product[12] = a[0] * b[12] + a[4] * b[13] + a[8] * b[14] + a[12];
+	product[13] = a[1] * b[12] + a[5] * b[13] + a[9] * b[14] + a[13];
+	product[14] = a[2] * b[12] + a[6] * b[13] + a[10] * b[14] + a[14];
+	product[15] = 1.0f;
 }
 
 void Matrix3_Multiply (vec3_t in1[3], vec3_t in2[3], vec3_t out[3])
@@ -77,58 +93,51 @@ void Matrix3_Multiply (vec3_t in1[3], vec3_t in2[3], vec3_t out[3])
 				in1[2][2] * in2[2][2];
 }
 
-void Matrix3_Multiply_Vec3 (vec3_t a[3],vec3_t b,vec3_t product)
+void Matrix3_Multiply_Vec3 (vec3_t a[3], vec3_t b, vec3_t product)
 {
-	float b0 = b[0], b1 = b[1], b2 = b[2];
-
-	product[0] = a[0][0]*b0 + a[1][0]*b1 + a[2][0]*b2;
-	product[1] = a[0][1]*b0 + a[1][1]*b1 + a[2][1]*b2;
-	product[2] = a[0][2]*b0 + a[1][2]*b1 + a[2][2]*b2;
+	product[0] = a[0][0]*b[0] + a[1][0]*b[1] + a[2][0]*b[2];
+	product[1] = a[0][1]*b[0] + a[1][1]*b[1] + a[2][1]*b[2];
+	product[2] = a[0][2]*b[0] + a[1][2]*b[1] + a[2][2]*b[2];
 }
 
 // This can be used to calc the inverse of a rotation matrix 
 void Matrix3_Transponse (vec3_t in[3], vec3_t out[3])
 {
-	vec3_t tmp [3];
+	out[0][0] = in[0][0];
+	out[1][1] = in[1][1];
+	out[2][2] = in[2][2];
 
-	memcpy (tmp, in, 9 * sizeof (float));
+	out[0][1] = in[1][0];
+	out[1][0] = in[0][1];
 
-	out[0][0] = tmp[0][0];
-	out[1][1] = tmp[1][1];
-	out[2][2] = tmp[2][2];
-
-	out[0][1] = tmp[1][0];
-	out[1][0] = tmp[0][1];
-
-	out[0][2] = tmp[2][0];
-	out[2][0] = tmp[0][2];
+	out[0][2] = in[2][0];
+	out[2][0] = in[0][2];
 }
 
 void Matrix_Multiply_Vec4 (mat4_t a, vec4_t b, vec4_t product)
 {
-    float b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];
-
-	product[0] = a[0]*b0 + a[4]*b1 + a[8]*b2 + a[12]*b3;
-	product[1] = a[1]*b0 + a[5]*b1 + a[9]*b2 + a[13]*b3;
-	product[2] = a[2]*b0 + a[6]*b1 + a[10]*b2 + a[14]*b3;
-	product[3] = a[3]*b0 + a[7]*b1 + a[11]*b2 + a[15]*b3;
+	product[0] = a[0]*b[0] + a[4]*b[1] + a[8]*b[2] + a[12]*b[3];
+	product[1] = a[1]*b[0] + a[5]*b[1] + a[9]*b[2] + a[13]*b[3];
+	product[2] = a[2]*b[0] + a[6]*b[1] + a[10]*b[2] + a[14]*b[3];
+	product[3] = a[3]*b[0] + a[7]*b[1] + a[11]*b[2] + a[15]*b[3];
 }
 
 void Matrix_Multiply_Vec3 (mat4_t a, vec3_t b, vec3_t product)
 {
-    float b0 = b[0], b1 = b[1], b2 = b[2], b3 = b[3];
-
-	product[0] = a[0]*b0 + a[4]*b1 + a[8]*b2 + a[12]*b3;
-	product[1] = a[1]*b0 + a[5]*b1 + a[9]*b2 + a[13]*b3;
-	product[2] = a[2]*b0 + a[6]*b1 + a[10]*b2 + a[14]*b3;
+	product[0] = a[0]*b[0] + a[4]*b[1] + a[8]*b[2] + a[12]*b[3];
+	product[1] = a[1]*b[0] + a[5]*b[1] + a[9]*b[2] + a[13]*b[3];
+	product[2] = a[2]*b[0] + a[6]*b[1] + a[10]*b[2] + a[14]*b[3];
 }
+
+// Stolen from Mesa:matrix.c
+#define A(row,col)  a[(col<<2)+row]
+#define B(row,col)  b[(col<<2)+row]
+#define P(row,col)  product[(col<<2)+row]
 
 void Matrix_Multiply_Vec2 (mat4_t a, vec2_t b, vec2_t product)
 {
-	float b0 = b[0], b1 = b[1];
-  
-	product[0] = A(0, 0)*b0 + A(0, 1)*b1 + A(0, 2)+ A(0, 3);
-	product[1] = A(1, 0)*b0 + A(1, 1)*b1 + A(1, 2)+ A(1, 3);
+	product[0] = a[0]*b[0] + a[1]*b[1] + a[2] + a[3];
+	product[1] = a[4]*b[0] + a[5]*b[1] + a[6] + a[7];
 }
 
 static float Matrix3_Det (float *mat)

@@ -27,8 +27,8 @@ typedef struct
     int				msize;		// Multiplied mesh dimensions, u*v
     vec3_t			*points;
     colour_t		*colour;
-    texcoord_t		*tex_st;
-    texcoord_t		*lm_st;
+    vec2_t			*tex_st;
+    vec2_t			*lm_st;
     int				numelems;
     unsigned int	*elems;
 } mesh_t;

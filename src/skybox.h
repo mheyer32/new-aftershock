@@ -30,11 +30,11 @@ enum
 
 typedef struct
 {
-    int numpoints;
-    vec3_t *points[5];     /* World coords */
-    texcoord_t *tex_st[5]; /* Skybox mapped texture coords */
-    int numelems;
-    uint_t *elems;
+    int			numpoints;
+    vec3_t		*points[5];     // World coords
+    vec2_t		*tex_st[5];		// Skybox mapped texture coords
+    int			numelems;
+    uint_t		*elems;
 } skybox_t;
 
 extern skybox_t *r_skybox;

@@ -41,6 +41,7 @@ int r_eyecluster;
 
 double sv_frametime = 0.0;
 double cl_frametime = 0.0;
+double shadertime = 0.0;
 
 uint_t *r_lightmaptex;
 int r_numlightmaptex;

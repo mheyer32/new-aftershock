@@ -66,7 +66,7 @@ extern reference_t transform_ref;
 __inline static double render_func_eval(uint_t func, float *args)
 {
     // Evaluate a number of time based periodic functions
-    double x  = (cl_frametime + args[2]) * args[3];
+    double x  = (shadertime + args[2]) * args[3];
 	x -= floor(x);
 
     switch (func)
@@ -96,6 +96,7 @@ void Render_Backend_Init(void)
     arrays.verts = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
 	arrays.norms = (vec3_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec3_t));
     arrays.tex_st = (vec2_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec2_t));
+    arrays.texmod_st = (vec2_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec2_t));
 	arrays.lm_st = (vec2_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec2_t));
 	arrays.elems = (int *)malloc(MAX_ARRAYS_ELEMS * sizeof(int));
     arrays.colour = (colour_t *)malloc(MAX_ARRAYS_VERTS * sizeof(colour_t));
@@ -104,18 +105,18 @@ void Render_Backend_Init(void)
 
 	if (!r_allowExtensions->integer)
 	{
-		arrays.stage_tex_st = (vec2_t **)malloc (sizeof(vec2_t *));
-		arrays.stage_tex_st[0] = (vec2_t *)malloc (MAX_ARRAYS_VERTS * sizeof(vec2_t));
+		arrays.stage_tex_st = (vec2_t **)malloc(sizeof(vec2_t *));
+		arrays.stage_tex_st[0] = (vec2_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec2_t));
 		glconfig.maxActiveTextures = 1;
 	}
 	else 
 	{
 		int i;
 
-		arrays.stage_tex_st = (vec2_t **)malloc (glconfig.maxActiveTextures * sizeof(vec2_t *));
+		arrays.stage_tex_st = (vec2_t **)malloc(glconfig.maxActiveTextures * sizeof(vec2_t *));
 		
 		for (i = 0; i < glconfig.maxActiveTextures; i++)
-			arrays.stage_tex_st[i] = (vec2_t *)malloc (MAX_ARRAYS_VERTS * sizeof(vec2_t));
+			arrays.stage_tex_st[i] = (vec2_t *)malloc(MAX_ARRAYS_VERTS * sizeof(vec2_t));
 	}
 }
 
@@ -125,6 +126,7 @@ void Render_Backend_Shutdown(void)
 
 	free(arrays.verts);
     free(arrays.tex_st);
+    free(arrays.texmod_st);
     free(arrays.lm_st);
 	free(arrays.norms);
     free(arrays.elems);
@@ -324,9 +326,7 @@ static void render_pushmesh(mesh_t *mesh)
 	// any way to implement faceculling here in the engine ?
 
     for (i = 0; i < mesh->numelems; i++)
-    {
 		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
-    }
 	
 	for (i = 0; i < mesh->msize; i++)
 	{
@@ -472,6 +472,7 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 	int i = arrays.numverts, n;
 	vec2_t *in = arrays.tex_st;
 	vec2_t *out = arrays.stage_tex_st[stage];
+	vec2_t *txmod = arrays.texmod_st;
 	vec3_t dir, pos;
 	int j;
 	float rot;
@@ -536,6 +537,10 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 			break;
 	}
 
+	if ((pass->tc_gen != TC_GEN_ENVIRONMENT) &&
+		(pass->tc_gen != TC_GEN_VECTOR))
+		memcpy (out, in, arrays.numverts * sizeof(vec2_t));
+
 	if (pass->num_tc_mod > 0)
 	{
 		float t1, t2, p1, p2;
@@ -543,11 +548,13 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 
 		for (n = 0; n < pass->num_tc_mod; n++)
 		{
+			memcpy (txmod, out, arrays.numverts * sizeof(vec2_t));
+
 			switch (pass->tc_mod[n].type)
 			{
 				case SHADER_TCMOD_ROTATE:
 				{
-					rot = pass->tc_mod[n].args[0] * cl_frametime * DEG2RAD;
+					rot = pass->tc_mod[n].args[0] * shadertime * DEG2RAD;
 					
 					sint = (float)sin(rot);
 					cost = (float)cos(rot);
@@ -556,8 +563,8 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 					
 					for (j = 0; j < arrays.numverts; j++)
 					{
-						out[j][0] = in[j][0] * cost - in[j][1] * sint + p1;
-						out[j][1] = in[j][1] * cost + in[j][0] * sint + p2;
+						out[j][0] = txmod[j][0] * cost - txmod[j][1] * sint + p1;
+						out[j][1] = txmod[j][1] * cost + txmod[j][0] * sint + p2;
 					}
 				}
 				break;
@@ -566,8 +573,8 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 				{
 					for (j = 0; j < arrays.numverts; j++)
 					{
-						out[j][0] = in[j][0] * pass->tc_mod[n].args[0];
-						out[j][1] =	in[j][1] * pass->tc_mod[n].args[1];
+						out[j][0] = txmod[j][0] * pass->tc_mod[n].args[0];
+						out[j][1] =	txmod[j][1] * pass->tc_mod[n].args[1];
 					}
 				}
 				break;
@@ -576,15 +583,15 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 				{
 					double k;
 
-					pos = pass->tc_mod[n].args[2] + cl_frametime * pass->tc_mod[n].args[3];
+					pos = pass->tc_mod[n].args[2] + shadertime * pass->tc_mod[n].args[3];
 
 					for (j = 0; j < arrays.numverts; j++)
 					{
 						k = (((arrays.verts[j][0] + arrays.verts[j][2]) / 1024.f + pos) * 1024.f) * DEG2RAD;
-						out[j][0] = in[j][0] + pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
+						out[j][0] = txmod[j][0] + pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
 
 						k = (((arrays.verts[j][1]) / 1024.f + pos) * 1024.f) * DEG2RAD;
-						out[j][1] = in[j][1] + pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
+						out[j][1] = txmod[j][1] + pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
 					}
 				}
 				
@@ -592,12 +599,12 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 					
 				case SHADER_TCMOD_STRETCH:
 				{
-					t1 = 1.0f / (float)render_func_eval(pass->tc_mod_stretch.func,
-						pass->tc_mod_stretch.args);
+					t1 = 1.0f / (float)render_func_eval(pass->tc_mod_stretch.func, pass->tc_mod_stretch.args);
+					t2 = 0.5f - t1 * 0.5f;
 
 					for (j = 0; j < arrays.numverts; j++) {
-						out[j][0] = t1 * (in[j][0] - 0.5f) + 0.5f;
-						out[j][1] = t1 * (in[j][1] - 0.5f) + 0.5f;
+						out[j][0] = txmod[j][0] * t1 + t2;
+						out[j][1] = txmod[j][1] * t1 + t2;
 					}
 				}
 
@@ -605,17 +612,17 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 					
 				case SHADER_TCMOD_SCROLL:
 				{
-					pos = pass->tc_mod[n].args[0] * cl_frametime;
+					pos = pass->tc_mod[n].args[0] * shadertime;
 					pos -= floor(pos);
 					t1 = (float)pos;
 
-					pos = pass->tc_mod[n].args[1] * cl_frametime;
+					pos = pass->tc_mod[n].args[1] * shadertime;
 					pos -= floor(pos);
 					t2 = (float)pos;
 
 					for (j = 0; j < arrays.numverts; j++) {
-						out[j][0] = in[j][0] + t1;
-						out[j][1] = in[j][1] + t2;
+						out[j][0] = txmod[j][0] + t1;
+						out[j][1] = txmod[j][1] + t2;
 					}
 				}
 				
@@ -625,8 +632,8 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 				{
 					for (j = 0; j < arrays.numverts; j++) 
 					{
-						out[j][0] = in[j][0] * pass->tc_mod[n].args[0] + in[j][1] * pass->tc_mod[n].args[2] + pass->tc_mod[n].args[4];
-						out[j][1] = in[j][1] * pass->tc_mod[n].args[1] + in[j][0] * pass->tc_mod[n].args[3] + pass->tc_mod[n].args[5];
+						out[j][0] = txmod[j][0] * pass->tc_mod[n].args[0] + txmod[j][1] * pass->tc_mod[n].args[2] + pass->tc_mod[n].args[4];
+						out[j][1] = txmod[j][1] * pass->tc_mod[n].args[1] + txmod[j][0] * pass->tc_mod[n].args[3] + pass->tc_mod[n].args[5];
 					}
 				}
 				break;
@@ -636,9 +643,6 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 					break;
 			}
 		}
-	}
-	else {
-		memcpy (out, in, arrays.numverts * sizeof(vec2_t));
 	}
 	
 	return *(float **)&out;
@@ -784,6 +788,13 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 
 void R_Begin2d (void)
 {
+	GL_Enable (GL_SCISSOR_TEST);
+	GL_Disable (GL_CULL_FACE);
+	GL_DepthFunc (GL_ALWAYS);
+	GL_DepthMask (GL_FALSE);
+	GL_Enable (GL_BLEND);
+	GL_BlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	if (r_overlay)
 		return;
 
@@ -798,25 +809,19 @@ void R_Begin2d (void)
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
-	GL_Enable (GL_SCISSOR_TEST);
-	GL_Disable (GL_CULL_FACE);
-	GL_DepthFunc (GL_ALWAYS);
-	GL_DepthMask (GL_FALSE);
-	GL_Enable (GL_BLEND);
-	GL_BlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	r_overlay = atrue;
 }
 
 void R_End2d (void)
 {
-	if (!r_overlay)
-		return;
-
 	GL_Disable (GL_BLEND);
 	GL_DepthMask(GL_TRUE);
 	GL_Enable (GL_CULL_FACE);
 	GL_Disable (GL_SCISSOR_TEST);
+
+	if (!r_overlay)
+		return;
 
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();   
@@ -880,6 +885,31 @@ void R_DrawStretchPic (float x, float y, float w, float h, float s1, float t1, f
 	R_End2d ();
 }
 
+void DoGamma(void)
+{
+	float gamma = (bound (0.5f, r_gamma->value, 2.0f)) * 0.5;
+
+	R_Begin2d();
+
+	GL_Disable (GL_TEXTURE_2D);
+	GL_BlendFunc (GL_DST_COLOR, GL_SRC_ALPHA);
+
+	glColor4f (gamma, gamma, gamma, gamma);
+
+	glBegin (GL_QUADS);
+	glVertex2f (0,0);
+	glVertex2f (winX, 0);
+	glVertex2f (winX, winY);
+	glVertex2f (0, winY);
+	glEnd ();
+
+	GL_Enable (GL_TEXTURE_2D);
+
+	R_End2d();
+
+	glColor4f (1.0, 1.0, 1.0, 1.0);
+}
+
 void Render_Backend_Flush (int shadernum, int lmtex)
 {
 	shader_t *s;
@@ -890,7 +920,7 @@ void Render_Backend_Flush (int shadernum, int lmtex)
 		return;
 	}
 
-	s = &r_shaders [shadernum];
+	s = &r_shaders[shadernum];
 
 	switch (s->flush)
 	{
@@ -980,7 +1010,7 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 			if (!pass->anim_numframes || pass->anim_numframes > SHADER_ANIM_FRAMES_MAX)
 				return;
 
-			frame = (int)(cl_frametime * pass->anim_fps) % pass->anim_numframes;
+			frame = (int)(shadertime * pass->anim_fps) % pass->anim_numframes;
 			
 			texture = pass->anim_frames[frame];
 		}
@@ -1025,8 +1055,8 @@ static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex )
 		}
 
 		// Draw it
-		glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
-		       arrays.elems);
+			glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT,
+				arrays.elems);
 	}
 
 	if (glUnlockArraysEXT)
@@ -1121,7 +1151,7 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 		if (!pass->anim_numframes || pass->anim_numframes > SHADER_ANIM_FRAMES_MAX) 
 			return;
 
-		frame = (int)(cl_frametime * pass->anim_fps) % pass->anim_numframes;
+		frame = (int)(shadertime * pass->anim_fps) % pass->anim_numframes;
 		texture = pass->anim_frames[frame];
 	}
 	else

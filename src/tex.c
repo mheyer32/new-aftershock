@@ -580,8 +580,8 @@ int R_Load_Texture (const char *name, int flags)
 
 	A_strncpyz (fname, name, MAX_APATH);
 
-	for (i = 0; i < strlen(fname); i++)
-		fname[i] = tolower (fname[i]);
+	for (i = 0; i < strlen(name); i++)
+		fname[i] = tolower (name[i]);
 
 	// Check if already loaded 
 	for (i = 0; i < r_num_textures; i++)

@@ -167,6 +167,11 @@ void Sys_Keyboard_Event (unsigned int Vkey, aboolean down)
 				key = '\\';
 				is_char = atrue;
 				break;
+			
+			case 190:
+				key = '.';
+				is_char = atrue;
+				break;
 
 			default:
 				break;

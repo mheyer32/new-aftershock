@@ -114,9 +114,8 @@ static void Cmd_history(void)
 
 static void Con_SetHScrollPos( void )
 {
-	int widthInChars;
-
-	widthInChars = ((winX - 2 * BORDER) / SMALLCHAR_WIDTH - 1 - strlen( console.prompt ));
+	int widthInChars =
+			((winX - 2 * BORDER) / SMALLCHAR_WIDTH - 1 - strlen( CON_PROMPT ));
 
 	if( console.cursorPos < widthInChars )
 		console.hScrollPos = 0;
@@ -272,8 +271,8 @@ static void Con_ProcessCmd(void)
 		Con_AddToHistory(cmd);
 
 		/* print command */
-		Con_Printf("%s%s\n", console.prompt, cmd);
-
+		Con_Printf("%s%s\n", CON_PROMPT, cmd);
+		
 		/* execute */
 		Cbuf_AddText(cmd);
 		Cbuf_AddText("\n");
@@ -281,7 +280,7 @@ static void Con_ProcessCmd(void)
 
 		free(cmd);
 	} else {
-		Con_Printf("%s\n", console.prompt);
+		Con_Printf("%s\n", CON_PROMPT);
 	}
 }
 
@@ -352,10 +351,10 @@ static void Con_Complete(void)
 							next = list[i][len];
 						} else if (list[i][len] != next) {
 							buf = A_CopyStr(minibuf);
-							Con_Printf("%s%s\n", console.prompt, buf);
+							Con_Printf("%s%s\n", CON_PROMPT, buf);
 							free(buf);
 							for (j=0; j<num; j++) {
-								Con_Printf("%s\n", list[j]);
+								Con_Printf("   %s\n", list[j]);
 							}
 							next = 0;
 							break;
@@ -388,20 +387,17 @@ void Con_Init(void)
 
 	console.numHist = 0;
 	console.curHist = 0;
-	console.isOpen = 0;
+	console.isOpen = afalse;
 	console.numFilledLines = 0;
 	console.height = 0;
 	console.vScrollPos = 0;
 	console.hScrollPos = 0;
 	console.cursorPos = 0;
-	console.shader = &shader_console;
 	console.newline = 0;
-
-	A_strncpyz (console.prompt, "]", CON_PROMT_SIZE);
 
 	memset(console.minibuffer, 0, CON_MINIBUFFER_SIZE);
 
-	for(i=0; i<CON_BUFFER_SIZE; i++)
+	for (i = 0; i < CON_BUFFER_SIZE; i++)
 		memset(console.chars[i], 0, CON_LINE_WIDTH);
 
 	developer = Cvar_Get( "developer", "0", 0 );
@@ -432,11 +428,11 @@ void Con_Shutdown(void)
 void Con_Toggle(void)
 {
 	if( console.isOpen ) {
-		console.isOpen = 0;
+		console.isOpen = afalse;
 		Key_SetCatcher( Key_GetCatcher() & ~KEYCATCH_CONSOLE );
 		Cvar_Set2( "cl_paused", "1",0 );
 	} else {
-		console.isOpen = 1;
+		console.isOpen = atrue;
 		Key_SetCatcher( Key_GetCatcher() | KEYCATCH_CONSOLE );
 		Cvar_Set2( "cl_paused", "0",0 );
 	}
@@ -452,10 +448,8 @@ void Con_Draw(void)
 	int i;
 	int y;
 	int line_idx;
-	int ch;
 	char buf[2];
 	
-
 	if (console.isOpen) {
 		if (console.height < winY / 2) {
 			console.height += (int)(5.0*scr_conspeed->value);
@@ -466,8 +460,8 @@ void Con_Draw(void)
 		}
 	}
 
-	if (console.height > winY / 2) {
-		console.height = winY / 2;
+	if (console.height > winY * 0.5) {
+		console.height = winY * 0.5;
 	} else if (console.height < 0) {
 		console.height = 0;
 	}
@@ -479,46 +473,43 @@ void Con_Draw(void)
 
 	/* background */
 	R_SetColor( colorWhite );
-	R_DrawStretchPic( 0.0f, 0.0f, (float)winX, y, 0.f, 1.f - (float)console.height / (float)winY, 1.f, 1.f, *console.shader );
+	R_DrawStretchPic( 0.0f, 0.0f, (float)winX, y, 0.f, 1.f - (float)console.height / (float)winY, 1.f, 1.f, shader_console );
 
 	y -= 2;
 
 	if( y < -SMALLCHAR_HEIGHT ) return;	/* offscreen */
 
 	/* bottom line */
-	R_SetColor(colorYellow);
-	// TODO
-	//R_DrawStretchPic(0.f, y, (float)winX, 2.f, 0.f, 0.f, 0.f, 0.f,1, shader_white);
-	y -= (BORDER + SMALLCHAR_HEIGHT);
+	R_SetColor(colorRed);
+	R_DrawStretchPic(0.0f, y, (float)winX, 3, 0.0, 1.f - (float)console.height / (float)winY, 1.f, 1.f, shader_white);
+
+	y -= /*(BORDER + SMALLCHAR_HEIGHT)*/20;
 
 	if( y < -SMALLCHAR_HEIGHT ) return;	/* offscreen */
 
 	/* version string */
-	R_DrawString( winX - BORDER - strlen(AFTERSHOCK_VERSION) * SMALLCHAR_WIDTH, y, AFTERSHOCK_VERSION, colorWhite );
+	R_DrawString( winX - BORDER - (strlen(AFTERSHOCK_VERSION) + 2) * SMALLCHAR_WIDTH, y, "A " AFTERSHOCK_VERSION, colorRed );
 
-	y -= SMALLCHAR_HEIGHT;
+	y -= SMALLCHAR_HEIGHT*0.5;
 
 	if( y < -SMALLCHAR_HEIGHT ) return;	/* offscreen */
 
 	/* prompt */
-	R_DrawString(BORDER, y, console.prompt, colorWhite);
-
+	R_DrawString(BORDER, y, CON_PROMPT, colorWhite);
+	
 	/* minibuffer */
-	R_DrawString(BORDER+strlen(console.prompt)*SMALLCHAR_WIDTH, y, console.minibuffer+console.hScrollPos, colorWhite);
+	R_DrawString(BORDER+strlen(CON_PROMPT)*SMALLCHAR_WIDTH, y, console.minibuffer+console.hScrollPos, colorWhite);
 
 	/* cursor */
-	if ((Sys_Get_Time ()/BLINK_DIVISOR) & 1) {
+	if ((Sys_Get_Time() / BLINK_DIVISOR) & 1) {
 		if(Key_GetOverstrikeMode()) {
-			ch = 11;
+			buf[0] = 11;
 		} else {
-			ch = 10;
+			buf[0] = 10;
 		}
 
-		buf[0] = ch;
 		buf[1] = 0;
-		R_DrawString(BORDER + (console.cursorPos - console.hScrollPos + strlen(console.prompt)) * SMALLCHAR_WIDTH, y, buf, colorWhite);
-		/* TODO */
-//		R_DrawChar(BORDER + (console.cursorPos - console.hScrollPos + strlen(console.prompt)) * SMALLCHAR_WIDTH, y, ch, colorWhite);
+		R_DrawString(BORDER + (console.cursorPos - console.hScrollPos + strlen(CON_PROMPT)) * SMALLCHAR_WIDTH, y, buf, colorWhite);
 	}
 
 	y -= SMALLCHAR_HEIGHT;
@@ -530,8 +521,9 @@ void Con_Draw(void)
 		if (console.vScrollPos > 0) {
 			buf[0] = '^';
 			buf[1] = 0;
-			for( i=0; i<20; i++ ) {
-				R_DrawString(BORDER+i*4*SMALLCHAR_WIDTH, y, buf, colorYellow);
+
+			for( i = 0; i < 20; i++ ) {
+				R_DrawString(BORDER+i*4*SMALLCHAR_WIDTH, y, buf, colorRed);
 			}
 		} else {
 			line_idx = console.numFilledLines - 1;
@@ -655,7 +647,7 @@ void Con_KeyEvent( int key )
 
 		case K_LEFTARROW:
 		case K_KP_LEFTARROW:
-			if (console.cursorPos) {
+			if (console.cursorPos > 0) {
 				console.cursorPos--;
 			}
 			Con_SetHScrollPos();

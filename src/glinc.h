@@ -1394,6 +1394,7 @@ BOOL  (APIENTRY * awglUseFontBitmapsA)(HDC, DWORD, DWORD, DWORD);
 BOOL  (APIENTRY * awglUseFontBitmapsW)(HDC, DWORD, DWORD, DWORD);
 BOOL  (APIENTRY * awglUseFontBitmaps)(HDC, DWORD, DWORD, DWORD);
 BOOL  (APIENTRY * awglSwapLayerBuffers)(HDC, UINT);
+BOOL  (APIENTRY * awglSwapBuffers)(HDC);
 
 
 

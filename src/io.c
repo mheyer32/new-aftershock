@@ -16,6 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+#include <windows.h>
 #include "a_shared.h"
 #include "sys_file.h"
 #include "sys_mem.h"
@@ -24,10 +25,11 @@
 #include "unzip.h"
 #include "console.h"
 
-static file_t		files [MAX_FILES];
-static int			files_used [MAX_FILES];
+static file_t		files[MAX_FILES];
+static int			files_used[MAX_FILES];
 static int			num_files = 0;
-static char			basedir [MAX_OSPATH];
+static char			basedir[MAX_OSPATH];
+static char			workdir[MAX_OSPATH];
 static int			fs_load_stack;
 
 char *FS_Add_Basedir (const char *s)
@@ -289,9 +291,18 @@ void FS_Init (const char *dir)
 }
 
 // TODO !
-int FS_FileExists (char *file)
+aboolean FS_FileExists (char *file)
 {
 	return Pak_FileExists(file);
+}
+
+void FS_GetWorkingDir (void)
+{
+    // get the current directory
+    GetCurrentDirectory(MAX_OSPATH, workdir);
+
+    // form the path string
+    Con_Printf("Working directory: %s\n", workdir);
 }
 
 // Works, but could be faster 

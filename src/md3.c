@@ -23,19 +23,19 @@
 #include "console.h"
 #include "io.h"
 
-md3model2_t r_md3models[MAX_MD3_MODELS];
-skin_t md3skins[MAX_MD3_SKINS];
-int r_md3Skincount = 1;
-int r_md3Modelcount = 1;
+md3model2_t r_md3models[MAX_MODELS];
+skin_t md3skins[MAX_SKINS];
+int r_md3Skincount = 0;
+int r_md3Modelcount = 0;
 
 static aboolean R_LoadSkin(skin_t *skin, const char *name);
 void MD3_Free (int num);
 
 void MD3_Init (void)
 {
-	memset (r_md3models, 0, MAX_MD3_MODELS * sizeof(md3model2_t));
-	r_md3Modelcount = 1;
-	r_md3Skincount = 1;
+	memset (r_md3models, 0, MAX_MODELS * sizeof(md3model2_t));
+	r_md3Modelcount = 0;
+	r_md3Skincount = 0;
 }
 
 void MD3_Shutdown (void)
@@ -43,11 +43,11 @@ void MD3_Shutdown (void)
 #if 0
 	int i;
 
-	for (i = 1; i < r_md3Modelcount; i++) MD3_Free(i);
+	for (i = 0; i < r_md3Modelcount; i++) MD3_Free(i);
 #endif
 
-	r_md3Modelcount = 1;
-	r_md3Skincount = 1;
+	r_md3Modelcount = 0;
+	r_md3Skincount = 0;
 }
 
 /*
@@ -62,7 +62,7 @@ void MD3_Free (int num)
 	md3mesh_t *mesh;
 	int i;
 
-	if (num <= 0 || num >= MAX_MD3_MODELS)
+	if (num <= 0 || num >= MAX_MODELS)
 		return;
 
 	mod = &r_md3models[num];
@@ -147,7 +147,7 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 		return afalse;
 	}
 
-	if (r_md3Modelcount >= MAX_MD3_MODELS)
+	if (r_md3Modelcount >= MAX_MODELS)
 	{
 //		Error ("R_LoadMD3: too many models\n");
 		return afalse;
@@ -330,6 +330,7 @@ aboolean R_LoadMD3(md3model2_t *md3, const char *filename)
 					for (j = 0; j < num2; j++) {
 						COM_StripExtension(data, texName);
 						data += MAX_APATH;
+						texName[0] = 'm';
 						mesh->skins[j] = R_LoadShader(texName, SHADER_MD3);
 					}
 				} else {
@@ -426,14 +427,14 @@ int R_RegisterModel (const char *name)
 	int i;
 
 	// Check if already existing 
-	for (i = 1; i < r_md3Modelcount; i++)
+	for (i = 0; i < r_md3Modelcount; i++)
 	{
 		if (!strcmp(r_md3models[i].name, name))
-			return i;
+			return (i+1);
 	}
 
 	if (R_LoadMD3(&r_md3models[r_md3Modelcount], name))
-		return r_md3Modelcount++;
+		return ++r_md3Modelcount;
 
 	return 0;
 }
@@ -443,14 +444,14 @@ int R_RegisterSkin (const char *name)
 	int i;
 
 	// Check if already existing 
-	for (i = 1; i < r_md3Skincount; i++)
+	for (i = 0; i < r_md3Skincount; i++)
 	{
 		if (!strcmp(name, md3skins[i].name))
-			return i;
+			return (i+1);
 	}
 
 	if (R_LoadSkin (&md3skins[r_md3Skincount], name))
-		return r_md3Skincount++;
+		return ++r_md3Skincount;
 	
 	return 0;
 }
@@ -460,7 +461,7 @@ static aboolean R_LoadSkin(skin_t *skin, const char *name)
 	int file, len, meshcount = 0;
 	char *token, *buf, *tmp, *comma, shadername[MAX_APATH];
 
-	if (r_md3Skincount >= MAX_MD3_SKINS)
+	if (r_md3Skincount >= MAX_SKINS)
 	{
 //		Error ("R_LoadSkin: too many skins\n");
 		return afalse;
@@ -505,11 +506,6 @@ static aboolean R_LoadSkin(skin_t *skin, const char *name)
 			strcpy (skin->skins[meshcount].mesh_name, token);
 			skin->skins[meshcount].shaderref = R_LoadShader (shadername, SHADER_MD3);
 			meshcount++;
-		}
-		else 
-		{
-			// ????
-
 		}
 	}
 

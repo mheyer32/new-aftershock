@@ -116,7 +116,7 @@
 //=============================================================
 
 
-#define AFTERSHOCK_VERSION "0.21"
+#define AFTERSHOCK_VERSION "0.24d"
 
 
 
@@ -234,9 +234,6 @@ typedef vec_t vec2_t[2];
 typedef vec_t vec3_t[3];
 typedef vec_t vec4_t[4];
 typedef vec_t vec5_t[5];
-
-typedef float texcoord_t [2];
-
 
 typedef float mat4_t[16]; /* 4x4 matrix */
 typedef vec3_t  mat3x3_t[3];

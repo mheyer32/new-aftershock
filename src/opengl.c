@@ -870,6 +870,7 @@ aboolean GL_LoadDll (char *name)
 	awglUseFontBitmapsA = (void *)GetProcAddress(dll, "wglUseFontBitmapsA");
 	awglUseFontBitmapsW = (void *)GetProcAddress(dll, "wglUseFontBitmapsW");
 	awglSwapLayerBuffers = (void *)GetProcAddress(dll, "wglSwapLayerBuffers");
+	awglSwapBuffers = (void *) GetProcAddress(dll, "wglSwapBuffers");
 
 	return atrue;
 }
@@ -1527,8 +1528,8 @@ void APIENTRY GL_Perspective( GLdouble fovy, GLdouble aspect,
 }
 
 
-// some wrapping -functions whitch track the state :
-// i`m tracking only  the important states 
+// some wrapping -functions whitch track the state
+// i`m tracking only the important states 
 #define TRACK_GL_STATE 1
 
 #define MAX_TEX_UNITS 32
@@ -1542,6 +1543,21 @@ static aboolean Polygon_Offset_Enabled = afalse;
 static aboolean Tex_Unit_Enabled[MAX_TEX_UNITS];
 static int Active_Tex_Unit = 0;
 static int Tex_IDs[MAX_TEX_UNITS];
+static int CullMode = 0; 
+
+void GL_ResetStates1 (void)
+{
+	DepthMask_State = GL_TRUE;
+	Cull_Face_Enabled = atrue;
+	Blending_Enabled = afalse;
+	Alpha_Test_Enabled = afalse;
+	Polygon_Offset_Enabled = afalse;
+	Active_Tex_Unit = 0;
+	CullMode = 0;
+
+	memset (Tex_Unit_Enabled, 0, sizeof(aboolean)*MAX_TEX_UNITS);
+	memset (Tex_IDs, -1, sizeof(int)*MAX_TEX_UNITS);
+}
 
 #endif 
 
@@ -1654,8 +1670,6 @@ void GL_Disable (int param)
 #endif 
 }
 
-static int CullMode = 0; 
-
 void GL_CullFace (int mode)
 {
 #if TRACK_GL_STATE
@@ -1685,8 +1699,8 @@ void GL_ActiveTextureARB (int param)
 }
 
 #if TRACK_GL_STATE
-static float Tex_Env_Mode[MAX_TEX_UNITS];
 
+static float Tex_Env_Mode[MAX_TEX_UNITS];
 static float Combine_Rgb_Ext[MAX_TEX_UNITS];
 static float Combine_Alpha_Ext[MAX_TEX_UNITS];
 static float Source0_Rgb_Ext[MAX_TEX_UNITS];
@@ -1705,6 +1719,27 @@ static float Rgb_Scale_Ext[MAX_TEX_UNITS];
 static float Alpha_Scale[MAX_TEX_UNITS];
 
 // I think this will get important when using TEX_ENV_COMBINE
+
+void GL_ResetStates2 (void)
+{
+	memset (Tex_Env_Mode, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Combine_Rgb_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Combine_Alpha_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Source0_Rgb_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Source1_Rgb_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Source2_Rgb_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Source0_Alpha_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Source1_Alpha_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Source2_Alpha_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Operand0_Rgb_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Operand1_Rgb_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Operand2_Rgb_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Operand0_Alpha_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Operand1_Alpha_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Operand2_Alpha_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Rgb_Scale_Ext, 0, sizeof(float)*MAX_TEX_UNITS);
+	memset (Alpha_Scale, 0, sizeof(float)*MAX_TEX_UNITS);
+}
 
 #endif 
 
@@ -1866,8 +1901,8 @@ void GL_TexEnvf (int target, int pname, float param)
 }
 
 #if TRACK_GL_STATE
-static aboolean Color_Array_Enabled;
-static aboolean Vertex_Array_Enabled;
+static aboolean Color_Array_Enabled = afalse;
+static aboolean Vertex_Array_Enabled = afalse;
 static aboolean Tex_Coord_Array_Enabled[MAX_TEX_UNITS];
 
 static int Active_Client_Tex_Unit = 0;
@@ -1878,6 +1913,20 @@ static int DepthFunc = 0;
 
 static int AlphaFunc = 0;
 static float Alpharef = 0.0f;
+
+void GL_ResetStates3 (void)
+{
+	Color_Array_Enabled = afalse;
+	Vertex_Array_Enabled = afalse;
+
+	memset (Tex_Coord_Array_Enabled, 0, sizeof(aboolean)*MAX_TEX_UNITS);
+	Active_Client_Tex_Unit = 0;
+	Blendsrc = 0;
+	Blenddst = 0;
+	DepthFunc = 0;
+	AlphaFunc = 0;
+	Alpharef = 0.0f;
+}
 
 #endif 
 
@@ -1904,7 +1953,7 @@ void GL_DepthFunc (int func)
 		DepthFunc = func;
 	}
 #else 
-	glDepthFunc (func );
+	glDepthFunc (func);
 #endif 
 }
 
@@ -2123,7 +2172,8 @@ int WIN_CreateWindow (HINSTANCE inst, int nCmdShow)
 	RECT		WindowRect;
 	DWORD		dwExStyle;
 	DWORD		dwStyle;
-	
+	int			x = 0, y = 0;
+
 	memset (&wcex, 0, sizeof (WNDCLASSEX));
 
 	wcex.cbSize			= sizeof(WNDCLASSEX); 
@@ -2176,7 +2226,7 @@ int WIN_CreateWindow (HINSTANCE inst, int nCmdShow)
 		   "Aftershock",
 		   "Aftershock",
 		   WS_CLIPSIBLINGS | WS_CLIPCHILDREN | dwStyle,
-		   0, 0,
+		   x, y,
 		   WindowRect.right-WindowRect.left,
 		   WindowRect.bottom-WindowRect.top,
 		   NULL,
@@ -2225,6 +2275,8 @@ int WIN_CreateWindow (HINSTANCE inst, int nCmdShow)
 		Con_Printf ("Could not Create Window");
 		return 0;
 	}
+
+	Con_Printf ("...created window@%i.%i(%ix%i)\n", x, y, winX, winY);	// ??
 
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd );
@@ -2649,6 +2701,12 @@ aboolean Init_OpenGL (void)
 	if (opengl_initialized)
 		return atrue;
 
+#if TRACK_GL_STATE
+	GL_ResetStates1();
+	GL_ResetStates2();
+	GL_ResetStates3();
+#endif
+
 	Con_Printf("Initializing OpenGl subsystem\n");
 
 	Con_Printf("...initializing AGL\n");
@@ -2763,6 +2821,7 @@ aboolean Init_OpenGL (void)
 	glconfig.vidHeight = winY;
 	glconfig.vidWidth = winX;
 	glconfig.displayFrequency = GetDeviceCaps (dc, VREFRESH);
+	glconfig.deviceSupportsGamma = atrue;	// HACK
 
 	Con_Printf ("GL_VENDOR: %s\n", glconfig.vendor_string);
 	Con_Printf ("GL_RENDERER: %s\n", glconfig.renderer_string);

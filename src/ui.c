@@ -36,7 +36,7 @@ extern void *UI_inst;
 static aboolean uiLoaded = afalse;
 
 
-aboolean LoadUI (void )
+aboolean LoadUI (void)
 {
 	if (uiLoaded) 
 		return atrue;

@@ -41,8 +41,9 @@ typedef struct
 	vec3_t		*norms;
     colour_t	*colour;
 	colour_t	*entity_colour;
-    texcoord_t	*tex_st;
-    texcoord_t	*lm_st;
+    vec2_t		*tex_st;
+    vec2_t		*texmod_st;
+    vec2_t		*lm_st;
 	vec2_t		**stage_tex_st;
 	colour_t	*mod_colour;
     int			numelems;

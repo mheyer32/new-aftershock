@@ -89,7 +89,6 @@ typedef enum {
 	UI_SQRT,
 	UI_FLOOR,
 	UI_CEIL
-
 } uiImport_t;
 
 

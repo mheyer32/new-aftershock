@@ -104,12 +104,12 @@ static void Cmd_Quit (void)
 aboolean Engine_Init (void)
 {
 	Key_ClearStates();
-	Swap_Init ();
+	Swap_Init();
 	Con_Init();
 	FS_Init("baseq3");
-	Key_Init ();
+	Key_Init();
 	Cmd_Init();
-	Cbuf_Init ();
+	Cbuf_Init();
 	Cvar_Init();
 	
 	// essential commands
@@ -117,6 +117,8 @@ aboolean Engine_Init (void)
 
 	Cbuf_AddText("exec q3config.cfg\n");
 	Cbuf_Execute();
+
+	Engine_GetCvars();
 
 	if (!SV_Init("FIXME")) {
 		Error ("Could not initialize server subsystem");
@@ -128,17 +130,15 @@ aboolean Engine_Init (void)
 		return afalse;
 	}
 	
+	Con_Printf("... Common Initialization Complete ...\n");
+
 	if (!Net_Init())
 	{
 		Error ("Could not initialize networking");
 		return afalse;
 	}
 
-	Engine_GetCvars();
-
-	// Init UI
-	UI_main(UI_INIT, 0, 0, 0, 0, 0, 0, 0);
-	UI_main(UI_SET_ACTIVE_MENU, UIMENU_MAIN, 0, 0, 0, 0, 0, 0);
+	FS_GetWorkingDir();
 
 	return atrue;
 }

@@ -318,7 +318,7 @@ void R_Init(void)
 
 	R_ClearScene();
 
-	Con_Printf ("... finished R_Init ...\n\n");
+	Con_Printf ("... finished R_Init ...\n");
 }
 
 void R_Shutdown (void)
@@ -541,10 +541,10 @@ void R_LerpTag(orientation_t *tag, int model, int startFrame, int endFrame, floa
 	md3model2_t *mod;
 	md3tag_t *st, *et;
 
-	if ((model <= 0) || (model >= r_md3Modelcount))
+	if ((model < 1) || (model > r_md3Modelcount))
 		return;
 
-	mod = &r_md3models[model];
+	mod = &r_md3models[model-1];
 
 	if (!mod->numframes)
 		return;
@@ -601,6 +601,8 @@ void R_LerpTag(orientation_t *tag, int model, int startFrame, int endFrame, floa
 	}
 }
 
+void Matrix4_MultiplyFast(mat4_t b, mat4_t c, mat4_t a);
+
 /*
 =================
 R_Render_Model
@@ -610,19 +612,20 @@ TODO: Optimize, put to backend.
 */
 void R_Render_Model (const refEntity_t *re)
 {
-	mat4_t mat, loadmat, tmpmat;
+	mat4_t loadmat;
 	md3model2_t *model;
 	md3mesh_t *mesh;
 	skin_t *skin;
-	uint_t *elem;
-	int i, j, k, shaderref = -1;
-	double saved_time;
+	uint_t *elems;
+	int i, j, k;
+	ahandle_t shaderref = -1;
 	int frame, backframe;
+	float frac;
 
-	if ((re->hModel <= 0) || (re->hModel >= r_md3Modelcount))
+	if ((re->hModel < 1) || (re->hModel > r_md3Modelcount))
 		return;
 
-	model = &r_md3models[re->hModel];
+	model = &r_md3models[re->hModel-1];
 	arrays.numverts = arrays.numelems = 0;
 
 	glMatrixMode(GL_MODELVIEW);
@@ -630,35 +633,28 @@ void R_Render_Model (const refEntity_t *re)
 
 	glLoadMatrixf(model_view_mat);
 
-	Matrix4_Identity(tmpmat);
+	loadmat[0] = re->axis[0][0];
+	loadmat[1] = re->axis[0][1];
+	loadmat[2] = re->axis[0][2];
+	loadmat[3] = 0;
+	loadmat[4] = re->axis[1][0];
+	loadmat[5] = re->axis[1][1];
+	loadmat[6] = re->axis[1][2];
+	loadmat[7] = 0;
+	loadmat[8] = re->axis[2][0];
+	loadmat[9] = re->axis[2][1];
+	loadmat[10] = re->axis[2][2];
+	loadmat[11] = 0;
+	loadmat[12] = re->origin[0];
+	loadmat[13] = re->origin[1];
+	loadmat[14] = re->origin[2];
+	loadmat[15] = 1.0;
 
-	tmpmat[12] = re->origin[0];
-	tmpmat[13] = re->origin[1];
-	tmpmat[14] = re->origin[2];
-
-	Matrix4_Identity(mat);
-	mat[0] = re->axis[0][0];
-	mat[1] = re->axis[0][1];
-	mat[2] = re->axis[0][2];
-
-	if (re->nonNormalizedAxes)
-		VectorNormalize(mat);
-
-	mat[4] = re->axis[1][0];
-	mat[5] = re->axis[1][1];
-	mat[6] = re->axis[1][2];
-
-	if (re->nonNormalizedAxes)
-		VectorNormalize(&mat[4]);
-
-	mat[8] = re->axis[2][0];
-	mat[9] = re->axis[2][1];
-	mat[10] = re->axis[2][2];
-
-	if (re->nonNormalizedAxes)
-		VectorNormalize(&mat[8]);
-	
-	Matrix4_Multiply(tmpmat, mat, loadmat);
+	if (re->nonNormalizedAxes) {
+		VectorNormalize(&loadmat[0]);
+		VectorNormalize(&loadmat[4]);
+		VectorNormalize(&loadmat[8]);
+	}
 
 	glMultMatrixf(loadmat);
 
@@ -667,10 +663,7 @@ void R_Render_Model (const refEntity_t *re)
 	transform_ref.matrix_identity = 0;
 
 	// Set the shader time
-	saved_time = cl_frametime;
-
-	// is this right?
-	cl_frametime = saved_time - (double)re->shaderTime;
+	shadertime = cl_frametime - (double)re->shaderTime;
 
 	for (j = 0; j < model->nummeshes; j++)
 	{
@@ -683,7 +676,7 @@ void R_Render_Model (const refEntity_t *re)
 		}
 		else if (re->customSkin > 0)
 		{
-			skin = &md3skins[re->customSkin];
+			skin = &md3skins[re->customSkin-1];
 
 			for (i = 0; i < skin->num_mesh_skins; i++)
 			{
@@ -702,9 +695,6 @@ void R_Render_Model (const refEntity_t *re)
 		}
 
 		if (shaderref < 0) {
-
-			cl_frametime = saved_time;
-
 			// Revert
 			Matrix4_Identity(transform_ref.matrix);
 			transform_ref.matrix_identity = atrue;
@@ -718,11 +708,10 @@ void R_Render_Model (const refEntity_t *re)
 		}
 
 		arrays.numverts = 0;
-
-	    elem = mesh->elems;
+		elems = mesh->elems;
 
 	    for (k = 0; k < mesh->numelems; k++)
-			arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
+			arrays.elems[arrays.numelems++] = arrays.numverts + *elems++;
 
 		frame = re->frame;
 		backframe = re->oldframe;
@@ -736,49 +725,28 @@ void R_Render_Model (const refEntity_t *re)
 			frame = backframe = 0;
 		}
 
-		if (!re->backlerp)
+		for (k = 0; k < mesh->numverts; k++)
 		{
-			for (k = 0; k < mesh->numverts; k++)
-			{
-				VectorCopy(mesh->points[re->frame][k], arrays.verts[arrays.numverts]);
-				Vector2Copy(mesh->tex_st[k], arrays.tex_st[arrays.numverts]);
-
-				// Push the entity colour (TEST)
-				Vector4Copy (re->shaderRGBA, arrays.entity_colour [arrays.numverts]);
-				ClearColor (arrays.colour[arrays.numverts]);
-
-				arrays.norms[arrays.numverts][0] = mesh->norms[frame][k][0];
-				arrays.norms[arrays.numverts][1] = mesh->norms[frame][k][1];
-				arrays.norms[arrays.numverts][2] = 0.0f;
-				arrays.numverts++;
-			}
-		}
-		else 
-		{
-			float frac = 1.0f - re->backlerp;
+			VectorCopy(mesh->points[frame][k], arrays.verts[arrays.numverts]);
+			Vector2Copy(mesh->tex_st[k], arrays.tex_st[arrays.numverts]);
 			
-			for (k = 0; k < mesh->numverts; k++)
-			{
-				arrays.norms[arrays.numverts][0] = mesh->norms[frame][k][0];
-				arrays.norms[arrays.numverts][1] = mesh->norms[frame][k][1];
-				arrays.norms[arrays.numverts][2] = 0.0f;
-				
-				ClearColor (arrays.colour[arrays.numverts]);
-
-				// Push the entity colour (TEST)
-				Vector4Copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
-
+			// Push the entity colour (TEST)
+			Vector4Copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
+			ClearColor (arrays.colour[arrays.numverts]);
+			
+			if (re->backlerp) {
+				frac = 1.0f - re->backlerp;
 				R_InterpolateNormal(mesh->points[backframe][k], mesh->points[frame][k], frac, arrays.verts[arrays.numverts]);
-
-				Vector2Copy(mesh->tex_st[k], arrays.tex_st[arrays.numverts]);
-				arrays.numverts++;
 			}
+			
+			arrays.norms[arrays.numverts][0] = mesh->norms[frame][k][0];
+			arrays.norms[arrays.numverts][1] = mesh->norms[frame][k][1];
+			arrays.norms[arrays.numverts][2] = 0.0f;
+			arrays.numverts++;
 		}
 	
 		Render_Backend_Flush(shaderref, 0);
 	}
-
-	cl_frametime = saved_time;
 
 	// Revert
 	Matrix4_Identity(transform_ref.matrix);
@@ -804,7 +772,6 @@ void R_Render_Sprite (const refEntity_t *re)
 	int elems[6];
 	vec3_t up, right;
 	vec3_t tmp;
-	int i;
 
 	VectorCopy (re->origin, org);
 
@@ -856,15 +823,36 @@ void R_Render_Sprite (const refEntity_t *re)
 	elems[5] = 0;
 
 	// push
-	for (i = 0; i < 6; i++)
-		arrays.elems[arrays.numelems++] = arrays.numverts + elems[i];
+	arrays.elems[arrays.numelems++] = arrays.numverts + elems[0];
+	arrays.elems[arrays.numelems++] = arrays.numverts + elems[1];
+	arrays.elems[arrays.numelems++] = arrays.numverts + elems[2];
+	arrays.elems[arrays.numelems++] = arrays.numverts + elems[3];
+	arrays.elems[arrays.numelems++] = arrays.numverts + elems[4];
+	arrays.elems[arrays.numelems++] = arrays.numverts + elems[5];
 
-	for (i = 0; i < 4; i++)
-	{
-		VectorCopy (v[i], arrays.verts[arrays.numverts]);
-		Vector2Copy (tc[i], arrays.tex_st[arrays.numverts]);
-		arrays.numverts++;
-	}
+	// Push the entity colour (TEST)
+	Vector4Copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
+	VectorCopy (v[0], arrays.verts[arrays.numverts]);
+	Vector2Copy (tc[0], arrays.tex_st[arrays.numverts]);
+	arrays.numverts++;
+
+	// Push the entity colour (TEST)
+	Vector4Copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
+	VectorCopy (v[1], arrays.verts[arrays.numverts]);
+	Vector2Copy (tc[1], arrays.tex_st[arrays.numverts]);
+	arrays.numverts++;
+
+	// Push the entity colour (TEST)
+	Vector4Copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
+	VectorCopy (v[2], arrays.verts[arrays.numverts]);
+	Vector2Copy (tc[2], arrays.tex_st[arrays.numverts]);
+	arrays.numverts++;
+
+	// Push the entity colour (TEST)
+	Vector4Copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
+	VectorCopy (v[3], arrays.verts[arrays.numverts]);
+	Vector2Copy (tc[3], arrays.tex_st[arrays.numverts]);
+	arrays.numverts++;
 
 	Render_Backend_Flush(re->customShader, 0);
 }
@@ -993,7 +981,7 @@ static void R_Upload_Lightmaps (void)
 	for (i = 0; i < r_numLightmaps; i++)
 	{
 		// TODO: Apply gammma? 
-		GL_BindTexture (GL_TEXTURE_2D, r_lightmaps [i]);
+		GL_BindTexture (GL_TEXTURE_2D, r_lightmaps[i]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -1077,8 +1065,13 @@ void R_StartFrame (void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
+void DoGamma(void);
+
 void R_EndFrame (void)
 {
+	if (r_gamma->value != 1.0f)
+		DoGamma();
+
 	if (r_ext_swap_control->modified)
 	{
 		// Vic: doesn't work on my GeForce2
@@ -1090,7 +1083,10 @@ void R_EndFrame (void)
 
 	glFinish();
 
-	awglSwapLayerBuffers(dc, WGL_SWAP_MAIN_PLANE);
+	if (awglSwapLayerBuffers)
+		awglSwapLayerBuffers(dc, WGL_SWAP_MAIN_PLANE);
+	else
+		awglSwapBuffers(dc);
 }
 
 // TODO

@@ -18,12 +18,13 @@
 
 #include "a_shared.h"
 #include "c_var.h"
+#include "command.h"
 #include "io.h"
 #include "console.h"
 #include "fmod/fmod.h"
 #include "sound.h"
 
-#define MAX_SAMPLES 256 
+#define MAX_SAMPLES 32786
 #define NUM_CHANNELS 32 
 
 typedef struct 
@@ -50,6 +51,7 @@ cvar_t *s_volume;
 cvar_t *s_musicvolume;
 cvar_t *s_separation;
 cvar_t *s_khz;
+cvar_t *s_initsound;
 cvar_t *s_loadas8bit;
 cvar_t *s_mixahead;
 cvar_t *s_mixPrestep;
@@ -74,6 +76,7 @@ static cvarTable_t cvarTable[] = {
 	{&s_musicvolume, "s_musicvolume", "0", CVAR_ARCHIVE},
 	{&s_separation, "s_separation", "0.5", CVAR_ARCHIVE},
 	{&s_khz, "s_khz", "22", CVAR_ARCHIVE},
+	{&s_initsound, "s_initsound", "1", 0},
 	{&s_loadas8bit, "s_loadas8bit", "0", CVAR_ARCHIVE},
 	{&s_mixahead, "s_mixahead", "0.2", CVAR_ARCHIVE},
 	{&s_mixPrestep, "s_mixPrestep", "0.05", CVAR_ARCHIVE},
@@ -106,15 +109,42 @@ void S_GetCvars (void)
 	}
 }
 
+void Cmd_Soundinfo (void)
+{
+	Con_Printf ("..... Sound Info .....\n");
+	Con_Printf ("sound system is muted\n");
+	Con_Printf ("    1 stereo\n");
+	Con_Printf ("%i samples\n", FSOUND_GetMaxSamples());
+	Con_Printf ("   16 samplebits\n");
+	Con_Printf ("    1 submission_chunk\n");
+	Con_Printf ("%i speed\n", FSOUND_GetOutputRate());
+	Con_Printf (" dma buffer\n");
+	Con_Printf ("No background file.\n");
+
+	Con_Printf ("......................\n");
+}
+
 aboolean S_Init (void)
 {
 	int khz;
 
+	Con_Printf ("\n....... sound initialization .......\n");
+
 	S_GetCvars();
+
+	if( !s_initsound->integer ) {
+		Com_Printf("not initializing.\n"); 
+		Com_Printf("------------------------------------\n");
+		return afalse;
+	}
+
+	Cmd_AddCommand("soundinfo", Cmd_Soundinfo);
 
 	if (FSOUND_GetVersion() < FMOD_VERSION)
 	{
 		Con_Printf(S_COLOR_YELLOW "WARNING: You are using the wrong FMOD DLL version! You should be using FMOD %.02f\n", FMOD_VERSION);
+		Con_Printf (".... sound initialization failed ....\n");
+		s_intialized = afalse;
 		return afalse;
 	}
 
@@ -124,13 +154,23 @@ aboolean S_Init (void)
 	// FSOUND_INIT !!!
 	khz = s_khz->integer * 1024;
 
+	FSOUND_SetOutput(FSOUND_OUTPUT_DSOUND);
+
+	Con_Printf ("Initializing DirectSound\n");
+
 	if (!FSOUND_Init(khz, NUM_CHANNELS, 0))
 	{
 		Con_Printf (S_COLOR_YELLOW "WARNING: Could not initialize Sound!\n");
+		Con_Printf (".... sound initialization failed ....\n");
+		s_intialized = afalse;
 		return afalse;
 	}
 
 	FSOUND_3D_Listener_SetDopplerFactor(s_doppler->value);
+
+	Con_Printf ("....................................\n");
+
+	Cmd_Soundinfo();
 
 	s_intialized = atrue;
 

@@ -123,11 +123,13 @@ aboolean CL_Init (void)
 
 	client_prepared = atrue;
 
-	Con_Printf("------ Client Initialization Successful ----\n");
-
 	cl_frametime = 0.0;
 	cl.connstate = CA_DISCONNECTED; 	// not talking to a server
 	
+	// Init UI
+	UI_main(UI_INIT, 0, 0, 0, 0, 0, 0, 0);
+	UI_main(UI_SET_ACTIVE_MENU, UIMENU_MAIN, 0, 0, 0, 0, 0, 0);
+
 	return atrue;
 }
 
