@@ -106,7 +106,6 @@ void Render_Backend_Init(void)
 	{
 		arrays.stage_tex_st = (vec2_t **)malloc (sizeof(vec2_t *));
 		arrays.stage_tex_st[0] = (vec2_t *)malloc (MAX_ARRAYS_VERTS * sizeof(vec2_t));
-
 		glconfig.maxActiveTextures = 1;
 	}
 	else 
@@ -254,9 +253,7 @@ void Render_Backend_Sky(int numsky, int *skylist)
 		elem = r_skybox->elems;
 
 		for (i = 0; i < r_skybox->numelems; i++)
-		{
 			arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
-		}
 
 		for (i = 0; i < r_skybox->numpoints; i++)
 		{
@@ -283,9 +280,8 @@ static void render_pushface(cface_t *face)
 	if (arrays.numverts >= MAX_ARRAYS_VERTS)
 		return;
 
-    for (i = 0; i < face->numelems; i++) {
+    for (i = 0; i < face->numelems; i++)
 		arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
-    }
     
     for (i = 0; i < face->numverts; i++)
 	{
@@ -307,11 +303,9 @@ void R_Push_raw (vec3_t *v, vec2_t *tc, colour_t *c, int *elems, int numverts, i
 		return;
 
 	for (i = 0; i < numelems; i++)
-	{
 		arrays.elems[arrays.numelems++] = arrays.numverts + *elems++;
-	}
 
-	for (i = 0; i < numverts; i++)
+	for (i = 0; i < numverts; i++) 
 	{
 		VectorCopy(v[i], arrays.verts[arrays.numverts]);
 		Vector2Copy(tc[i], arrays.tex_st[arrays.numverts]);
@@ -375,7 +369,7 @@ static void render_stripmine(int numelems, int *elems)
 		while (elem < numelems)
 		{
 			if (a != elems[elem] || b != elems[elem+1])
-			break;
+				break;
 			
 			if (toggle)
 			{
@@ -387,9 +381,11 @@ static void render_stripmine(int numelems, int *elems)
 				a = elems[elem+2];
 				glArrayElement(a);
 			}
+
 			elem += 3;
 			toggle = !toggle;
 		}
+
 		glEnd();
     }
 }
@@ -430,8 +426,8 @@ void Render_Backend_Make_Vertices (shader_t *s)
 						args[2] = startoff + off;
 						deflect = render_func_eval(s->deformv_wavefunc[n].func, args);
 						
-						// Deflect vertex along its normal vector by wave amount
-						VectorScale(v, deflect, v);
+						// Deflect vertex along its normal by wave amount
+						VectorScale(arrays.norms[i], deflect, v);
 						VectorAdd(v, arrays.verts[i], arrays.verts[i]);
 					}
 					break;
@@ -584,10 +580,10 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 
 					for (j = 0; j < arrays.numverts; j++)
 					{
-						k = ( ( ( arrays.verts[j][0] + arrays.verts[j][2] ) / 1024.f + pos ) * 1024.f ) * DEG2RAD;
+						k = (((arrays.verts[j][0] + arrays.verts[j][2]) / 1024.f + pos) * 1024.f) * DEG2RAD;
 						out[j][0] = in[j][0] + pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
 
-						k = ( ( ( arrays.verts[j][1] ) / 1024.f + pos ) * 1024.f ) * DEG2RAD;
+						k = (((arrays.verts[j][1]) / 1024.f + pos) * 1024.f) * DEG2RAD;
 						out[j][1] = in[j][1] + pass->tc_mod[n].args[0] + pass->tc_mod[n].args[1] * sin(k);
 					}
 				}
@@ -653,7 +649,7 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 	int i;
 	byte c;
 	colour_t *col = NULL;
-	byte alpha;
+	float color;
 
 	switch (pass->rgbgen)
 	{
@@ -730,8 +726,10 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 	switch (pass->alpha_gen)
 	{
 		case ALPHA_GEN_WAVE:
-			c = FloatToByte(255.0f * (float)render_func_eval(pass->alphagen_func.func,
-							pass->alphagen_func.args));
+			color = 255.0f * (float)render_func_eval(pass->alphagen_func.func,
+							pass->alphagen_func.args);
+			color = bound (0.0f, color, 255.0f);
+			c = FloatToByte(color);
 
 			for (i = 0; i < arrays.numverts; i++) {
 				col[i][3] = c;
@@ -742,9 +740,10 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 		case ALPHA_GEN_PORTAL:
 			for (i = 0; i < arrays.numverts; i++)
 			{
-				// TODO 
-				alpha = FloatToByte(Distance (r_eyepos, arrays.verts[i]) / 255.0f);
-				col[i][3] = min (alpha, 255);
+				// TODO
+				color = Distance (r_eyepos, arrays.verts[i]) / 255.0f;
+				color = bound (0.0f, color, 255.0f);
+				col[i][3] = FloatToByte(color);
 			}
 			break;
 
@@ -761,7 +760,12 @@ byte *Render_Backend_Make_Colors (shaderpass_t *pass)
 				col[i][3] = arrays.colour[i][3];
 			break;
 
+		// TODO
+		// Looks good but it's incorrect. Uses mid value of 63 (127 was too bright)
+		// Sum of all lights in the vertex origin (static + dyn)?
 		case ALPHA_GEN_LIGHTINGSPECULAR:
+			for (i = 0; i < arrays.numverts; i++)
+				col[i][3] = 63;
 			break;
 
 		case ALPHA_GEN_DEFAULT:

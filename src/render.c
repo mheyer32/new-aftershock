@@ -574,27 +574,26 @@ void R_LerpTag(orientation_t *tag, int model, int startFrame, int endFrame, floa
 	if (tagnum < 0) 
 		return;
 
-	if (frac == 0.0)
+	frac = bound (0.0f, frac, 1.0f);
+	st = &mod->tags[startFrame][tagnum];
+	et = &mod->tags[endFrame][tagnum];
+
+	if (!frac)
 	{
-		VectorCopy(mod->tags[startFrame][tagnum].pos, tag->origin);
-		VectorCopy(mod->tags[startFrame][tagnum].rot[0], tag->axis[0]);
-		VectorCopy(mod->tags[startFrame][tagnum].rot[1], tag->axis[1]);
-		VectorCopy(mod->tags[startFrame][tagnum].rot[2], tag->axis[2]);
+		VectorCopy(st->pos, tag->origin);
+		VectorCopy(st->rot[0], tag->axis[0]);
+		VectorCopy(st->rot[1], tag->axis[1]);
+		VectorCopy(st->rot[2], tag->axis[2]);
 	}
-	else if (frac == 1.0)
+	else if (frac == 1.0f)
 	{
-		VectorCopy(mod->tags[endFrame][tagnum].pos, tag->origin);
-		VectorCopy(mod->tags[endFrame][tagnum].rot[0], tag->axis[0]);
-		VectorCopy(mod->tags[endFrame][tagnum].rot[1], tag->axis[1]);
-		VectorCopy(mod->tags[endFrame][tagnum].rot[2], tag->axis[2]);
+		VectorCopy(et->pos, tag->origin);
+		VectorCopy(et->rot[0], tag->axis[0]);
+		VectorCopy(et->rot[1], tag->axis[1]);
+		VectorCopy(et->rot[2], tag->axis[2]);
 	}
 	else 
 	{
-		st = &mod->tags[startFrame][tagnum];
-		et = &mod->tags[endFrame][tagnum];
-
-		frac = bound (0.0, frac, 1.0);
-
 		R_InterpolateNormal(st->rot[0], et->rot[0], frac, tag->axis[0]);
 		R_InterpolateNormal(st->rot[1], et->rot[1], frac, tag->axis[1]);
 		R_InterpolateNormal(st->rot[2], et->rot[2], frac, tag->axis[2]);
@@ -617,7 +616,7 @@ void R_Render_Model (const refEntity_t *re)
 	skin_t *skin;
 	uint_t *elem;
 	int i, j, k, shaderref = -1;
-	float saved_time;
+	double saved_time;
 	int frame, backframe;
 
 	if ((re->hModel <= 0) || (re->hModel >= r_md3Modelcount))
@@ -629,9 +628,9 @@ void R_Render_Model (const refEntity_t *re)
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 
-	glLoadMatrixf (model_view_mat);
+	glLoadMatrixf(model_view_mat);
 
-	Matrix4_Identity (tmpmat);
+	Matrix4_Identity(tmpmat);
 
 	tmpmat[12] = re->origin[0];
 	tmpmat[13] = re->origin[1];
@@ -643,21 +642,21 @@ void R_Render_Model (const refEntity_t *re)
 	mat[2] = re->axis[0][2];
 
 	if (re->nonNormalizedAxes)
-		VectorNormalize (mat);
+		VectorNormalize(mat);
 
 	mat[4] = re->axis[1][0];
 	mat[5] = re->axis[1][1];
 	mat[6] = re->axis[1][2];
 
 	if (re->nonNormalizedAxes)
-		VectorNormalize (&mat[4]);
+		VectorNormalize(&mat[4]);
 
 	mat[8] = re->axis[2][0];
 	mat[9] = re->axis[2][1];
 	mat[10] = re->axis[2][2];
 
 	if (re->nonNormalizedAxes)
-		VectorNormalize (&mat[8]);
+		VectorNormalize(&mat[8]);
 	
 	Matrix4_Multiply(tmpmat, mat, loadmat);
 
@@ -671,7 +670,7 @@ void R_Render_Model (const refEntity_t *re)
 	saved_time = cl_frametime;
 
 	// is this right?
-	cl_frametime = saved_time - (float)re->shaderTime / 1000.0f;
+	cl_frametime = saved_time - (double)re->shaderTime;
 
 	for (j = 0; j < model->nummeshes; j++)
 	{
@@ -703,6 +702,9 @@ void R_Render_Model (const refEntity_t *re)
 		}
 
 		if (shaderref < 0) {
+
+			cl_frametime = saved_time;
+
 			// Revert
 			Matrix4_Identity(transform_ref.matrix);
 			transform_ref.matrix_identity = atrue;
@@ -718,10 +720,9 @@ void R_Render_Model (const refEntity_t *re)
 		arrays.numverts = 0;
 
 	    elem = mesh->elems;
+
 	    for (k = 0; k < mesh->numelems; k++)
-	    {
 			arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
-	    }
 
 		frame = re->frame;
 		backframe = re->oldframe;
@@ -766,6 +767,7 @@ void R_Render_Model (const refEntity_t *re)
 
 				// Push the entity colour (TEST)
 				Vector4Copy (re->shaderRGBA, arrays.entity_colour[arrays.numverts]);
+
 				R_InterpolateNormal(mesh->points[backframe][k], mesh->points[frame][k], frac, arrays.verts[arrays.numverts]);
 
 				Vector2Copy(mesh->tex_st[k], arrays.tex_st[arrays.numverts]);
@@ -829,7 +831,7 @@ void R_Render_Sprite (const refEntity_t *re)
 	VectorAdd (org, tmp, v[1]);
 
 	// 4 
-	VectorScale (tmp, -1.0, tmp);
+	VectorScale (tmp, -1.0f, tmp);
 	VectorAdd (org, tmp, v[3]);
 
 	// texcoords
@@ -934,9 +936,9 @@ void R_RenderScene (const refdef_t *fd)
 	modmat[10]	= fd->viewaxis[2][2];
 	modmat[11]	= 0;
 
-	modmat[12]	= -fd->vieworg[0];
-	modmat[13]	= -fd->vieworg[1];
-	modmat[14]	= -fd->vieworg[2];
+	modmat[12]	= fd->vieworg[0];
+	modmat[13]	= fd->vieworg[1];
+	modmat[14]	= fd->vieworg[2];
 	modmat[15]	= 1.0f;
 
 	glMultMatrixf(modmat);
@@ -988,10 +990,10 @@ static void R_Upload_Lightmaps (void)
 
 	glGenTextures (r_numLightmaps, r_lightmaps);
 
-	for (i = 0; i < r_numLightmaps; i++ )
+	for (i = 0; i < r_numLightmaps; i++)
 	{
 		// TODO: Apply gammma? 
-		GL_BindTexture (GL_TEXTURE_2D,r_lightmaps [i]);
+		GL_BindTexture (GL_TEXTURE_2D, r_lightmaps [i]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -1124,7 +1126,8 @@ void R_Draw_World (void)
 	Render_Backend(&facelist);
 }
 
-#define M_PI_2 M_PI /2.0f
+#define M_PI_2 M_PI*0.5f
+
 void R_Setup_Clipplanes (const refdef_t *fd)
 {
 	float half_pi_minus_half_fov_x = M_PI_2 - fd->fov_x * M_PI / 360.f;
@@ -1170,7 +1173,7 @@ void R_Render_Bsp_Model (int num)
 	}
 }
 
-// NO More accept , this slowed just down 
+// NO More accept, this slowed just down 
 void R_Recursive_World_Node (int n)
 {
 	cnode_t *node;
@@ -1201,9 +1204,9 @@ void R_Recursive_World_Node (int n)
 		
 		plane = node->plane;
 		
-//		if (plane->type < 3)
-//			dist = r_eyepos[plane->type] - plane->dist;
-//		else
+		if (plane->type < 3)
+			dist = r_eyepos[plane->type] - plane->dist;
+		else
 			dist = DotProduct(r_eyepos, plane->normal) - plane->dist;
 	
 		R_Recursive_World_Node (node->children[(dist <= 0)]);
@@ -1214,16 +1217,14 @@ void R_Recursive_World_Node (int n)
 
 int R_ClipFrustrum (vec3_t mins, vec3_t maxs)
 {
-	static int res [4];
-
-	res[0] = BoxOnPlaneSide(mins, maxs, &clipplanes[0]);
-	if (res[0] == 1) return 1;
-	res[1] = BoxOnPlaneSide(mins, maxs, &clipplanes[1]);
-	if (res[1] == 1) return 1;
-	res[2] = BoxOnPlaneSide(mins, maxs, &clipplanes[2]);
-	if (res[2] == 1) return 1;
-	res[3] = BoxOnPlaneSide(mins, maxs, &clipplanes[3]);
-	if (res[3] == 1) return 1;
+	if (BoxOnPlaneSide(mins, maxs, &clipplanes[0]) == 1)
+		return 1;
+	if (BoxOnPlaneSide(mins, maxs, &clipplanes[1]) == 1)
+		return 1;
+	if (BoxOnPlaneSide(mins, maxs, &clipplanes[2]) == 1)
+		return 1;
+	if (BoxOnPlaneSide(mins, maxs, &clipplanes[3]) == 1)
+		return 1;
 
 	return 0;
 }
@@ -1250,8 +1251,8 @@ void R_Render_Walk_Face (int num)
 		break;
 
 		case FACETYPE_MESH:
-	//		if (R_ClipFrustrum (face->mins,face->maxs))
-	//			return;
+//			if (R_ClipFrustrum (face->mins, face->maxs))
+//				return;
 			break;
 
 		default: // FLARE OR Error
@@ -1310,9 +1311,9 @@ static int R_Find_Cluster(const vec3_t pos)
     {
 		plane = node->plane;
 
-//		if (plane->type < 3)
-//			dist = pos[plane->type] - plane->dist;
-//		else 
+		if (plane->type < 3)
+			dist = pos[plane->type] - plane->dist;
+		else 
 			dist = DotProduct(pos, plane->normal) - plane->dist;
 			
 		if (dist > 0)
