@@ -43,7 +43,7 @@ int LoadCGAME (void )
 
 
 	
-	CGAME_inst= LoadLibrary(CGAME_name );
+	CGAME_inst= LoadLibrary(FS_Add_Basedir(CGAME_name) );
 	if (!CGAME_inst) return 0;
 
 	CGAME_entry=(EntryFunc*) GetProcAddress(

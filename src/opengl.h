@@ -156,6 +156,23 @@ void GL_DisableTexUnitARB (int num );
 void GL_TexEnvf (int target ,int pname ,float param );
 
 
+
+// GLU - Replacement :
+GLint APIENTRY GL_ScaleImage( GLenum format,
+                              GLsizei widthin, GLsizei heightin,
+                              GLenum typein, const void *datain,
+                              GLsizei widthout, GLsizei heightout,
+                              GLenum typeout, void *dataout );
+
+GLint APIENTRY GL_Build2DMipmaps( GLenum target, GLint components,
+                                  GLsizei width, GLsizei height, GLenum format,
+                                  GLenum type, const void *data );
+
+
+void APIENTRY GL_Perspective( GLdouble fovy, GLdouble aspect,
+                              GLdouble zNear, GLdouble zFar );
+
+
 enum
 {
  CPU_AMD = 1,

@@ -47,7 +47,7 @@ int LoadUI (void )
 
 	if (uiLoaded) return 1;
 
-		UI_inst= LoadLibrary(UI_name );
+		UI_inst= LoadLibrary(FS_Add_Basedir(UI_name) );
 	if (!UI_inst) return 0;
 
 	UI_entry=(EntryFunc*) GetProcAddress(

@@ -1377,69 +1377,6 @@ extern void (APIENTRY *glViewport) (GLint x, GLint y, GLsizei width, GLsizei hei
 
 
 
-// GLU Stuff :
-
-const GLubyte* (APIENTRY *gluErrorString) (
-    GLenum   errCode);
-
-const GLubyte* (APIENTRY *gluGetString) (
-    GLenum   name);
-
-void (APIENTRY *gluOrtho2D) (
-    GLdouble left, 
-    GLdouble right, 
-    GLdouble bottom, 
-    GLdouble top);
-
-void (APIENTRY  *gluPerspective) (
-    GLdouble fovy, 
-    GLdouble aspect, 
-    GLdouble zNear, 
-    GLdouble zFar);
-
-
-void (APIENTRY *gluLookAt) (
-    GLdouble eyex, 
-    GLdouble eyey, 
-    GLdouble eyez, 
-    GLdouble centerx, 
-    GLdouble centery, 
-    GLdouble centerz, 
-    GLdouble upx, 
-    GLdouble upy, 
-    GLdouble upz);
-
-
-int (APIENTRY *gluScaleImage) (
-    GLenum      format, 
-    GLint       widthin, 
-    GLint       heightin, 
-    GLenum      typein, 
-    const void  *datain, 
-    GLint       widthout, 
-    GLint       heightout, 
-    GLenum      typeout, 
-    void        *dataout);
-
-
-int (APIENTRY *gluBuild1DMipmaps) (
-    GLenum      target, 
-    GLint       components, 
-    GLint       width, 
-    GLenum      format, 
-    GLenum      type, 
-    const void  *data);
-
-int (APIENTRY *gluBuild2DMipmaps) (
-    GLenum      target, 
-    GLint       components, 
-    GLint       width, 
-    GLint       height, 
-    GLenum      format, 
-    GLenum      type, 
-    const void  *data);
-
-
 // WGL Stuff :
 
 

@@ -37,7 +37,7 @@ int FS_FileSize (const char * name );
 void FS_Init (const char *dir );
 void FS_Shutdown(void);
 
-
+char *FS_Add_Basedir (const char * s);
 
 
 

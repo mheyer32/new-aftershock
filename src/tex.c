@@ -67,70 +67,6 @@ static void tex_loadtexture(byte *rgb, int w, int h, int format, uint_t flags);
 
 static void *imgbuf;
 
-static void
-tex_loadtexture(byte *rgb, int w, int h, int format, uint_t flags)
-{
-    byte *tex = rgb;
-    int width = w, height = h;
-    int size = width*height* (format == GL_RGB ? 3 : 4);
-
-    /* Scale image down for biased level of detail (lowered texture quality) */
-    if (r_lodbias->integer > 0)
-    {
-	width /= 1 << r_lodbias->integer;
-	height /= 1 << r_lodbias->integer;
-	tex = malloc(size);
-
-	gluScaleImage(format, w, h, GL_UNSIGNED_BYTE, rgb,
-		      width, height, GL_UNSIGNED_BYTE, tex);
-    }
-
-    /* Not really a gamma: prelighten the texture to compensate for
-       darkening after lightmap application. */
-    /* FIXME: should alpha be brightened too? */
-    if (r_gamma->value != 1.0)
-    {
-	int i, val;
-
-	
-	for (i=0; i<size; ++i)
-	{
-	    val = tex[i] * r_gamma->value;
-	    if (val > 255) val = 255;
-	    tex[i] = val;
-	}
-    }
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-		    GL_LINEAR_MIPMAP_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    if (flags & TEXFILE_CLAMP)
-    {
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    }
-    else
-    {
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    }
-
-    if (flags & TEXFILE_NOMIPMAPS)
-    {
-	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
-		     GL_UNSIGNED_BYTE, tex);
-    }
-    else
-    {
-	gluBuild2DMipmaps(GL_TEXTURE_2D, format, width, height, format,
-			  GL_UNSIGNED_BYTE, tex);
-    }
-
-    if (r_lodbias > 0)
-	free(tex);
-}
-
 
 static void
 jpg_noop(j_decompress_ptr cinfo)
@@ -324,85 +260,6 @@ int jpg_read_extern(const char *fname, byte **rgb, int *w, int *h, int *format,v
     jpeg_destroy_decompress(&cinfo);
     
     return 1;
-}
-
-
- int
-loadtexture_extern(byte *rgb, int w, int h, int format, uint_t flags)
-{
-    byte *tex;
-    int width = w, height = h;
-    int size = width*height* (format == GL_RGB ? 3 : 4);
-
-
-	// not really the right test 
-	if (w % 2 || h % 2 )
-	{
-		return 0;
-
-	}
-
-
-
-	if (r_picmip->integer || w>glconfig.maxTextureSize || h> glconfig.maxTextureSize)
-    {
-		if (!(flags & TEXFILE_NOSCALEDOWN) )
-		if (r_picmip->integer > 0)
-		{
-			width /= 1 << (r_lodbias->integer);
-			height /= 1 << (r_lodbias->integer);
-		}
-
-		while (width>glconfig.maxTextureSize || height > glconfig.maxTextureSize )
-		{
-			width /= 1 << 1;
-			height /= 1 << 1;
-		}
-		tex = malloc(size);
-
-		gluScaleImage(format, w, h, GL_UNSIGNED_BYTE, rgb,
-		      width, height, GL_UNSIGNED_BYTE, tex);
-	}
-		else 
-		{
-			 tex=rgb;
-		}
-
-
-
-
-
-
-  
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-		    GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    if (flags & TEXFILE_CLAMP)
-    {
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    }
-    else
-    {
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    }
-
-	if (flags & TEXFILE_NOMIPMAPS)
-    {
-	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
-		     GL_UNSIGNED_BYTE, tex);
-    }
-    else
-    {
-	gluBuild2DMipmaps(GL_TEXTURE_2D, format, width, height, format,
-			  GL_UNSIGNED_BYTE, tex);
-    }
-
-
-	return 1;
-   
 }
 
 
@@ -789,8 +646,14 @@ int Tex_UploadTexture (byte **data ,int width ,int height , int format ,int flag
 		byte *tmp=*data;
 		byte * scaled = malloc ( w * h * ( (format == GL_RGB)? 3 : 4 ));
 
-		gluScaleImage (format,width,height,GL_UNSIGNED_BYTE,tmp,w
-			,h,GL_UNSIGNED_BYTE,scaled);
+		if (GL_ScaleImage(format,width,height,GL_UNSIGNED_BYTE,tmp,w
+			,h,GL_UNSIGNED_BYTE,scaled))
+		{
+			free (tmp);
+			free (scaled );
+			return 0;
+		}
+
 
 		free (tmp);
 
@@ -840,7 +703,7 @@ int Tex_UploadTexture (byte **data ,int width ,int height , int format ,int flag
     }
     else
     {
-		gluBuild2DMipmaps(GL_TEXTURE_2D, internal_format
+		GL_Build2DMipmaps(GL_TEXTURE_2D, internal_format
 			, w, h, format,
 			  GL_UNSIGNED_BYTE, *data);
     }

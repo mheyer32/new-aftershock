@@ -282,14 +282,16 @@ void R_Init(void)
 
 	Con_Printf (" -------- R_INIT : --------- \n");
 
-
 	R_GetCvars( );
 
 	if (!Init_OpenGL ())
-		Error (" Could not Init OpenGL ! ");
+		Error ("Could not Init OpenGL ! ");
 
-	Shader_Init();
-	MD3_Init ();
+	if (!Shader_Init())
+		Error ("Could not Init Shaders !");
+	
+	if (!MD3_Init ())
+		Error ("Could not Init MD3 !");
 
 	GL_DepthMask (GL_TRUE);
 
@@ -326,11 +328,9 @@ void R_Init(void)
 
 	overlay = malloc (MAX_OVERLAY * sizeof (quad_t ));
 
-
-
     R_backend_init();
 
-	Con_Printf (" ... finsished R_Init ... \n");
+	Con_Printf (" ... finished R_Init ... \n");
 
 }
 
@@ -379,6 +379,32 @@ void R_AddPolyToScene(  const polyVert_t *verts , int numVerts, int Shader )
 	dyn_polys_count++;
 }
 
+// TODO : Optimize : Sort !
+void R_RenderPolys (void )
+{
+	int i,j;
+	poly_t * p;
+
+
+	for (i=0;i<dyn_polys_count;i++)
+	{
+		p=&Dyn_Polys [i];
+
+		for (j=0;j<p->numVerts;j++)
+		{
+			VectorCopy(p->verts[j].xyz,arrays.verts[arrays.numverts]);
+			arrays.tex_st[arrays.numverts][0]=p->verts[j].st[0];
+			arrays.tex_st[arrays.numverts][1]=p->verts[j].st[1];
+			colour_copy (p->verts[j].modulate,arrays.colour[j]);
+			arrays.elems[arrays.numverts]=arrays.numverts+j; // FIXME ?
+			arrays.numverts++;
+		}
+		R_backend_flush(p->hShader,0);
+			
+	}
+
+
+}
 
 
 // TODO : Make resolution independent !
@@ -987,7 +1013,7 @@ void R_RenderScene( const refdef_t *fd )
 // WORKS !!!
 	glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-	gluPerspective(fd->fov_y,fd->fov_x/fd->fov_y,r_znear->value,3000.0);
+	GL_Perspective(fd->fov_y,fd->fov_x/fd->fov_y,r_znear->value,3000.0);
 
 //Setup the Matrix :
 // Finally WORKS !!!
@@ -1051,6 +1077,7 @@ void R_RenderScene( const refdef_t *fd )
 // Render Entities :
 	R_renderEntities ();
 
+	R_RenderPolys();
 
 	glFinish();
 

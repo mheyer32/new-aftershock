@@ -37,7 +37,7 @@ int LoadGame (void )
 
 	if (gameLoaded) return 1;
 
-	GAME_inst= LoadLibrary(GAME_name );
+	GAME_inst= LoadLibrary(FS_Add_Basedir(GAME_name) );
 	if (!GAME_inst) return 0;
 
 	GAME_entry=(EntryFunc*) GetProcAddress(

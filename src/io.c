@@ -60,16 +60,13 @@ static int num_files=0;
 static char basedir [MAX_APATH];
 
 
-static void Add_Basedir (char * s)
+char *FS_Add_Basedir (const char * s)
 {
-	char buf [128];
-
-	if (!strncmp (s,basedir,strlen(basedir)))
-		return ;
+	static char buf [128];
 
 	sprintf (buf,"%s/%s",basedir,s);
 
-	strcpy (s,buf);
+	return buf;
 }
 
 
@@ -95,7 +92,7 @@ int FS_OpenFile (const char *path, int  *handle,fsMode_t mode)
 	int fnum =Get_FirstFreeFile ();
 	file_t *f = &files[fnum];
 	void * h;
-	char buf [MAX_APATH];
+	char *buf;
 
 	if (!path || !handle )
 		return 0;
@@ -119,8 +116,7 @@ int FS_OpenFile (const char *path, int  *handle,fsMode_t mode)
 			break;
 	}
 
-	strcpy (buf,path);
-	Add_Basedir (buf);
+	buf=FS_Add_Basedir (path);
 	h=File_Open(buf,mode);
 	
 	
@@ -313,7 +309,7 @@ int  FS_GetFileList (const char *path,const char *extension,char *listbuf,int bu
 	char tmp [128];
 	int len=0;
 	void * handle ;
-	char syspath [128];
+	char *syspath;
 	char fname [128];
 
 	listbuf[0]=0;
@@ -323,8 +319,8 @@ int  FS_GetFileList (const char *path,const char *extension,char *listbuf,int bu
 	if (!path[0])
 		return 0;
 
-	strcpy (syspath,path);
-	Add_Basedir (syspath);
+	
+	syspath=FS_Add_Basedir (path);
 	
 	sprintf (tmp,"%s/*.%s",syspath,extension);	
 
