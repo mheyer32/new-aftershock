@@ -24,6 +24,7 @@
 void Cmd_Unbindall (void );
 void  Cmd_Bind (void );
 
+void Key_WriteBindings( int file );
 void Key_SetBinding( int keynum, const char *binding ) ;
 void Key_GetBindingBuf( int keynum, char *buf, int buflen ) ;
 void Key_KeynumToStringBuf( int keynum, char *buf, int buflen ) ;

@@ -23,6 +23,8 @@
 
 extern HWND hWnd;
 extern HGLRC hRC;
+
+// TODO !!!
 void Error(const char *fmt, ...)
 {
 	char buf [1024];
@@ -56,66 +58,6 @@ int strcmpEXT (char * str,char * str2 ,int len)
 
 
 
-
-// UGLY !!!
-
-int Search (const char * name ,char * in, char * buf ,int bufsize)
-{
-
-	int i=0,len=0,ret=0;
-
-	char * actpos=in;
-	char * tmppos=NULL;
-	char * token=malloc(128);
-	char * nextpos=NULL;
-	char * bufpos=buf;
-
-	memset(buf,0,bufsize);
-
-	if (strlen(name)<1)
-	{
-		free(token);
-		return 0;
-	}
-
-	for (i=0;strstr(actpos,name)!=NULL; )
-	{
-
-		memset(token,0,128);
-		ret++;
-		tmppos=strstr(actpos,name);
-
-		while (*tmppos != ' ')
-		{
-			tmppos--;
-
-
-		}
-		tmppos++;
-		nextpos=tmppos;
-		len=0;
-		while (*nextpos != ' ')
-		{
-			len++;
-			nextpos++;
-
-
-		}
-		memcpy(token,tmppos,len);
-		strcat(bufpos,token);
-		bufpos+=strlen(token)+1;
-		actpos=nextpos;
-		
-
-
-	}
-
-
-	free(token);
-	return ret;
-
-
-}
 
 
 char *copystring(const char *s)

@@ -406,7 +406,7 @@ int BSP_Load_Map(char *mapname )
 
 	len =FS_OpenFile (filename,& file ,FS_READ );
 
-
+	
 
 	if (!len || ! file )
 	{
@@ -639,26 +639,6 @@ int BSP_Load_Map(char *mapname )
 	bsploaded =1;
 
 
-
-
-
-
-// TEST !!!!
-
-	if (1 )
-	{
-		trace_t res ;
-		vec3_t start ={ 5000.0,5000.0,5000.0 }, end={ -200.0,-200.0 ,-200.0 };
-		vec3_t mins ={-10.0,-10.0,-10.0} , maxs ={ 10.0,10.0,10.0};
-		Trace (&res,start,mins,maxs,end,0,CONTENTS_SOLID);
-
-
-	}
-
-
-
-
-	FS_FCloseFile (file);
 
 
 	return 1;

@@ -229,6 +229,10 @@ SOURCE=.\skybox.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\sound.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\sys_file.c
 # End Source File
 # Begin Source File
@@ -357,11 +361,19 @@ SOURCE=.\mesh.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\net_ipx.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\net_lan.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\net_msg.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\net_udp.h
 # End Source File
 # Begin Source File
 
@@ -394,6 +406,10 @@ SOURCE=.\shader.h
 # Begin Source File
 
 SOURCE=.\skybox.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound.h
 # End Source File
 # Begin Source File
 

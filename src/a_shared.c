@@ -1,6 +1,8 @@
 #include "a_shared.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include "console.h"
+#include "util.h"
 
 float Com_Clamp( float min, float max, float value )
 {
@@ -13,14 +15,37 @@ float Com_Clamp( float min, float max, float value )
 	return value;
 }
 
-
-void Com_Error(void)
+// TODO !!!
+void Com_Error(int level, const char *error, ... )
 {
+	char buf [MAX_STRING_CHARS];
+	va_list mark;
+	va_start (mark,error);
+	
+	vsprintf (buf,error,mark);
 
+	switch (level  )
+	{
+		case ERR_FATAL:
+			Error (buf);
+			break;
+		case ERR_DROP:					
+		case ERR_DISCONNECT:
+		case ERR_NEED_CD:		
+				break;
+	}
 
 }
-void Com_Printf(void)
+
+// TODO !!!
+void Com_Printf(const char *msg, ... )
 {
+	static char buf [1024];
+
+	va_list mark;
+	va_start (mark,msg);
+
+	Con_Printf (msg,mark);
 
 }
 /*
@@ -315,7 +340,7 @@ void COM_MatchToken( char **buf_p, char *match ) {
 
 	token = COM_Parse( buf_p );
 	if ( strcmp( token, match ) ) {
-	//	Com_Error( ERR_DROP, "MatchToken: %s != %s", token, match );
+		Com_Error( ERR_DROP, "MatchToken: %s != %s", token, match );
 	}
 }
 
@@ -550,10 +575,10 @@ Safe strncpy that ensures a trailing zero
 void A_strncpyz( char *dest, const char *src, int destsize )
 {
 	if ( !src ) {
-	//	Com_Error( ERR_FATAL, "G_strncpyz: NULL src" );
+		Com_Error( ERR_FATAL, "G_strncpyz: NULL src" );
 	}
 	if ( destsize < 1 ) {
-	//	Com_Error( ERR_FATAL, "G_strncpyz: destsize < 1" ); 
+		Com_Error( ERR_FATAL, "G_strncpyz: destsize < 1" ); 
 	}
 
 	strncpy( dest, src, destsize-1 );
@@ -706,10 +731,10 @@ void Com_sprintf( char *dest, int size, const char *fmt, ...)
 	len = vsprintf (bigbuffer, fmt, argptr);
 	va_end (argptr);
 	if ( len >= sizeof( bigbuffer ) ) {
-		//Com_Error( ERR_FATAL, "Com_sprintf: overflowed bigbuffer" );
+		Com_Error( ERR_FATAL, "Com_sprintf: overflowed bigbuffer" );
 	}
 	if (len >= size) {
-		//Com_Printf ("Com_sprintf: overflow of %i in %i\n", len, size);
+		Com_Printf ("Com_sprintf: overflow of %i in %i\n", len, size);
 	}
 	strncpy (dest, bigbuffer, size );
 }
@@ -769,7 +794,7 @@ char *Info_ValueForKey( const char *s, const char *key ) {
 	}
 
 	if ( strlen( s ) >= MAX_INFO_STRING ) {
-	//	Com_Error( ERR_DROP, "Info_ValueForKey: oversize infostring" );
+		Com_Error( ERR_DROP, "Info_ValueForKey: oversize infostring" );
 	}
 
 	valueindex ^= 1;
@@ -857,7 +882,7 @@ void Info_RemoveKey( char *s, const char *key ) {
 	char	*o;
 
 	if ( strlen( s ) >= MAX_INFO_STRING ) {
-	//	Com_Error( ERR_DROP, "Info_RemoveKey: oversize infostring" );
+		Com_Error( ERR_DROP, "Info_RemoveKey: oversize infostring" );
 	}
 
 	if (strchr (key, '\\')) {

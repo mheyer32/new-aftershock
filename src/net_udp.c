@@ -17,10 +17,10 @@
  */
 
 #include "a_shared.h"
+#include "sys_network.h"
 #include "network.h"	/* NET_SOCKET */
 #include "console.h"		/* Con_Printf */
 #include "c_var.h"			/* cvar_t */
-#include "network.h"		/* Net_SendPacket */
 
 
 // From GOLK :www.digital-phenomenon.de

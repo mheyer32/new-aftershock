@@ -40,6 +40,9 @@
 #include "entity.h"
 #include "client.h"
 #include "server.h"
+#include "brushtest.h"
+
+#include "net_lan.h"
 
 typedef    int  SYSCALL (int arg, ...) ;
 
@@ -792,6 +795,7 @@ int CGAME_Call (int arg,...)
 		Con_Printf(va_arg(mark,const char *));
 		break;
 	case CG_ERROR:
+		Error (va_arg(mark,const char *));
 		break;
 	case CG_MILLISECONDS:
 		return Sys_Get_Time();

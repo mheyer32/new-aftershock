@@ -23,7 +23,8 @@
 
 
 
-void Engine_Init(void);
+int Engine_Init (void );
+void Engine_Render_Next_Frame ( void );
 void Engine_Shutdown(void);
 
 

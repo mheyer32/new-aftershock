@@ -23,6 +23,7 @@
 #include "command.h"
 #include "console.h"
 #include "io.h"
+#include "client.h"
 
 
 
@@ -198,7 +199,7 @@ void Key_Update_Keystate ( int key ,int state ,aboolean is_char )
 		return ;
 	}
 
-	if (Keys[key]!=state )
+	if (Keys[key]!=state || state )
 	{
 		Keys[key]=state ;
 

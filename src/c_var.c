@@ -175,7 +175,7 @@ aboolean Com_MatchPattern( char *pattern, char *string, aboolean case_sensitive 
 static void Cmd_cvarlist( void )
 {
 	cvar_t	*cvar;
-	char	*arg;
+	char	*arg=NULL;
 	char	flags[8];
 
 	if( Cmd_Argc() > 1 ) {

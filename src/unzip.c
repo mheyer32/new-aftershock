@@ -993,7 +993,7 @@ int Unz_GetStringForDir (unzFile * pak,const char * dir,const char *extension,ch
 
 }
 
-int Unz_FileExists (unzFile * pak, char * file )
+int Unz_FileExists (unzFile * pak, const char * file )
 {
 	int i,j;
 	unz_s *s=(unz_s*) pak;

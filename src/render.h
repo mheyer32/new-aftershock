@@ -104,10 +104,11 @@ extern cvar_t *win_wndproc;
 
 
 
-
-#include "vec.h"
 #define	MAX_RENDER_STRINGS			8
 #define	MAX_RENDER_STRING_LENGTH	32
+
+#define MAX_TRANSPARENT 1000
+#define MAX_OVERLAY 4096
 
 
 

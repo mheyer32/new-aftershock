@@ -32,6 +32,6 @@ void	LAN_GetPing( int n, char *buf, int buflen, int *pingtime );
 void	LAN_GetPingInfo( int n, char *buf, int buflen );
 
 void	LAN_Ping( void );
-void	LAN_AddServer( net_address_t *addr, const char *info );
+void	LAN_AddServer( struct net_address_t *addr, const char *info );
 
 #endif				/* NET_LAN_H_INCLUDED */

@@ -18,15 +18,15 @@
 #ifndef __RENDER_BACK_H__
 #define __RENDER_BACK_H__
 
-#include "a_shared.h"
+
+#define MAX_ARRAYS_VERTS 8192
+#define MAX_ARRAYS_ELEMS MAX_ARRAYS_VERTS * 3 
 
 
-enum {
-	REND_TYPE_FACE,
-	REND_TYPE_QUAD,
-	REND_TYPE_MD3_MESH,
-	REND_TYPE_POLY
-};
+
+#define TWOPI 6.28318530718
+#define TURB_SCALE 0.2
+
 
 
 typedef struct
@@ -42,6 +42,22 @@ typedef struct
     int numfaces;
     rendface_t *faces;
 } facelist_t;
+
+
+typedef struct
+{
+    int numverts;
+    vec3_t *verts;
+	vec3_t * norms ;
+    colour_t *colour;
+	colour_t *entity_colour;
+    texcoord_t *tex_st;
+    texcoord_t *lm_st;
+	vec2_t ** stage_tex_st ;
+	colour_t * mod_colour;
+    int numelems;
+    int *elems;
+} arrays_t;
 
 
 
@@ -65,25 +81,6 @@ void Render_backend_Overlay ( quad_t * q,int numquads );
 /* FIXME: other things that could go in the sort key include transparency
  * and 'sort' directives from the shader scripts */
 //#define SORTKEY(face)  ( ((face)->shadernum << 16) + (face)->lm_texnum+1)
-
-#include "vec.h"
-typedef struct
-{
-    int numverts;
-    vec3_t *verts;
-	vec3_t * norms ;
-    colour_t *colour;
-	colour_t *entity_colour;
-    texcoord_t *tex_st;
-    texcoord_t *lm_st;
-	vec2_t ** stage_tex_st ;
-	colour_t * mod_colour;
-    int numelems;
-    int *elems;
-} arrays_t;
-
-
-
 
 
 

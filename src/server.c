@@ -24,6 +24,8 @@
 #include "command.h"
 #include "console.h"
 #include "bsp.h"
+#include "server.h"
+#include "client.h"
 
 
 
@@ -303,13 +305,13 @@ int SV_Startup (char * mapname )
 	if (!LoadGame()) 
 	{
 		Error ("Could not load Game ! ");
-		return;
+		return 0;
 	}
 	GAME_main(0, 0, 0,0,0,0,0,0);
 
 	Con_Printf( "-----------------------------------\n" );
 
-
+	return 1;
 }
 
 

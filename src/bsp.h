@@ -281,6 +281,9 @@ typedef struct
 extern map_t map ;
 
 
+int BSP_Load_Map(char *mapname );
+
+
 /* PVS test macro:  PVS table is a packed single bit array, rowsize
    bytes times numclusters rows */
 #define BSP_TESTVIS(from,to) \

@@ -241,7 +241,7 @@ void FS_Init (const char *dir )
 	Con_Printf("   ------- FS_INIT: -------    \n");
 
 	if (!Pak_Init ())
-		return 0;
+		return ;
 
 	strcpy (basedir,dir );
 

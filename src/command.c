@@ -22,6 +22,7 @@
 #include "console.h"
 #include "io.h"
 #include "c_var.h"
+#include "keys.h"
 
 cmd_t *cmdlist;
 

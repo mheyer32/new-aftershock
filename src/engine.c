@@ -33,6 +33,7 @@
 #include "keys.h"
 #include "client.h"
 #include "server.h"
+#include "network.h"
 
 #include "windows.h"
 

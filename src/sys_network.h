@@ -38,11 +38,6 @@
 # define ioctlsocket	ioctl
 #endif
 
-typedef struct net_address_s {
-	short sa_family;
-	unsigned char sa_data[14];
-} net_address_t;
-
 char *Net_GetErrorString(void);
 int Net_GetError(void);
 

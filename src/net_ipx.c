@@ -19,6 +19,7 @@
 #include "a_shared.h"
 #include "console.h"		/* Con_Printf */
 #include "c_var.h"			/* cvar_t */
+#include "sys_network.h"
 #include "network.h"		/* Net_SendPacket */
 
 // From GOLK :www.digital-phenomenon.de

@@ -17,8 +17,6 @@ void Sys_Keyboard_Event ( unsigned int Vkey ,aboolean down )
 
 		is_char =1;
 		key = Vkey - 0x30+ '0';
-
-
 	}
 	else if ( Vkey >= 0x41 && Vkey <=0x5A )
 	{
@@ -68,8 +66,9 @@ void Sys_Keyboard_Event ( unsigned int Vkey ,aboolean down )
 		case VK_RIGHT:
 			key=K_RIGHTARROW;
 			break;
-
-	//K_ALT,
+		case 18:
+			key=K_ALT;
+			break;
 		case VK_CONTROL:
 			key=K_CTRL;
 			break;
@@ -82,9 +81,12 @@ void Sys_Keyboard_Event ( unsigned int Vkey ,aboolean down )
 		case VK_DELETE:
 			key=K_DEL;
 			break;
-		//	K_PGDN,
-		//K_PGUP,
-	
+		case 34:
+			key=K_PGDN;
+			break;
+		case 33:
+			key=K_PGUP;
+			break;
 		case VK_HOME:
 			key=K_HOME;
 			break;

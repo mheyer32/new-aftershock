@@ -47,22 +47,6 @@
 
 
 
-
-
-#define MAX_ARRAYS_VERTS 8192
-#define MAX_ARRAYS_ELEMS MAX_ARRAYS_VERTS * 3 
-
-
-
-#define TWOPI 6.28318530718
-#define TURB_SCALE 0.2
-
-
-
-static int error=0;
-//if a mesh or a mapent is in the array enable culling
-static int meshincluded=0;
-
 void Render_Backend_Flush (int shadernum ,int lmtex );
 
 static void Render_Backend_Flush_Generic (shader_t *s ,int lmtex );
@@ -79,9 +63,9 @@ static void render_stripmine(int numelems, int *elems);
 static int render_setstate(shaderpass_t *pass, uint_t lmtex);
 static void render_pushmesh_deformed(mesh_t *mesh,cface_t *face);
 
-colour_t * R_Make_Rgba (shaderpass_t * pass );
-float * R_Make_TexCoords (shaderpass_t * pass ,int stage);
-void R_Make_Vertices (shader_t *s );
+static colour_t * R_Make_Rgba (shaderpass_t * pass );
+static float * R_Make_TexCoords (shaderpass_t * pass ,int stage);
+static void R_Make_Vertices (shader_t *s );
 arrays_t arrays;
 
 
@@ -434,7 +418,7 @@ render_pushface(cface_t *face)
     
     vert = face->verts;
 	finaladdress=(void *)(vert+face->numverts);
-	while (vert<finaladdress)
+	while (vert<(vertex_t *)finaladdress)
 	{
 	vec_copy(vert->v_point, arrays.verts[arrays.numverts]);
 	VectorCopy (vert->v_norm ,arrays.norms [arrays.numverts]);
@@ -483,7 +467,6 @@ render_pushmesh(mesh_t *mesh)
 	// shit happens 
 	if (mesh->size[0]>10000 || mesh->size[0]>10000 || mesh->size[0]<0 || mesh->size[1]<0 ) return;
     elem = mesh->elems;
-	meshincluded=1;
     for (i = 0; i < mesh->numelems/3; ++i)
     {
 	arrays.elems[arrays.numelems++] = arrays.numverts + *elem++;
@@ -664,11 +647,11 @@ render_setstate(shaderpass_t *pass, uint_t lmtex)
 */
 
 // TODO !!!
-void Render_Backend_Make_Vertices (shader_t *s )
+static void Render_Backend_Make_Vertices (shader_t *s )
 {
 	int i;
 
-	if (s->flags   & SHADER_DEFORMVERTS )
+	if (s->flags & SHADER_DEFORMVERTS )
 	{
 		float deflect ;
 		vec3_t v;
@@ -710,7 +693,7 @@ void Render_Backend_Make_Vertices (shader_t *s )
 
 }
 
-float * Render_Backend_Make_TexCoords (shaderpass_t * pass ,int stage )
+static float * Render_Backend_Make_TexCoords (shaderpass_t * pass ,int stage )
 {
 
 	int i=arrays.numverts,n;
@@ -917,7 +900,7 @@ float * Render_Backend_Make_TexCoords (shaderpass_t * pass ,int stage )
 
 }
 
-byte * Render_Backend_Make_Colors ( shaderpass_t * pass )
+static byte * Render_Backend_Make_Colors ( shaderpass_t * pass )
 {
 	int i;
 	byte rgb;
@@ -1319,7 +1302,7 @@ static void Render_Backend_Flush_Multitexture_Lightmapped (shader_t *s ,int lmte
 static void Render_Backend_Flush_Multitexture_Combine (shader_t *s,int lmtex )
 {
 	shaderpass_t * pass;
-	int texture ,i ;
+	int texture  ;
 
 	if (s->numpasses != 2 )
 		return ;

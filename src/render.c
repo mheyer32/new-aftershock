@@ -30,14 +30,11 @@
 #include "matrix.h"
 #include "console.h"
 
-#include "brushtest.h"
+
 /* The front end of the rendering pipeline decides what to draw, and
  * the back end actually draws it.  These functions build a list of faces
  * to draw, sorts it by shader, and sends it to the back end (renderback.c)
  */
-#define MAX_TRANSPARENT 1000
-#define MAX_OVERLAY 4096
-
 
 /* cvars */
 cvar_t *con_notifytime;

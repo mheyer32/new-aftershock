@@ -279,7 +279,7 @@ extern int ZEXPORT unzGetLocalExtrafield OF((unzFile file,
 
 
 int Unz_GetStringForDir (unzFile * pak,const char * dir,const char *extension,char * buf ,int bufsize,int *len);
-int Unz_FileExists (unzFile * pak, char * file );
+int Unz_FileExists (unzFile * pak, const char * file );
 
 
 

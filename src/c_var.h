@@ -46,6 +46,7 @@ void Cvar_Init( void );
 void Cvar_Shutdown( void );
 void Cvar_Register( vmCvar_t *cvar, const char *var_name, const char *resetString, unsigned int flags );
 void Cvar_Update( vmCvar_t *cvar );
+aboolean Cvar_Print( const char *var_name );
 
 
 

@@ -26,6 +26,8 @@
 #include "sys_network.h"
 #include "net_msg.h"
 #include "network.h"
+#include "net_udp.h"
+#include "net_ipx.h"
 
 #define AFTERSHOCK_PORT 27960
 

@@ -1,5 +1,7 @@
 
 #include <windows.h>
+#include "engine.h"
+#include "util.h"
 
 HINSTANCE hInst;
 HDC dc;

@@ -26,10 +26,13 @@
 #include "console.h"	/* Con_Printf */
 #include "c_var.h"		/* Cvar_Get */
 #include "command.h"	/* Cmd_AddCommand */
+#include "util.h"
 #include "sys_network.h"
 #include "network.h"
 #include "net_msg.h"
 #include "net_lan.h"
+#include "net_udp.h"
+#include "net_ipx.h"
 
 /* TODO: IPX */
 #define AFTERSHOCK_PORT 27960
