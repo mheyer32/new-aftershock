@@ -163,7 +163,7 @@ void S_StartSound( vec3_t origin, int entityNum, int entchannel, sfxHandle_t sfx
 
 	s = &samples[sfx];
 
-	act_channel = FSOUND_PlaySound3DAttrib(entchannel,s->handle,-1, 255, FSOUND_STEREOPAN,origin,NULL);
+	act_channel = FSOUND_PlaySound3DAttrib(entchannel, s->handle, -1, s_volume->value * 255, FSOUND_STEREOPAN, origin, NULL);
 
 	if (act_channel == -1) // problem
 		return;
@@ -208,8 +208,7 @@ void S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inw
 {
 }
 
-
-sfxHandle_t	S_RegisterSound( const char *sample )		// returns buzz if not found
+sfxHandle_t	S_RegisterSound ( const char *sample )		// returns buzz if not found
 {
 	int file, i;
 	void *f_data;

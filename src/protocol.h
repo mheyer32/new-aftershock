@@ -2,50 +2,33 @@
 #ifndef PROTOCOL_H__
 #define PROTOCOL_H__
 
+#define PROTOCOL_VERSION	48
 
-// Server Commands
-
-#define SVC_BAD				0		// ungültiger Server Befehl
-#define SVC_NOP				1		// kann einfach überlesen werden
-#define SVC_GAMESTATE		2		// startdaten bei spielbeginn: configstrings, entities der baseline
-#define SVC_CONFIGSTRING    3		// alter Q2 befehl, jetzt ungültig
-#define SVC_BASELINE		4		// alter Q2 befehl, jetzt ungültig
-#define SVC_SERVERCOMMAND	5		// server befehler wie print, centerprint, disconnect ...
-#define SVC_DOWNLOAD		6		// alter Q2 befehl, jetzt ungültig
-#define SVC_SNAPSHOT		7		// beschreibung des spielzustands zu einer bestimmten Zeit
-
-
-
-
-
-
-
+// the svc_strings[] array in cl_parse.c should mirror this
+//
+// server to client
+//
+enum svc_ops_e {
+	svc_bad,
+	svc_nop,
+	svc_gamestate,
+	svc_configstring,		// [short] [string] only in gamestate messages
+	svc_baseline,			// only in gamestate messages
+	svc_serverCommand,		// [string] to be executed by client game module
+	svc_download,			// [short] size [size bytes]
+	svc_snapshot
+};
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//
+// client to server
+//
+enum clc_ops_e {
+	clc_bad,
+	clc_nop, 		
+	clc_move,				// [usercmd_t]
+	clc_moveNoDelta,		// [usercmd_t]
+	clc_clientCommand		// [string] message
+};
 
 #endif 

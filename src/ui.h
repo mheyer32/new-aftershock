@@ -154,15 +154,11 @@ extern char  UI_name[];
 
 extern int (__cdecl *UI_syscall)( int arg, ... );
 
-
-
-int LoadUI (void );
-int UnLoadUI (void );
-void UI_KeyEvent (int Key );
-void UI_MouseEvent (int x, int y );
-void UI_Refresh (void );
-
-
-
+int LoadUI (void);
+int UnLoadUI (void);
+void UI_KeyEvent (int Key);
+void UI_MouseEvent (int x, int y);
+void UI_Refresh (void);
+void UI_Restart (void);
 
 #endif 

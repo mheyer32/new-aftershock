@@ -2378,6 +2378,7 @@ int WIN_CreateWindow ( HINSTANCE inst ,int nCmdShow)
    UpdateWindow( hWnd );
 
 	GetCursorPos (&mpos);
+	SetCursorPos (0, 0);
 
 	ShowCursor (FALSE);		// Vic: hide mouse
 

@@ -64,7 +64,7 @@ static void render_pushmesh_deformed(mesh_t *mesh,cface_t *face);
 
 arrays_t arrays;
 
-static aboolean r_overlay = afalse;
+aboolean r_overlay = afalse;
 static aboolean r_reflection = afalse;
 static aboolean r_reflection_ = afalse;
 
@@ -642,7 +642,8 @@ float *Render_Backend_Make_TexCoords (shaderpass_t *pass, int stage)
 			}
 		}
 
-		out = in;
+		out = arrays.stage_tex_st[stage];
+		memcpy (out, in, arrays.numverts * sizeof(vec2_t));
 	}
 	else
 	{

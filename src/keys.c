@@ -480,10 +480,8 @@ static void Cmd_Unbindall (void )
 	{
 		A_strncpyz(key_bindings[i].keyname," ",256);
 		A_strncpyz(key_bindings[i].command," ",256);
-
 	}
 }
-
 
 void Key_WriteBindings( int file )
 {

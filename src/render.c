@@ -266,6 +266,8 @@ reference_t transform_ref;
 
 colour_t r_actcolor = {255, 255, 255, 255};
 
+extern aboolean r_overlay;
+
 void R_ClearScene (void);
 
 
@@ -295,6 +297,7 @@ void R_Init(void)
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glColor3f(1.0, 1.0, 1.0);
 
+	r_overlay = afalse;
 
     GL_Enable(GL_DEPTH_TEST);
     GL_CullFace(GL_FRONT);

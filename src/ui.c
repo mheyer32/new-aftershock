@@ -104,7 +104,15 @@ void UI_Refresh (void )
 	UI_main(UI_REFRESH,(int)(g_frametime*1000.0),0,0,0,0,0,0 );
 }
 
+void UI_Restart (void)
+{
+	if (!UnLoadUI())
+		return;
 
+	if (!LoadUI())
+		return;
 
-
-
+	// Init UI
+	UI_main(UI_INIT, 0, 0, 0, 0, 0, 0, 0);
+	UI_main(UI_SET_ACTIVE_MENU, UIMENU_MAIN, 0, 0, 0, 0, 0, 0);
+}

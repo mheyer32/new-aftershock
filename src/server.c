@@ -209,8 +209,6 @@ static void SV_Map( const char *mapname )
 		// TODO
 	}
 
-//	CL_Map();
-
 	FS_Restart();
 
 	Cvar_Set( "nextmap", va( "map %s", mapname ) );
@@ -233,6 +231,8 @@ static void SV_Map( const char *mapname )
 	}
 
 	GAME_main(GAME_INIT, 0, 0, 0, 0, 0, 0, 0);
+
+	CL_Startup ();
 
 	Com_Printf( "-----------------------------------\n" );
 }

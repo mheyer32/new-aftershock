@@ -85,8 +85,13 @@ static void Cmd_vid_restart (void)
 
 	client_prepared = atrue;
 
-	if (Key_GetCatcher () & KEYCATCH_UI)
-		UI_main(UI_SET_ACTIVE_MENU, UIMENU_MAIN, 0, 0, 0, 0, 0, 0 );
+//	Key_SetCatcher( Key_GetCatcher() & ~KEYCATCH_CONSOLE );
+
+	if (Key_GetCatcher () & KEYCATCH_UI) {
+//		UI_main(UI_SET_ACTIVE_MENU, UIMENU_MAIN, 0, 0, 0, 0, 0, 0 );
+		UI_Restart();
+		Key_SetCatcher( KEYCATCH_UI );
+	}
 }
 
 static void Cmd_demo (void)
