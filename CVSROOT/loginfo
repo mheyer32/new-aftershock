@@ -25,5 +25,5 @@
 # or
 #DEFAULT (echo ""; id; echo %{sVv}; date; cat) >> $CVSROOT/CVSROOT/commitlog
 
-ALL             /usr/local/bin/cvs-log $CVSROOT/CVSROOT/changelog $USER
-^CVSROOT        /usr/local/bin/cvs-log /usr/adm/cvsroot-log
+ALL             /usr/lib/cvs/contrib/log -f $CVSROOT/CVSROOT/commitlog
+

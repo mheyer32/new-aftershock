@@ -69,7 +69,7 @@ static void jpg_noop(j_decompress_ptr cinfo)
 
 static boolean jpg_fill_input_buffer(j_decompress_ptr cinfo)
 {
-    Error("Premeture end of jpeg file");
+    Con_Printf("Premeture end of jpeg file\n");
     return TRUE;
 }
 
@@ -78,8 +78,9 @@ static void jpg_skip_input_data(j_decompress_ptr cinfo, long num_bytes)
         
     cinfo->src->next_input_byte += (size_t) num_bytes;
     cinfo->src->bytes_in_buffer -= (size_t) num_bytes;
-    if (cinfo->src->bytes_in_buffer < 0)
-	Error("Premeture end of jpeg file");
+
+    if (cinfo->src->bytes_in_buffer < 0) 
+		Con_Printf("Premeture end of jpeg file\n");
 }
 
 static void jpeg_mem_src(j_decompress_ptr cinfo, byte *mem, int len)
