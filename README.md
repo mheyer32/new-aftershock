@@ -120,4 +120,4 @@ Steve Taylor
 <lazyX@home.com>
 
 Additions and changes made by 
-Martin Kraus <m_kraus@excite.de>
+Martin Kraus <misterkraus@gmail.com>
