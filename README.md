@@ -117,7 +117,7 @@ get enough interest, I'll open the CVS, create a discussion list, etc.
 I also appreciate any comments.
 
 Steve Taylor
-<lazyX@home.com>
+<taylorsc@gmail.com>
 
 Additions and changes made by 
 Martin Kraus <misterkraus@gmail.com>
